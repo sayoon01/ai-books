@@ -1,2 +1,9 @@
 .github_token
 output/
+.claude/
+__pycache__/
+*.pyc
+web/node_modules/
+web/.next/
+web/.env.local
+web/.git/
