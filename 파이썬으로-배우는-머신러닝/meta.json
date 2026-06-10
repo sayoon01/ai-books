@@ -3,6 +3,6 @@
   "language": "ko",
   "model": "gemma4:31b",
   "total_chapters": 2,
-  "completed_chapters": 2,
-  "status": "done"
+  "completed_chapters": 1,
+  "status": "in_progress"
 }
