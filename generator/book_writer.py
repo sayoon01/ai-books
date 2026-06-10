@@ -3,9 +3,9 @@ import ollama
 from pathlib import Path
 
 from prompts import (
-    build_write_system,  write_user,
-    build_review_system, review_user,
-    build_revise_system, revise_user,
+    WRITE_SYSTEM,  write_user,
+    REVIEW_SYSTEM, review_user,
+    REVISE_SYSTEM, revise_user,
 )
 from github_push import push_chapter, update_meta, update_readme
 
@@ -17,13 +17,7 @@ BOOK_CONFIG_REQUIRED = (
     "target_reader", "book_style", "writing_guidelines",
 )
 
-# 선택 키 — 시스템 프롬프트에서 직접 처리 (book_config에는 포함하되 user 메시지에선 제외)
-BOOK_CONFIG_OPTIONAL = (
-    "chapter_template",    # 시스템 프롬프트에 챕터 구성 구조로 주입
-    "output_requirements", # 시스템 프롬프트에 출력 요구사항으로 주입
-)
-
-BOOK_CONFIG_KEYS = BOOK_CONFIG_REQUIRED + BOOK_CONFIG_OPTIONAL
+BOOK_CONFIG_KEYS = BOOK_CONFIG_REQUIRED
 
 
 def _call(system: str, user: str, temperature: float) -> str:
@@ -48,27 +42,44 @@ def _book_config(toc: dict) -> dict:
 
 
 def _parse_review(raw: str) -> dict:
-    """JSON 파싱 실패 시 안전하게 폴백"""
+    import re
+    text = raw.strip()
+
+    # 1) ```json ... ``` 블록 추출
+    if "```" in text:
+        text = text.split("```")[1]
+        if text.startswith("json"):
+            text = text[4:]
+
+    # 2) 앞뒤 자연어 제거 — { } 사이 JSON만 추출 (2번 케이스 대응)
+    match = re.search(r'\{.*\}', text, re.DOTALL)
+    if match:
+        text = match.group()
+
     try:
-        # 모델이 ```json ... ``` 로 감쌀 때도 처리
-        text = raw.strip()
-        if text.startswith("```"):
-            text = text.split("```")[1]
-            if text.startswith("json"):
-                text = text[4:]
         return json.loads(text.strip())
     except Exception:
-        return {"has_errors": False, "score": 99, "issues": [], "summary": "JSON 파싱 실패 — 원고 그대로 사용"}
+        # JSON 자체가 잘리거나 진짜 파싱 불가 → 강제 재수정
+        print("  [경고] 검수 JSON 파싱 실패 → 수정 단계 강제 실행")
+        return {
+            "has_errors": True,
+            "score": 0,
+            "issues": [{"type": "unclear", "severity": "high",
+                        "problem": "검수 결과를 파싱할 수 없습니다.",
+                        "original_text": "",
+                        "fix_instruction": "원고 전체를 writing_guidelines에 맞게 재검토하세요."}],
+            "summary": "검수 JSON 파싱 실패 — 전체 재수정",
+        }
 
 
-def write_chapter(book_config: dict, chapter: dict) -> str:
-    print(f"  [1/3] 초안 작성 중: {chapter['title']}")
-    return _call(build_write_system(book_config), write_user(book_config, chapter), temperature=0.8)
+def write_chapter(book_config: dict, chapter: dict, previous_summaries: list = None) -> str:
+    print(f"  [1/4] 초안 작성 중: {chapter['title']}")
+    return _call(WRITE_SYSTEM, write_user(book_config, chapter, previous_summaries), temperature=0.8)
 
 
-def review_chapter(book_config: dict, chapter: dict, draft: str) -> dict:
-    print(f"  [2/3] 검수 중...")
-    raw = _call(build_review_system(book_config), review_user(book_config, chapter, draft), temperature=0.2)
+def review_chapter(book_config: dict, chapter: dict, draft: str, step: str = "2/4") -> dict:
+    print(f"  [{step}] 검수 중...")
+    raw = _call(REVIEW_SYSTEM, review_user(book_config, chapter, draft), temperature=0.2)
     data = _parse_review(raw)
     score = data.get("score", 0)
     issues = len(data.get("issues", []))
@@ -77,9 +88,9 @@ def review_chapter(book_config: dict, chapter: dict, draft: str) -> dict:
 
 
 def revise_chapter(book_config: dict, chapter: dict, draft: str, review_data: dict) -> str:
-    print(f"  [3/3] 수정 중...")
+    print(f"  [3/4] 수정 중...")
     review_json = json.dumps(review_data, ensure_ascii=False, indent=2)
-    return _call(build_revise_system(book_config), revise_user(book_config, chapter, draft, review_json), temperature=0.5)
+    return _call(REVISE_SYSTEM, revise_user(book_config, chapter, draft, review_json), temperature=0.5)
 
 
 def generate_book(toc: dict, output_dir: Path, slug: str) -> None:
@@ -88,30 +99,54 @@ def generate_book(toc: dict, output_dir: Path, slug: str) -> None:
     config   = _book_config(toc)
 
     output_dir.mkdir(parents=True, exist_ok=True)
+    log_dir = output_dir / "logs"
+    log_dir.mkdir(exist_ok=True)
+
     print(f"\n책 생성 시작: {title}")
     print(f"챕터 수: {len(chapters)}\n")
+
+    chapter_summaries = []  # 나중에 [-8:] 슬라이싱으로 교체 가능
 
     for chapter in chapters:
         num    = chapter["number"]
         ctitle = chapter["title"]
         print(f"--- 챕터 {num}: {ctitle} ---")
 
-        draft       = write_chapter(config, chapter)
-        review_data = review_chapter(config, chapter, draft)
+        draft       = write_chapter(config, chapter, chapter_summaries[:])
+        review_data = review_chapter(config, chapter, draft, step="2/4")
+
+        quality_log = {
+            "chapter": {"number": num, "title": ctitle},
+            "initial_review": review_data,
+            "revised": False,
+            "re_review": None,
+        }
 
         if review_data.get("has_errors") or review_data.get("score", 100) < 90:
-            final = revise_chapter(config, chapter, draft, review_data)
+            revised   = revise_chapter(config, chapter, draft, review_data)
+            re_review = review_chapter(config, chapter, revised, step="4/4")
+            final     = revised
+            quality_log["revised"]   = True
+            quality_log["re_review"] = re_review
+            if re_review.get("has_errors") or re_review.get("score", 100) < 90:
+                remaining = [i for i in re_review.get("issues", []) if i.get("severity") == "high"]
+                print(f"  [4/4] 재검수 후 잔여 이슈 {len(remaining)}건 — 현재 버전으로 저장")
         else:
-            print(f"  [3/3] 수정 불필요 (score {review_data.get('score')})")
+            print(f"  [수정 불필요] score {review_data.get('score')} — 저장")
             final = draft
 
         content  = f"# 챕터 {num}: {ctitle}\n\n{final}"
         filename = f"chapter-{num:02d}.md"
         (output_dir / filename).write_text(content, encoding="utf-8")
+        (log_dir / f"chapter-{num:02d}-review.json").write_text(
+            json.dumps(quality_log, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
         print(f"  저장: {filename}")
 
         push_chapter(slug, num, ctitle, content)
         update_meta(slug, toc, completed=num)
+
+        chapter_summaries.append(f"{num}장 {ctitle}: {chapter.get('description', '')}")
         print()
 
     update_readme(slug, toc)
