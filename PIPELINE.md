@@ -106,7 +106,8 @@ generate_book()                 챕터 루프 전체 제어
       │  revised 원고를 같은 방식으로 재검수               │
       │  결과와 무관하게 final = revised 로 저장           │
       │  (무한루프 방지 — 1회만)                          │
-      └─────────────────────────────────────────────────┘
+      └─────────────────────────────────────────────────┘      <img width="464" height="312" alt="image" src="https://github.com/user-attachments/assets/90263fd2-91f4-4cc5-a3a0-47792e293baa" />
+
               │
               ▼
 
