@@ -128,8 +128,12 @@ class DataDigest(BaseModel):
     process_time: dict[str, StatBlock] = Field(default_factory=dict)
     top_correlations: list[Corr] = Field(default_factory=list)
     n_clusters: int = 0                 # 클러스터 총 개수(중심값은 토큰 예산상 미주입)
-    clusters: list[ClusterStat] = Field(default_factory=list)
     models_in_use: list[ModelMeta] = Field(default_factory=list)
     field_dict: dict[str, FieldSpec] = Field(default_factory=dict)
+    # --- 확장: 센서/분포 요약 (히스토그램은 빼고 요약 통계만) ---
+    sensor_stats: dict[str, dict[str, float]] = Field(default_factory=dict)  # T1~8/P1~8 {mean,p1,p99}
+    cycle_interval: dict[str, float] = Field(default_factory=dict)  # ci-hist {mean,p25,p50,p75,n}
+    wait: dict[str, float] = Field(default_factory=dict)            # wait-dist {mean,p50,p75,p95,n}
+    anomaly_categories: dict[str, int] = Field(default_factory=dict)  # {normal,genuine,quality}
     # 인용 가능 키(ref_keys)는 grounding.flatten_keys(digest.model_dump())로 데이터에서 자동 추출한다.
     # (도메인별 하드코딩 제거)

@@ -93,6 +93,38 @@ def _models(d) -> list[ModelMeta]:
     return out
 
 
+def _round(v, nd: int = 2):
+    return round(float(v), nd) if isinstance(v, (int, float)) else v
+
+
+def _sensor_stats(d) -> dict:
+    """sensor-dist: {t:{T1:{mean,p1,p99,...}}, p:{P1:{...}}} → {T1:{mean,p1,p99}}."""
+    if not isinstance(d, dict):
+        return {}
+    out = {}
+    for group in ("t", "p"):
+        for name, s in (d.get(group) or {}).items():
+            if isinstance(s, dict) and "mean" in s:
+                out[name] = {k: _round(s[k]) for k in ("mean", "p1", "p99") if k in s}
+    return out
+
+
+def _dist_summary(d, keys) -> dict:
+    """ci-hist/wait-dist에서 스칼라 요약만 추출(히스토그램 edges/counts 제외)."""
+    if not isinstance(d, dict):
+        return {}
+    out = {}
+    for k in keys:
+        v = d.get(k)
+        if isinstance(v, (int, float)):
+            out[k] = int(v) if k == "n" else _round(v)
+    return out
+
+
+def _anomaly_categories(d) -> dict:
+    return (d.get("category_dist") if isinstance(d, dict) else {}) or {}
+
+
 def build_digest(api: ApiSource | None, excel: ExcelSource | None, fetched_at: str) -> DataDigest:
     data = api.fetch_all() if api else {}
     summary = data.get("summary") or {}
@@ -120,6 +152,10 @@ def build_digest(api: ApiSource | None, excel: ExcelSource | None, fetched_at: s
         n_clusters=_n_clusters(data.get("cluster-stats")),
         models_in_use=_models(data.get("model-meta")),
         field_dict=excel.field_dict() if excel else {},
+        sensor_stats=_sensor_stats(data.get("sensor-dist")),
+        cycle_interval=_dist_summary(data.get("ci-hist"), ["mean", "p25", "p50", "p75", "n"]),
+        wait=_dist_summary(data.get("wait-dist"), ["mean", "p50", "p75", "p95", "n"]),
+        anomaly_categories=_anomaly_categories(data.get("mismatch-stats")),
     )
 
 

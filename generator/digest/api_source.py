@@ -8,7 +8,8 @@ HTTPS로 강제 업그레이드하지 않으므로 그대로 호출 가능하다
 import httpx
 
 # digest에 필요한 엔드포인트만
-ENDPOINTS = ["summary", "proc-stats", "correlation", "cluster-stats", "model-meta"]
+ENDPOINTS = ["summary", "proc-stats", "correlation", "cluster-stats", "model-meta",
+             "sensor-dist", "ci-hist", "wait-dist", "mismatch-stats"]
 
 
 class ApiSource:
