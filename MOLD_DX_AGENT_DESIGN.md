@@ -17,6 +17,10 @@
 > | 운영모델 2종(IsolationForest·GradientBoosting) | 실측 **5종**(IF, GB×3: moldid/cycletype/cycletime, LogReg: warmup) |
 > | `specs/digest_cache.json` | `cache/grounding/` 스냅샷 |
 > | `book_style` 필드 | `target_reader`에 흡수 |
+> | **보고서 성격**: 4섹션 "분석 시스템 제안서"(분석범위/SW/라이브러리/프로토타입, §7) | **9단위 "데이터 해석 보고서"** (수치→의미→원인→시사점). 아래 §7은 폐기된 초기 안 |
+> | digest 범위: summary·proc·corr·cluster·model | **+ 센서별 통계(sensor-dist)·사이클간격·대기분포·이상 카테고리** 확장 |
+
+> 📊 **현행 산출물**: `toc/mold-dx-report.json`(9단위 해석 보고서) → `output/금형-사출-데이터-해석-보고서/unit-01~09.md`. 웹 배포는 별도 레포 `ai-books-web`.
 
 ---
 

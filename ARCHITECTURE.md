@@ -79,14 +79,15 @@ flowchart TD
 
 | `kind` | 동작 | payload | ref_keys(계획 검증용) |
 | --- | --- | --- | --- |
-| `mold_api` | `:33001 /api/*` + 엑셀 사전 → `DataDigest`(통계 압축) | digest JSON | `flatten_keys()` |
-| `file` | 로컬 파일(.md/.txt/.csv/.xlsx) 내용/요약 | 내용 | 없음 |
-| `url` | 평문 HTTP fetch | 텍스트/JSON | 없음 |
-| `text` | spec 인라인 텍스트 | 그대로 | 없음 |
+| `mold_api` | `:33001 /api/*` + 엑셀 사전 → `DataDigest`(통계 압축) | digest JSON | **자동 추출** |
+| `file` | 로컬 파일(.md/.txt/.csv/.xlsx) 내용/요약 | 내용 | 없음(텍스트) |
+| `url` | 평문 HTTP fetch | 텍스트/JSON | 없음(텍스트) |
+| `text` | spec 인라인 텍스트 | 그대로 | 없음(텍스트) |
 
+- **`ref_keys`는 `grounding.flatten_keys(data)`로 데이터에서 재귀 자동 추출** — 도메인별 키 하드코딩 없음. 구조화 payload(dict)면 어떤 도메인이든 키가 자동으로 나오고, 텍스트 payload(file/url/text)는 빈 set → Planner 검증 자동 skip.
 - 결과는 `cache/grounding/<slug>.json`에 스냅샷 → **서버가 불안정해도 재현·오프라인 생성** 가능
 - `mold_api`는 서버 다운 시 **엑셀 사전만으로 폴백**(graceful degradation)
-- 토큰 예산(≤~4k tokens) 보호: 상관행렬→`|r|>0.8` 상위 40쌍, 클러스터 123개→개수만, 금형모델→상위 N
+- `mold_api` digest는 통계만 압축 주입(원본 미주입): 사이클유형 분포·이상률·금형별·공정시간(분위수)·상관(|r|>0.8 상위 40쌍)·클러스터 개수·운영모델·**센서별 통계(T1~8/P1~8 mean·p1·p99)·사이클간격·대기분포·이상 카테고리**·필드사전 (~3.8k tokens, ctx 32768 여유)
 
 ---
 
@@ -167,9 +168,10 @@ def call_structured(system, user, schema, temperature, retries=2, post_validate=
 | `ReviewResult` | Reviewer | `has_errors`, `score`(0~100 제약), `issues[]`, `ungrounded_numbers`(근거 없는 수치) |
 | `Issue` | Reviewer | `type`(Literal 8종), `severity`(low/med/high), `problem`, `fix_instruction` |
 | `UnitPlan` | Planner | `key_points`(3~8), `data_refs`, `required_figures`, `out_of_scope` |
-| `DataDigest` | mold_api grounding | `n_cycles`, `anomaly_rate`, `process_time`, `top_correlations`, `n_clusters`, `models_in_use`, `field_dict` + `flatten_keys()` |
+| `DataDigest` | mold_api grounding | `n_cycles`, `anomaly_rate`, `mean_ct_sec`, `cycle_type_dist`, `mold_models`, `process_time`, `top_correlations`, `n_clusters`, `models_in_use`, `field_dict`, `sensor_stats`, `cycle_interval`, `wait`, `anomaly_categories` |
 
-`ungrounded_numbers`는 grounding이 있을 때만 채워집니다(R2 환각 탐지). 책처럼 grounding 없는 문서는 빈 배열.
+- `ungrounded_numbers`는 grounding이 있을 때만 채워집니다(R2 환각 탐지). 책처럼 grounding 없는 문서는 빈 배열.
+- `ref_keys`(Planner 검증용)는 `DataDigest`에 메서드로 박지 않고 **`grounding.flatten_keys(digest.model_dump())`로 데이터에서 자동 추출** — 필드 추가/삭제해도 자동 추적, 도메인 하드코딩 없음.
 
 ---
 
@@ -203,9 +205,9 @@ GitHub REST API로 파일을 직접 읽어 렌더링하고, 새 단위가 푸시
 | `/` | `app/page.tsx` | 문서 목록 그리드 |
 | `/books/[slug]` | `app/books/[slug]/page.tsx` | 단위 사이드바 + 본문 |
 
-본문은 `ChapterViewer.tsx`에서 `react-markdown` + `remark-gfm`으로 렌더링합니다.
+본문은 `ChapterViewer.tsx`에서 `react-markdown` + `remark-gfm`으로 렌더링합니다. `lib/github.ts`는 `chapter-NN.md`(구)·`unit-NN.md`(신)를 모두 인식하고, 구/신 `meta.json`(`total_chapters` ↔ `total`)을 정규화합니다.
 
-> ⚠️ **알려진 정합 작업**: `web/lib/github.ts`의 `getChapters()`가 아직 `chapter-NN.md`를 읽습니다. 생성기는 이제 `unit-NN.md`를 푸시하므로, 웹이 새 문서를 인식하려면 `unit-NN.md`(또는 둘 다)를 읽도록 갱신이 필요합니다.
+> ⚠️ **중요 — 웹 코드는 두 레포에 존재**: 이 모노레포의 `web/`은 **참고용 사본**이고, **Vercel이 실제 배포하는 것은 별도 레포 `sayoon01/ai-books-web`**(루트가 Next 앱, 콘텐츠는 `ai-books`에서 API로 읽음)입니다. **웹 코드 수정은 `ai-books-web`에 반영해야 배포됩니다.** (모노레포 web/만 고치면 배포 안 됨 — 과거 금형 문서 미표시의 원인이었음.) 장기적으로 둘을 하나로 합치는 정리 권장.
 
 ---
 
@@ -240,9 +242,11 @@ ai-books/
 ├── data/                # grounding 원본 (엑셀 등)
 ├── cache/grounding/     # 해소된 근거 스냅샷 (재현성)
 ├── output/<slug>/       # 로컬 생성 결과 (unit-NN.md + logs/)
-├── web/                 # Next.js 프론트엔드
+├── web/                 # Next.js 프론트엔드 (참고용 사본 — 배포본은 별도 레포 ai-books-web)
 └── <slug>/              # GitHub에 푸시되는 문서 데이터 (unit-NN.md + meta.json)
 ```
+
+> **배포 레포 분리**: Vercel 배포본 = `sayoon01/ai-books-web`(독립 Next 앱). 콘텐츠(`<slug>/`)는 이 `ai-books` 레포에서 읽음. 웹 코드 변경은 `ai-books-web`에 push해야 반영됨.
 
 ---
 
