@@ -131,20 +131,5 @@ class DataDigest(BaseModel):
     clusters: list[ClusterStat] = Field(default_factory=list)
     models_in_use: list[ModelMeta] = Field(default_factory=list)
     field_dict: dict[str, FieldSpec] = Field(default_factory=dict)
-
-    def flatten_keys(self) -> set[str]:
-        """Planner.data_refs 교차검증용. digest에 실재하는 인용 가능 키 집합."""
-        keys: set[str] = {
-            "n_cycles", "period", "anomaly_rate", "mean_ct_sec",
-            "cycle_type_dist", "mold_models", "top_correlations",
-            "n_clusters", "models_in_use", "field_dict",
-        }
-        for k in self.cycle_type_dist:
-            keys.add(f"cycle_type_dist.{k}")
-        for k in self.process_time:
-            keys.add(f"process_time.{k}")
-        for f in self.field_dict:
-            keys.add(f"field_dict.{f}")
-        for m in self.mold_models:
-            keys.add(f"mold_models.{m.model}")
-        return keys
+    # 인용 가능 키(ref_keys)는 grounding.flatten_keys(digest.model_dump())로 데이터에서 자동 추출한다.
+    # (도메인별 하드코딩 제거)

@@ -38,6 +38,22 @@ class Grounding:
                          provenance=d.get("provenance", {}))
 
 
+# -------- 범용 키 추출 (도메인 무관) --------
+def flatten_keys(obj, prefix: str = "") -> set[str]:
+    """구조화 데이터(dict/list)를 재귀로 훑어 점(.) 경로 키 집합을 만든다.
+    Planner.data_refs 교차검증용. 도메인별로 키를 손으로 적지 않는다."""
+    keys: set[str] = set()
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            full = f"{prefix}.{k}" if prefix else k
+            keys.add(full)
+            keys |= flatten_keys(v, full)
+    elif isinstance(obj, list):
+        for item in obj:
+            keys |= flatten_keys(item, prefix)
+    return keys
+
+
 # -------- kind별 resolver --------
 def _resolve_mold_api(spec: dict) -> Grounding:
     from digest.build import load_or_build, DEFAULT_EXCEL, DEFAULT_API
@@ -49,7 +65,7 @@ def _resolve_mold_api(spec: dict) -> Grounding:
     )
     return Grounding(
         payload=digest.model_dump_json(indent=2),
-        ref_keys=digest.flatten_keys(),
+        ref_keys=flatten_keys(digest.model_dump()),   # 데이터에서 자동 추출
         provenance=digest.provenance.model_dump(),
     )
 
