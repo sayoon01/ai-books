@@ -1,175 +1,255 @@
 # 챕터 13: 실전 프로젝트 - 타이타닉 생존자 예측
 
-# 챕터 13: 실전 프로젝트 - 타이타닉 생존자 예측
+# 13장. 실전 프로젝트 - 타이타닉 생존자 예측
 
-머신러닝의 개별 부품인 데이터 전처리, 회귀, 분류, 앙상블을 적절한 순서로 조립하여 하나의 '시스템'으로 만드는 능력은 실무에서 매우 중요합니다. 머신러닝의 가장 상징적인 입문 프로젝트인 **'타이타닉 생존자 예측'**을 통해, 데이터 로드부터 모델 평가까지의 전체 파이프라인(End-to-End Pipeline)을 직접 구축해 보겠습니다.
+지금까지 우리는 머신러닝의 개별 부품들을 하나씩 학습했습니다. 데이터 전처리 방법, 회귀와 분류 알고리즘, 모델 평가 지표, 그리고 성능을 높이는 앙상블 기법까지 말이죠. 하지만 실제 현업에서 머신러닝 엔지니어가 하는 일은 단순히 알고리즘 하나를 실행하는 것이 아닙니다. 
 
----
-
-## 1. 학습 목표
-- **머신러닝 전체 파이프라인**의 흐름을 이해하고 구현합니다.
-- **탐색적 데이터 분석(EDA)**을 통해 데이터 속에 숨겨진 생존 패턴을 찾아냅니다.
-- **특성 공학(Feature Engineering)**을 통해 모델의 성능을 높이는 새로운 변수를 생성합니다.
-- **데이터 누수(Data Leakage)**를 방지하는 올바른 전처리 순서를 익힙니다.
-- 실제 데이터를 활용해 **최종 예측 모델**을 만들고 그 결과를 해석합니다.
+데이터를 처음 마주한 순간부터 최종 예측 결과를 내놓기까지의 전체 과정, 즉 **'머신러닝 파이프라인(ML Pipeline)'**을 설계하고 실행하는 것이 핵심입니다. 이번 장에서는 머신러닝 입문자들의 '통과 의례'라고 불리는 **타이타닉 생존자 예측 프로젝트**를 통해, 지금까지 배운 모든 내용을 하나의 흐름으로 엮어보겠습니다.
 
 ---
 
-## 2. 개념 이해하기: 비유 $\rightarrow$ 직관 $\rightarrow$ 기술
+## 1. 머신러닝 파이프라인: 탐정의 수사 과정
 
-### 🕵️ 비유: 100년 전의 사건을 추리하는 데이터 탐정
-여러분은 지금 1912년 타이타닉호 침몰 사고의 기록물을 넘겨받은 **'데이터 탐정'**입니다. 주어진 것은 승객들의 명단(이름, 성별, 나이, 티켓 등급 등)과 일부 승객들의 생존 여부가 적힌 장부입니다. 사건을 해결하는 과정은 다음과 같습니다.
+머신러닝 프로젝트를 수행하는 것은 마치 **'오래된 미제 사건을 해결하는 탐정의 수사 과정'**과 매우 비슷합니다. 
 
-1. **증거 수집(EDA):** "여성과 아이들이 먼저 구조되었다는데 정말일까?"라며 장부를 훑어보며 경향성을 파악합니다.
-2. **단서 정리(전처리):** 기록이 누락된 나이 칸을 주변 정황으로 추론해 채우고, 읽기 어려운 텍스트를 분석 가능한 형태로 바꿉니다.
-3. **새로운 가설 세우기(특성 공학):** "단순히 나이보다, 가족이 많았던 사람이 서로를 챙겨서 더 많이 살아남지 않았을까?"라며 '가족 수'라는 새로운 단서를 만들어냅니다.
-4. **결론 도출(모델링):** 지금까지의 모든 단서를 종합해, 아직 생존 여부를 모르는 승객들이 살았을지 죽었을지를 최종 예측합니다.
+### 비유로 이해하기
+탐정이 사건을 해결할 때 무턱대고 범인을 지목하지 않습니다. 다음과 같은 단계를 거치죠.
+1. **현장 조사 (EDA):** 사건 현장을 둘러보며 어떤 단서가 있는지, 피해자와 가해자의 관계는 어떠했는지 파악합니다.
+2. **증거 정제 (Preprocessing):** 훼손된 지문을 복원하거나, 불필요한 잡음을 제거하여 깨끗한 증거물을 만듭니다.
+3. **새로운 가설 설정 (Feature Engineering):** "단순히 범인이 누구인가"가 아니라, "범인이 왼손잡이였을 가능성이 높다"라는 새로운 관점의 단서를 찾아냅니다.
+4. **추리 및 검증 (Modeling & Evaluation):** 수집한 증거를 바탕으로 범인을 추리하고, 그 추리가 맞는지 기존의 알리바이와 대조하며 검증합니다.
 
-### ⚙️ 직관: 머신러닝은 '조립 라인'이다
-머신러닝 프로젝트는 단순히 `model.fit()`이라는 버튼을 누르는 것이 아닙니다. 원재료(Raw Data)가 들어가서 완성품(Prediction)이 나오기까지 거치는 **'공정 라인'**을 설계하는 과정입니다.
+### 직관적으로 이해하기
+머신러닝에서도 마찬가지입니다. 원본 데이터(Raw Data)를 그대로 모델에 넣는다고 해서 정답이 나오지 않습니다. 데이터를 이해하고, 다듬고, 의미 있는 특징을 추출하는 과정이 선행되어야 모델이 비로소 '학습'을 할 수 있습니다.
 
-만약 공정 순서가 잘못되어 완성 직전의 제품을 다시 원재료 단계로 되돌리거나, 미래에 들어올 제품의 정보를 미리 가져와 현재 제품을 수정한다면 전체 시스템은 붕괴합니다. 따라서 **"데이터의 흐름은 반드시 일방통행이어야 한다"**는 직관이 필요합니다.
+### 기술적 정의: 머신러닝 파이프라인
+머신러닝 파이프라인이란 **데이터 수집 $\rightarrow$ 데이터 분석(EDA) $\rightarrow$ 전처리 $\rightarrow$ 특성 공학 $\rightarrow$ 모델 학습 $\rightarrow$ 평가 $\rightarrow$ 배포**로 이어지는 일련의 반복적인 과정을 의미합니다. 
 
-### 🛠️ 기술 설명: 머신러닝 파이프라인(ML Pipeline)
-기술적으로 머신러닝 파이프라인은 데이터가 모델에 입력되기까지 거치는 일련의 표준화된 단계입니다.
+**[그림 13-1. 머신러닝 파이프라인의 전체 흐름]**
+*(도식 가이드: 데이터 수집부터 배포까지의 각 단계가 화살표로 연결된 플로우차트. 특히 '평가' 단계에서 성능이 낮을 경우 다시 '전처리'나 '특성 공학' 단계로 돌아가는 피드백 루프가 표현되어야 함)*
 
-$$\text{데이터 로드} \rightarrow \text{EDA} \rightarrow \text{데이터 전처리} \rightarrow \text{특성 공학} \rightarrow \text{모델 선택/학습} \rightarrow \text{평가} \rightarrow \text{최종 예측}$$
+이번 프로젝트에서는 다음과 같은 흐름으로 진행합니다.
 
-**핵심 기술 포인트:**
-1. **탐색적 데이터 분석 (EDA):** 시각화와 통계량을 통해 변수 간의 상관관계를 분석합니다. (예: 성별 $\rightarrow$ 생존율의 상관관계 확인)
-2. **특성 공학 (Feature Engineering):** 도메인 지식을 활용해 기존 변수를 조합하여 새로운 변수를 생성합니다.
-   - *예: $\text{SibSp(형제/배우자)} + \text{Parch(부모/자녀)} + 1 = \text{FamilySize(가족 규모)}$*
-3. **데이터 누수 (Data Leakage) 방지:** 훈련 데이터(Train set)와 테스트 데이터(Test set)를 엄격히 분리한 후, 전처리에 사용되는 모든 통계량(평균, 중앙값 등)은 오직 **훈련 데이터에서만 산출**하여 테스트 데이터에 적용해야 합니다.
+| 단계 | 주요 작업 | 목적 |
+| :--- | :--- | :--- |
+| **Step 1: EDA** | 데이터 분포 확인, 상관관계 분석 | 데이터의 특성과 생존 요인 파악 |
+| **Step 2: 데이터 분리** | 학습 데이터와 테스트 데이터 분리 | 모델의 일반화 성능을 객관적으로 평가하기 위함 |
+| **Step 3: 전처리 및 특성 공학** | 결측치 처리, 인코딩, 변수 생성 | 모델이 학습 가능한 최적의 데이터 형태로 가공 |
+| **Step 4: 모델링** | 알고리즘 선택 및 학습 | 생존 여부를 예측하는 최적의 규칙 발견 |
+| **Step 5: 평가** | 정확도 측정 및 결과 해석 | 모델이 얼마나 잘 맞히는지 검증 |
 
 ---
 
-## 3. 파이썬 코드 실습
+## 2. Step 1: 데이터 탐색 (EDA) - 현장 조사
+
+먼저 우리가 다룰 데이터를 살펴보겠습니다. 타이타닉 데이터셋은 승객의 성별, 나이, 객실 등급, 요금 등의 정보와 실제 생존 여부(`Survived`)가 포함되어 있습니다.
+
+### 코드 실습: 데이터 불러오기와 기본 분석
 
 ```python
 import pandas as pd
 import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
+import seaborn as sns
 
-# 1. 데이터 로드
+# 데이터 로드 (seaborn 라이브러리에서 제공하는 데이터셋 사용)
 df = sns.load_dataset('titanic')
 
-# --- [단계 1: EDA] ---
-print("--- [EDA] 성별에 따른 생존율 ---")
-print(df.groupby('sex')['survived'].mean())
+# 1. 데이터 상위 5개 행 확인
+print("--- Dataset Head ---")
+print(df.head())
 
+# 2. 기본 정보 확인 (결측치 및 데이터 타입)
+print("\n--- Dataset Info ---")
+print(df.info())
+
+# 3. 생존율 확인 (Survived: 0=사망, 1=생존)
+print("\n--- Survival Rate ---")
+print(df['survived'].value_counts(normalize=True))
+
+# 4. 성별에 따른 생존율 시각화
 plt.figure(figsize=(6, 4))
 sns.barplot(x='sex', y='survived', data=df)
-plt.title('Survival Rate by Sex')
+plt.title('Survival Rate by Gender')
 plt.show()
 
-# --- [단계 2: 전처리 및 특성 공학] ---
-# 불필요하거나 중복된 컬럼 제거
-df = df.drop(['who', 'adult_male', 'deck', 'embark_town', 'alive'], axis=1)
-
-# 결측치 처리: 나이는 중앙값으로, 승선항은 최빈값으로 채움
-df['age'] = df['age'].fillna(df['age'].median())
-df['embarked'] = df['embarked'].fillna(df['embarked'].mode()[0])
-
-# 특성 공학: 가족 수 변수 생성 (형제/배우자 + 부모/자녀 + 본인)
-df['family_size'] = df['sibsp'] + df['parch'] + 1
-
-# 범주형 데이터 인코딩 (문자 -> 숫자)
-le = LabelEncoder()
-df['sex'] = le.fit_transform(df['sex'])       # female: 0, male: 1
-df['embarked'] = le.fit_transform(df['embarked'])
-df['class'] = le.fit_transform(df['class'])
-
-# --- [단계 3: 데이터 분리 및 스케일링] ---
-X = df.drop('survived', axis=1)
-y = df['survived']
-
-# 데이터 분리 (훈련 8 : 테스트 2)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-# 스케일링: 데이터 누수 방지를 위해 X_train으로만 fit 수행
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
-
-# --- [단계 4: 모델 학습 및 평가] ---
-model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42)
-model.fit(X_train_scaled, y_train)
-
-# 예측 및 결과 확인
-y_pred = model.predict(X_test_scaled)
-print(f"\n최종 모델 정확도: {accuracy_score(y_test, y_pred):.4f}")
-print("\n[상세 분류 보고서]\n", classification_report(y_test, y_pred))
-
-# 변수 중요도 시각화
-importances = pd.Series(model.feature_importances_, index=X.columns)
-importances.sort_values().plot(kind='barh', figsize=(8, 5))
-plt.title('Feature Importances')
+# 5. 객실 등급(pclass)에 따른 생존율 시각화
+plt.figure(figsize=(6, 4))
+sns.barplot(x='pclass', y='survived', data=df)
+plt.title('Survival Rate by Pclass')
 plt.show()
 ```
 
----
-
-## 4. 실행 결과 및 해석
-
-### 📊 결과 해석
-1. **성별 생존율:** EDA 결과, 여성의 생존율이 남성보다 압도적으로 높게 나타납니다. 이는 모델이 `sex` 변수를 가장 강력한 예측 지표로 사용할 것임을 시사합니다.
-2. **최종 정확도:** 일반적으로 약 **80% ~ 83%** 사이의 정확도가 도출됩니다. 이는 무작위 예측(50%)보다 훨씬 높으며, 기본적인 특성들만으로도 생존 여부를 상당히 정확히 맞힐 수 있음을 의미합니다.
-3. **분류 보고서:** `Precision`(정밀도)과 `Recall`(재현율)을 통해 모델이 생존자(1)와 사망자(0) 중 어느 쪽을 더 잘 예측하는지 확인할 수 있습니다. 보통 사망자 예측의 정밀도가 더 높게 나오는 경향이 있습니다.
-4. **변수 중요도:** 그래프 상위권에 `sex`, `age`, `fare`가 위치합니다. 이는 **"여성이고, 나이가 어리며, 비싼 티켓(상류층)을 가진 사람이 살 가능성이 높았다"**는 역사적 사실이 데이터로 증명된 결과입니다.
+### 결과 해석
+- **데이터 구조:** `survived`가 우리가 예측해야 할 타깃(Target) 변수입니다.
+- **성별의 영향:** 시각화 결과, 여성의 생존율이 남성보다 압도적으로 높음을 알 수 있습니다.
+- **객실 등급의 영향:** 1등급(1st class) 승객의 생존율이 가장 높고, 3등급으로 갈수록 낮아집니다.
+- **결측치 발견:** `age`와 `embarked` 컬럼에 결측치(NaN)가 다수 존재함을 확인했습니다.
 
 ---
 
-## 5. 실무 활용 사례
+## 3. Step 2 & 3: 데이터 분리와 전처리 - 증거 정제 및 단서 찾기
 
-이러한 **End-to-End 파이프라인** 구조는 기업의 실제 예측 시스템 구축 시 동일하게 적용됩니다.
+여기서 매우 중요한 주의사항이 있습니다. **전처리를 하기 전에 데이터를 먼저 나누어야 합니다.** 모든 데이터의 평균으로 결측치를 채운 뒤 데이터를 나누면, 테스트 데이터의 정보가 학습 데이터에 스며드는 '데이터 누수(Data Leakage)'가 발생하여 평가 결과가 왜곡됩니다.
 
-- **이탈 고객 예측 (Churn Prediction):**
-  - `데이터 로드` $\rightarrow$ `EDA(이탈 고객의 공통점 분석)` $\rightarrow$ `전처리` $\rightarrow$ `특성 공학(최근 7일간 접속 횟수 등 생성)` $\rightarrow$ `모델링` $\rightarrow$ `이탈 확률 예측`.
-- **신용 점수 산정 (Credit Scoring):**
-  - `금융 기록 로드` $\rightarrow$ `EDA(연체자와 정상인의 차이 분석)` $\rightarrow$ `전처리` $\rightarrow$ `특성 공학(소득 대비 부채 비율 생성)` $\rightarrow$ `모델링` $\rightarrow$ `대출 승인 여부 결정`.
+### 직관적 접근: 학습 데이터의 기준으로만 채우기
+우리는 미래의 데이터(테스트 세트)를 미리 알 수 없습니다. 따라서 **학습 데이터에서 계산한 통계량(중앙값 등)을 저장해두었다가, 이를 테스트 데이터에도 동일하게 적용**하는 것이 실무의 정석입니다.
+
+### 코드 실습: 데이터 분리 및 전처리 파이프라인
+
+```python
+from sklearn.model_selection import train_test_split
+
+# 1. 분석에 불필요한 컬럼 제거
+cols_to_drop = ['deck', 'embark_town', 'alive', 'who', 'adult_male']
+df = df.drop(columns=cols_to_drop)
+
+# 2. 특성(X)과 타깃(y) 분리
+X = df.drop('survived', axis=1)
+y = df['survived']
+
+# 3. [중요] 데이터 분리 (학습 데이터와 테스트 데이터를 먼저 나눕니다)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 4. 전처리 및 특성 공학 (학습 데이터 기반으로 처리)
+
+# [특성 공학] 가족 규모 및 혼자 탑승 여부 생성
+for dataset in [X_train, X_test]:
+    dataset['family_size'] = dataset['sibsp'] + dataset['parch'] + 1
+    dataset['is_alone'] = (dataset['family_size'] == 1).astype(int)
+
+# [결측치 처리] 학습 데이터의 pclass별 나이 중앙값을 계산하여 적용
+age_medians = X_train.groupby('pclass')['age'].median()
+
+def fill_age(row):
+    return age_medians[row['pclass']] if pd.isna(row['age']) else row['age']
+
+X_train['age'] = X_train.apply(fill_age, axis=1)
+X_test['age'] = X_test.apply(fill_age, axis=1)
+
+# 탑승항구(embarked)는 학습 데이터의 최빈값으로 채움
+most_freq_embarked = X_train['embarked'].mode()[0]
+X_train['embarked'] = X_train['embarked'].fillna(most_freq_embarked)
+X_test['embarked'] = X_test['embarked'].fillna(most_freq_embarked)
+
+# [인코딩] 범주형 데이터 변환 (One-Hot Encoding)
+# 학습 데이터와 테스트 데이터에 동일한 컬럼이 생성되도록 처리
+X_train = pd.get_dummies(X_train, columns=['sex', 'embarked'], drop_first=True)
+X_test = pd.get_dummies(X_test, columns=['sex', 'embarked'], drop_first=True)
+
+print("\n--- Preprocessed X_train Head ---")
+print(X_train.head())
+```
+
+### 결과 해석
+- **데이터 누수 방지:** `X_test`의 나이 결측치를 채울 때 `X_test` 자체의 평균이 아닌, `X_train`에서 계산된 `age_medians`를 사용했습니다.
+- **특성 생성:** `family_size`와 `is_alone` 변수가 추가되어 모델이 학습할 수 있는 더 풍부한 힌트를 제공합니다.
+- **인코딩:** `sex_male` 등 수치형 변수로 변환되어 모델 입력 준비가 완료되었습니다.
 
 ---
 
-## 6. 자주 하는 실수 (Anti-Patterns)
+## 4. Step 4: 모델 학습 - 추리 시작
 
-**❌ 실수 1: `fit()`을 테스트 데이터에 적용하는 것**
-- `scaler.fit(X_test)`를 호출하는 경우입니다. 이는 테스트 데이터의 정보가 모델에 미리 흘러 들어가는 **데이터 누수(Data Leakage)**를 유발하여, 실제 서비스 적용 시 성능이 급격히 떨어지는 원인이 됩니다.
-- **해결:** `fit`은 오직 **훈련 데이터**에만 적용하고, 테스트 데이터에는 `transform`만 적용하십시오.
+이제 준비된 데이터를 바탕으로 모델을 학습시키겠습니다. 분류 문제이므로 12장에서 배운 **Random Forest**를 사용하겠습니다.
 
-**❌ 실수 2: EDA 없이 바로 모델링하는 것**
-- 변수 간의 관계를 모른 채 모델을 돌리면, 성능이 낮게 나왔을 때 원인을 분석할 수 없습니다. 실무 면접에서 "왜 이 모델과 변수를 썼는가?"라는 질문에 "그냥 돌려보니 정확도가 높아서요"라고 답하는 것은 전문성 부족으로 간주됩니다.
+### 코드 실습: 모델 구축 및 학습
+
+```python
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
+
+# 1. 모델 생성 및 학습
+# n_estimators: 결정 트리의 개수, max_depth: 트리의 최대 깊이 (과적합 방지)
+model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42)
+model.fit(X_train, y_train)
+
+# 2. 예측 수행
+y_pred = model.predict(X_test)
+
+# 3. 성능 평가
+accuracy = accuracy_score(y_test, y_pred)
+print(f"\n모델 정확도(Accuracy): {accuracy:.4f}")
+print("\n--- Classification Report ---")
+print(classification_report(y_test, y_pred))
+```
+
+### 결과 해석
+- **정확도(Accuracy):** 약 80~83% 정도의 정확도가 나옵니다. 이는 테스트 데이터 10명 중 8명 이상의 생존 여부를 정확히 맞혔다는 뜻입니다.
+- **정밀도와 재현율:** 생존자(1)를 얼마나 정확하게 예측했는지, 실제 생존자를 얼마나 많이 찾아냈는지를 확인할 수 있습니다.
 
 ---
 
-## 7. 핵심 요약
-1. **ML 파이프라인:** 데이터 로드 $\rightarrow$ EDA $\rightarrow$ 전처리 $\rightarrow$ 특성 공학 $\rightarrow$ 학습 $\rightarrow$ 평가의 일방향 흐름을 갖는다.
-2. **EDA의 목적:** 데이터의 특성을 파악하고, 모델링을 위한 가설을 세우기 위함이다.
-3. **특성 공학:** 도메인 지식을 활용해 모델이 학습하기 좋은 '강력한 힌트(변수)'를 만드는 과정이다.
-4. **데이터 누수 방지:** 훈련 셋에서 학습한 통계량만을 테스트 셋에 적용하는 원칙을 반드시 준수해야 한다.
+## 5. Step 5: 모델 평가와 해석 - 판결 내리기
+
+단순히 정확도 숫자만 보는 것이 아니라, 모델이 **어떤 기준**으로 생존을 예측했는지 분석하는 것이 중요합니다.
+
+### 특성 중요도(Feature Importance) 분석
+
+```python
+importances = model.feature_importances_
+feature_names = X_train.columns
+feature_importance_df = pd.DataFrame({'Feature': feature_names, 'Importance': importances})
+feature_importance_df = feature_importance_df.sort_values(by='Importance', ascending=False)
+
+plt.figure(figsize=(10, 6))
+sns.barplot(x='Importance', y='Feature', data=feature_importance_df)
+plt.title('Feature Importance in Titanic Survival Prediction')
+plt.show()
+```
+
+### 결과 해석
+- 그래프 상단에 위치한 변수(예: `sex_male`, `age`, `fare`)가 생존 예측에 가장 결정적인 역할을 했음을 알 수 있습니다.
+- 이는 우리가 EDA 단계에서 파악했던 "여성과 아이, 그리고 부유층이 더 많이 생존했다"는 가설과 일치하며, 모델이 실제 세상의 규칙을 잘 찾아냈음을 의미합니다.
 
 ---
 
-## 8. 확인 문제
-**Q. 타이타닉 프로젝트에서 '가족 수(family_size)'라는 새로운 변수를 만든 이유는 무엇이며, 이를 머신러닝 용어로 무엇이라고 하나요?**
+## 6. 타이타닉 프로젝트에서 실무로: 분류 파이프라인의 확장
 
-**정답 및 해설:** 
-단순한 형제 수나 부모 수라는 개별 지표보다, '전체 가족의 규모'가 생존 여부에 더 직관적인 영향을 줄 것이라는 가설을 바탕으로 모델에게 더 유용한 정보를 제공하기 위해서입니다. 이렇게 기존 변수를 조합해 새로운 변수를 만드는 과정을 **특성 공학(Feature Engineering)**이라고 합니다.
+타이타닉 예제는 학습용 데이터셋이지만, 여기서 구축한 **'분류 파이프라인(데이터 분리 $\rightarrow$ 전처리 $\rightarrow$ 특성 공학 $\rightarrow$ 학습 $\rightarrow$ 평가)'**은 실제 현업에서 매우 광범위하게 사용됩니다.
+
+### 실무 적용 사례
+이 프로젝트에서 배운 흐름을 그대로 가져가면 다음과 같은 비즈니스 문제를 해결할 수 있습니다.
+
+- **은행의 고객 이탈 예측 (Churn Prediction):** 
+  - **데이터:** 고객의 거래 횟수, 상담 내역, 잔액 변화 등
+  - **목표:** 고객이 서비스를 해지할지(1) 유지할지(0) 예측 $\rightarrow$ 이탈 가능성이 높은 고객에게 맞춤 혜택 제공
+- **이커머스의 구매 전환 예측 (Conversion Prediction):** 
+  - **데이터:** 페이지 체류 시간, 클릭 경로, 장바구니 담기 횟수 등
+  - **목표:** 방문자가 실제로 구매를 할지(1) 그냥 나갈지(0) 예측 $\rightarrow$ 구매 확률이 높은 사용자에게 타겟 쿠폰 발송
+- **의료 데이터의 질병 진단 (Disease Diagnosis):** 
+  - **데이터:** 혈압, 혈당, 나이, 가족력 등
+  - **목표:** 특정 검사 결과가 양성(1)인지 음성(0)인지 예측 $\rightarrow$ 조기 진단 및 정밀 검사 권고
+
+결국 **"특정 조건(Feature)을 가진 대상이 어떤 결과(Target)를 낼 것인가"**를 맞히는 모든 분류 문제는 타이타닉 프로젝트와 본질적으로 동일한 파이프라인을 가집니다.
 
 ---
 
-## 9. 미니 프로젝트: "1%의 성능 향상을 찾아라!"
+## 7. 초보자가 자주 하는 실수와 해결 방법
 
-**미션:** 제공된 코드의 정확도를 1%라도 더 높여보세요.
+### ❌ 실수 1: 데이터 누수 (Data Leakage)
+**상황:** 전처리 단계에서 전체 데이터의 평균값으로 결측치를 채운 뒤, 데이터를 학습/테스트 세트로 나누는 경우.
+- **문제:** 테스트 데이터의 정보가 학습 과정에 미리 반영되어, 평가 결과가 비정상적으로 높게 나오는 '낙관적 편향'이 발생합니다.
+- **해결:** 반드시 **데이터를 먼저 나누고**, 학습 데이터의 통계량만을 사용하여 학습/테스트 세트를 각각 전처리하세요.
 
-- **힌트 1 (특성 공학):** 승객의 이름(`name`)에서 'Mr', 'Mrs', 'Miss', 'Master' 같은 호칭(Title)을 추출해 보세요. 사회적 지위가 생존에 영향을 주었을까요?
-- **힌트 2 (하이퍼파라미터):** `RandomForestClassifier`의 `max_depth`나 `n_estimators` 값을 조정하며 최적의 값을 찾아보세요.
-- **힌트 3 (모델 변경):** `XGBoost`나 `LightGBM` 같은 최신 그래디언트 부스팅 모델을 적용해 보세요.
+### ❌ 실수 2: 과도한 특성 생성 (Over-engineering)
+**상황:** 근거 없이 수십 개의 변수를 억지로 만들어 넣는 경우.
+- **문제:** 모델이 훈련 데이터의 특수한 상황까지 암기해버리는 **과적합(Overfitting)**이 발생하여 새로운 데이터에 대한 예측력이 떨어집니다.
+- **해결:** EDA를 통해 근거가 확실한 특성만 추가하고, 모델의 `max_depth` 등을 조절해 복잡도를 제어하세요.
 
-**결과 기록 양식:**
-- 변경 전 정확도: `0.812` $\rightarrow$ 변경 후 정확도: `0.825`
-- 변경 내용: `이름에서 Title 추출 및 범주화 적용`
+### ❌ 실수 3: 원-핫 인코딩의 함정 (Dummy Variable Trap)
+**상황:** `sex`를 `sex_male`과 `sex_female` 두 개로 모두 만드는 경우.
+- **문제:** 두 변수는 완벽하게 중복된 정보를 가지므로 다중공선성 문제를 일으켜 일부 모델의 성능을 저하시킵니다.
+- **해결:** `pd.get_dummies(..., drop_first=True)` 옵션을 사용하여 변수 하나를 제거하세요.
+
+---
+
+## 8. 요약 및 마무리
+
+이번 장에서는 타이타닉 생존자 예측 프로젝트를 통해 머신러닝의 전체 파이프라인을 경험했습니다.
+
+1. **EDA:** 데이터를 시각화하여 성별, 객실 등급이 생존의 핵심 요인임을 파악했습니다.
+2. **데이터 분리:** 데이터 누수를 방지하기 위해 전처리 전 학습/테스트 세트를 엄격히 분리했습니다.
+3. **전처리 및 특성 공학:** 학습 데이터의 통계량을 기준으로 결측치를 채우고, `family_size` 같은 새로운 변수를 생성했습니다.
+4. **모델링 및 평가:** Random Forest를 사용하여 생존 여부를 분류하고, 특성 중요도를 통해 판단 근거를 확인했습니다.
+
+머신러닝은 단순히 `model.fit()`을 호출하는 것이 아니라, **데이터를 깊게 이해하고 가공하는 과정**이 80% 이상을 차지합니다. 이제 여러분은 단순한 코드 작성자를 넘어, 데이터를 통해 문제를 해결하는 '데이터 사이언티스트'의 관점을 갖게 되었습니다.
