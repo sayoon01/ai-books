@@ -1,5 +1,6 @@
 .github_token
 output/
+cache/
 .claude/
 __pycache__/
 *.pyc

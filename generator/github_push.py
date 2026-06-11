@@ -1,11 +1,20 @@
 """
-챕터 완성마다 GitHub에 자동 커밋+푸시하는 모듈
+작성 단위 완성마다 GitHub에 자동 커밋+푸시하는 모듈 (장르 무관).
 """
 import json
 import subprocess
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent  # ai-books/
+
+_UNITS_KEYS = ("units", "chapters", "sections")
+
+
+def _units(doc: dict) -> list:
+    for k in _UNITS_KEYS:
+        if k in doc:
+            return doc[k]
+    return []
 
 
 def _git(args: list[str]) -> str:
@@ -20,35 +29,36 @@ def _git(args: list[str]) -> str:
     return result.stdout.strip()
 
 
-def push_chapter(slug: str, chapter_num: int, chapter_title: str, content: str) -> None:
-    """챕터 파일을 저장하고 GitHub에 커밋+푸시"""
-    book_dir = REPO_ROOT / slug
-    book_dir.mkdir(parents=True, exist_ok=True)
+def push_unit(slug: str, num: int, title: str, content: str) -> None:
+    """작성 단위 파일을 저장하고 GitHub에 커밋+푸시"""
+    doc_dir = REPO_ROOT / slug
+    doc_dir.mkdir(parents=True, exist_ok=True)
 
-    filename = f"chapter-{chapter_num:02d}.md"
-    (book_dir / filename).write_text(content, encoding="utf-8")
+    filename = f"unit-{num:02d}.md"
+    (doc_dir / filename).write_text(content, encoding="utf-8")
 
-    _git(["add", str(book_dir / filename)])
-    _git(["commit", "-m", f"feat({slug}): chapter-{chapter_num:02d} {chapter_title}"])
+    _git(["add", str(doc_dir / filename)])
+    _git(["commit", "-m", f"feat({slug}): unit-{num:02d} {title}"])
     _git(["push"])
     print(f"  [GitHub] 푸시 완료: {slug}/{filename}")
 
 
-def update_meta(slug: str, toc: dict, completed: int) -> None:
+def update_meta(slug: str, doc: dict, completed: int) -> None:
     """meta.json 갱신 후 커밋+푸시"""
-    book_dir = REPO_ROOT / slug
-    book_dir.mkdir(parents=True, exist_ok=True)
+    doc_dir = REPO_ROOT / slug
+    doc_dir.mkdir(parents=True, exist_ok=True)
 
-    total = len(toc["chapters"])
+    total = len(_units(doc))
     meta = {
-        "title":              toc["title"],
-        "language":           toc.get("language", "ko"),
-        "model":              "gemma4:31b",
-        "total_chapters":     total,
-        "completed_chapters": completed,
-        "status":             "done" if completed >= total else "in_progress",
+        "title":     doc["title"],
+        "language":  doc.get("language", "ko"),
+        "doc_type":  doc.get("doc_type", ""),
+        "model":     "gemma4:31b",
+        "total":     total,
+        "completed": completed,
+        "status":    "done" if completed >= total else "in_progress",
     }
-    meta_path = book_dir / "meta.json"
+    meta_path = doc_dir / "meta.json"
     meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
 
     _git(["add", str(meta_path)])
@@ -56,38 +66,36 @@ def update_meta(slug: str, toc: dict, completed: int) -> None:
     _git(["push"])
 
 
-def update_readme(slug: str, toc: dict) -> None:
-    """루트 README.md 책 목록 테이블 갱신 후 커밋+푸시"""
+def update_readme(slug: str, doc: dict) -> None:
+    """루트 README.md 문서 목록 테이블 갱신 후 커밋+푸시"""
     readme_path = REPO_ROOT / "README.md"
 
-    # 기존 책 목록 파싱
-    books: dict[str, dict] = {}
+    docs: dict[str, dict] = {}
     for meta_file in sorted(REPO_ROOT.glob("*/meta.json")):
-        book_slug = meta_file.parent.name
-        meta = json.loads(meta_file.read_text(encoding="utf-8"))
-        books[book_slug] = meta
+        docs[meta_file.parent.name] = json.loads(meta_file.read_text(encoding="utf-8"))
 
-    # 테이블 생성
-    rows = ["| 제목 | 언어 | 챕터 | 모델 | 상태 |",
-            "|---|---|---|---|---|"]
-    for s, m in books.items():
-        status = "✅ 완료" if m["status"] == "done" else "🔄 진행중"
+    rows = ["| 제목 | 유형 | 언어 | 진행 | 모델 | 상태 |",
+            "|---|---|---|---|---|---|"]
+    for s, m in docs.items():
+        status = "✅ 완료" if m.get("status") == "done" else "🔄 진행중"
+        # 구 키(total_chapters) 폴백
+        total = m.get("total", m.get("total_chapters", "?"))
+        done = m.get("completed", m.get("completed_chapters", "?"))
         rows.append(
             f"| [{m['title']}](./{s}) "
-            f"| {m['language']} "
-            f"| {m['completed_chapters']}/{m['total_chapters']} "
-            f"| {m['model']} "
+            f"| {m.get('doc_type', '')} "
+            f"| {m.get('language', 'ko')} "
+            f"| {done}/{total} "
+            f"| {m.get('model', '')} "
             f"| {status} |"
         )
 
-    content = "# AI Generated Books\n\n" + "\n".join(rows) + "\n"
+    content = "# AI Generated Documents\n\n" + "\n".join(rows) + "\n"
     readme_path.write_text(content, encoding="utf-8")
 
     _git(["add", "README.md"])
-    # 변경사항 없으면 커밋 스킵
-    import subprocess
     result = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=REPO_ROOT)
     if result.returncode != 0:
-        _git(["commit", "-m", "docs: README 책 목록 업데이트"])
+        _git(["commit", "-m", "docs: 문서 목록 업데이트"])
         _git(["push"])
     print("  [GitHub] README.md 업데이트 완료")
