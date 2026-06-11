@@ -90,7 +90,19 @@ def update_readme(slug: str, doc: dict) -> None:
             f"| {status} |"
         )
 
-    content = "# AI Generated Documents\n\n" + "\n".join(rows) + "\n"
+    # 문서 테이블은 마커 블록 안에만 갱신 → README의 수동 설명은 보존
+    start, end = "<!-- DOCS:START -->", "<!-- DOCS:END -->"
+    block = f"{start}\n\n" + "\n".join(rows) + f"\n\n{end}"
+    if readme_path.exists():
+        cur = readme_path.read_text(encoding="utf-8")
+        if start in cur and end in cur:
+            import re
+            content = re.sub(re.escape(start) + r".*?" + re.escape(end), block,
+                             cur, flags=re.DOTALL)
+        else:
+            content = cur.rstrip() + "\n\n## 생성된 문서\n\n" + block + "\n"
+    else:
+        content = "# AI Books\n\n## 생성된 문서\n\n" + block + "\n"
     readme_path.write_text(content, encoding="utf-8")
 
     _git(["add", "README.md"])

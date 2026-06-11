@@ -48,11 +48,23 @@ export interface Chapter {
   title:    string
 }
 
-// 루트 디렉토리에서 폴더 목록 → 각 meta.json 읽어 책 목록 반환
+// 문서 디렉터리가 아닌 루트 폴더 (GitHub API 호출 수·rate limit 절약)
+const NON_DOC_DIRS = new Set([
+  "web", "generator", "toc", "data", "cache", "output", "node_modules",
+])
+
+// 루트 디렉토리에서 폴더 목록 → 각 meta.json 읽어 문서 목록 반환
 export async function getBooks(): Promise<BookMeta[]> {
   type Entry = { name: string; type: string }
-  const entries = await get<Entry[]>(`${BASE}/contents`)
-  const folders = entries.filter((e) => e.type === "dir")
+  let entries: Entry[]
+  try {
+    entries = await get<Entry[]>(`${BASE}/contents`)
+  } catch {
+    return []   // 빌드/런타임에 GitHub 접근 실패해도 페이지가 죽지 않도록(배포 안정성)
+  }
+  const folders = entries.filter(
+    (e) => e.type === "dir" && !e.name.startsWith(".") && !NON_DOC_DIRS.has(e.name)
+  )
 
   const books = await Promise.all(
     folders.map(async (f) => {
