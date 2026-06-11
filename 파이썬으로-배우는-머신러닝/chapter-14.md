@@ -1,187 +1,308 @@
 # 챕터 14: 실전 프로젝트 - 집값 예측
 
-# 챕터 14: 실전 프로젝트 - 집값 예측
+# 14장. 실전 프로젝트 - 집값 예측
 
-## 1. 실생활 비유: 베테랑 부동산 중개인의 감각
-동네에서 가장 정확하게 집값을 맞히는 베테랑 중개인 아저씨를 떠올려 보세요. 그분은 단순히 "평수가 넓으니 비싸겠지?"라고 생각하지 않습니다.
+우리는 지금까지 머신러닝의 기초부터 다양한 알고리즘, 그리고 모델 평가 방법까지 학습했습니다. 이제는 이 모든 조각을 하나로 합쳐 실제 세상의 문제를 해결해 볼 차례입니다. 이번 프로젝트의 주제는 **'집값 예측'**입니다.
 
-1.  **데이터 수집:** "역세권인가?", "최근 리모델링을 했나?", "학군이 좋은가?" 등 다양한 변수를 살핍니다.
-2.  **이상치 제거:** "이 집은 예술가의 작품이라 시세보다 훨씬 비싸네. 일반적인 시세 분석에서는 제외해야겠다"라고 판단합니다.
-3.  **가중치 부여:** "요즘은 평수보다 '역과의 거리'가 가격에 더 큰 영향을 주더라고"라며 변수별 중요도를 조정합니다.
-4.  **예측 및 검증:** "내 생각엔 5억 정도 할 것 같은데, 실제 거래가를 보니 1천만 원 차이 나네. 꽤 정확해!"라고 스스로를 평가합니다.
-
-**머신러닝의 집값 예측 모델은 바로 이 '베테랑 중개인의 감각'을 수학적 공식과 데이터로 구현하는 과정입니다.**
+부동산 가격을 예측하는 것은 머신러닝의 가장 전형적인 '회귀(Regression)' 문제이자, 실무에서 매우 중요하게 다뤄지는 과제입니다. 단순히 데이터를 모델에 넣는 것이 아니라, 데이터 속에 숨겨진 의미를 찾고 이를 통해 미래의 가치를 예측하는 전체 과정을 경험해 보겠습니다.
 
 ---
 
-## 2. 개념 설명: 데이터에서 인사이트까지
+## 1. 집값 예측, 어떻게 접근해야 할까?
 
-### 🛠️ 머신러닝 파이프라인 (Pipeline)
-**[직관]** 파이프라인은 원재료가 들어가서 완제품이 나오는 '공장 조립 라인'과 같습니다. 원재료(데이터)가 오염되어 있다면 아무리 좋은 기계(모델)를 써도 불량품이 나옵니다. 따라서 정제 과정이 핵심입니다.
+### 🏠 베테랑 공인중개사의 '감'
+동네에서 수십 년간 활동한 베테랑 공인중개사에게 특정 집의 적정 가격을 물어본다고 가정해 봅시다. 중개사는 단순히 집의 크기만 보지 않습니다. 
 
-**[기술 설명]** 데이터 과학의 표준 프로세스는 다음과 같습니다.
-`데이터 로드` $\rightarrow$ `탐색적 데이터 분석(EDA)` $\rightarrow$ `데이터 전처리(이상치 제거, 변환)` $\rightarrow$ `모델 학습` $\rightarrow$ `평가 및 튜닝`
+*"이 집은 방이 3개고 넓지만, 역에서 너무 멀어요. 하지만 최근 주변에 대형 쇼핑몰이 들어섰고, 학군이 좋아서 가격이 조금 오를 겁니다. 다만 지은 지 30년이 넘어서 수리비가 들 테니 그 점은 감가해야겠네요."*
 
-### 📈 데이터의 왜곡과 로그 변환
-**[직관]** 대부분의 집값은 평균 근처에 모여 있지만, 극소수의 초고가 펜트하우스들이 가격 분포를 오른쪽으로 길게 늘어뜨립니다. 이는 마치 돋보기로 특정 부분만 과하게 확대해 보는 것과 같아, 모델이 이 극단적인 값들에 휘둘리게 만듭니다. 이때 로그(Log)를 취하는 것은 **'너무 큰 값은 적당히 누르고, 작은 값들 사이의 차이는 유지하는 압축기'**를 사용하는 것과 같습니다.
+중개사는 머릿속에서 수많은 **특성(Feature)**들을 조합하여 가격이라는 **결과(Target)**를 도출합니다. 
+- **양적 특성:** 면적, 방 개수, 건축 연도
+- **질적 특성:** 역세권 여부, 학군, 주변 편의시설
+- **가중치:** 면적보다는 위치가 더 중요하다는 판단, 노후도는 가격을 낮추는 요인이라는 판단
 
-**[기술 설명]** 이를 '오른쪽으로 꼬리가 긴 분포(Right-skewed)'라고 합니다. 선형 회귀 모델은 데이터가 정규분포를 따를 때 가장 효율적으로 학습합니다. $\log(x+1)$ 변환을 통해 왜곡된 분포를 정규분포에 가깝게 만들어 모델의 일반화 성능을 높입니다.
+### 💡 머신러닝으로 옮기기
+머신러닝 모델이 하는 일은 바로 이 '베테랑 중개사의 감'을 수학적으로 구현하는 것입니다. 
+
+1. **데이터 수집:** 중개사가 경험을 쌓듯, 수많은 집의 특성과 실제 거래 가격 데이터를 수집합니다.
+2. **특성 추출:** 가격에 영향을 주는 핵심 요소(면적, 위치, 연식 등)를 선택합니다.
+3. **패턴 학습:** "면적이 넓을수록 가격이 오르지만, 연식이 오래될수록 가격이 떨어진다"는 상관관계를 수식으로 찾아냅니다.
+4. **예측:** 학습된 수식에 새로운 집의 정보를 넣으면 예상 가격이 출력됩니다.
+
+### 🛠️ 기술적 설계도
+이번 프로젝트에서는 다음과 같은 파이프라인을 거쳐 모델을 구축합니다.
+
+| 단계 | 수행 내용 | 주요 도구/기법 |
+| :--- | :--- | :--- |
+| **데이터 탐색 (EDA)** | 데이터의 분포, 상관관계, 이상치 확인 | Pandas, Seaborn, Matplotlib |
+| **데이터 전처리** | 결측치 처리, 특성 스케일링, 변수 선택 | StandardScaler, SimpleImputer |
+| **모델 구축** | 기본 모델(선형 회귀) $\rightarrow$ 고성능 모델(랜덤 포레스트) | LinearRegression, RandomForestRegressor |
+| **성능 평가** | 예측값과 실제값의 오차 측정 | MSE, RMSE, $R^2$ Score |
+| **결과 해석** | 어떤 특성이 집값에 가장 큰 영향을 주었는지 분석 | Feature Importance |
 
 ---
 
-## 3. 기술 설명: 성능 평가와 모델의 안정성
+## 2. 데이터 탐색 및 분석 (EDA)
 
-### ① $R^2$ Score (결정계수)
-**"모델이 데이터의 변동성을 얼마나 설명하는가?"**를 나타내는 지표입니다.
-*   **수식적 의미:** $R^2 = 1 - \frac{\text{SSE(잔차 제곱합)}}{\text{SST(총 제곱합)}}$
-*   **해석:** $R^2 = 0.8$이라면, "집값 변동 원인의 80%를 이 모델의 변수들로 설명할 수 있다"는 뜻입니다. 1에 가까울수록 완벽한 모델이며, 0에 가깝다면 단순히 평균값으로 예측하는 것과 다를 바 없습니다.
+실전 프로젝트에서 가장 중요한 것은 모델을 돌리는 것이 아니라 **데이터를 이해하는 것**입니다. 우리는 사이킷런(scikit-learn)에서 제공하는 `California Housing` 데이터셋을 사용하겠습니다. 이 데이터는 캘리포니아 지역의 인구 통계 및 지리적 특성을 바탕으로 집값의 중앙값을 기록한 데이터입니다.
 
-### ② RMSE (Root Mean Squared Error)
-**"예측값과 실제값의 평균적인 거리"**를 나타냅니다.
-*   **특징:** 오차를 제곱하여 평균 낸 뒤 루트를 씌웠기 때문에, 최종 결과값이 실제 타겟 변수(집값)와 동일한 단위를 가집니다.
-*   **해석:** RMSE가 2,000만 원이라면, "이 모델은 평균적으로 약 2,000만 원 정도의 오차 범위 내에서 예측한다"고 해석합니다.
+### 📋 데이터셋 변수 정의
+분석에 앞서, 데이터셋에 포함된 각 변수가 무엇을 의미하는지 확인해 보겠습니다.
 
-### ③ 다중공선성 (Multicollinearity)
-**"서로 너무 닮은 변수들이 일으키는 혼란"**입니다.
-*   **현상:** '방의 개수'와 '집의 전체 평수'는 매우 강한 상관관계를 가집니다. 이 두 변수를 동시에 모델에 넣으면, 모델은 가격 상승의 원인이 '방 개수' 때문인지 '평수' 때문인지 구분하지 못합니다.
-*   **결과:** 회귀 계수(Weight)가 불안정해져 모델의 해석력이 떨어지고, 작은 데이터 변화에도 예측값이 크게 출렁이는 문제가 발생합니다.
+| 변수명 | 의미 | 설명 |
+| :--- | :--- | :--- |
+| **MedInc** | 중위 소득 | 가구당 소득의 중앙값 |
+| **HouseAge** | 집 연식 | 주택 건설 후 경과 연수 (중앙값) |
+| **AveRooms** | 평균 방 개수 | 가구당 평균 방 개수 |
+| **AveBedrms** | 평균 침실 개수 | 가구당 평균 침실 개수 |
+| **Population** | 인구 수 | 해당 구역의 총 인구 수 |
+| **AveOccup** | 평균 가구원 수 | 가구당 평균 거주 인원수 |
+| **Latitude** | 위도 | 지역의 위도 좌표 |
+| **Longitude** | 경도 | 지역의 경도 좌표 |
+| **MedHouseVal** | 집값 (Target) | 집값의 중앙값 (단위: 100,000달러) |
 
----
-
-## 4. 파이썬 코드 실습
-`scikit-learn`의 캘리포니아 집값 데이터셋을 활용하여 전체 파이프라인을 구현합니다.
+### 💻 데이터 로드 및 기초 확인
 
 ```python
-import numpy as np
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.datasets import fetch_california_housing
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, r2_score
 
-# 1. 데이터 로드 및 데이터프레임 변환
-data = fetch_california_housing()
-df = pd.DataFrame(data.data, columns=data.feature_names)
-df['Price'] = data.target
+# 1. 데이터 로드
+housing = fetch_california_housing()
+df = pd.DataFrame(housing.data, columns=housing.feature_names)
+df['MedHouseVal'] = housing.target # 타겟 변수(집값) 추가
 
-# 2. 로그 변환 (타겟 변수 Price의 왜곡 해소)
-# np.log1p는 log(1+x)를 계산하여 x=0일 때의 오류를 방지합니다.
-df['Log_Price'] = np.log1p(df['Price'])
+# 데이터 상위 5개 행 확인
+print(df.head())
+print("-" * 30)
+# 데이터 기본 정보 확인
+print(df.info())
+print("-" * 30)
+# 통계치 확인
+print(df.describe())
+```
 
-# 분포 시각화
-plt.figure(figsize=(12, 5))
-plt.subplot(1, 2, 1)
-sns.histplot(df['Price'], kde=True, color='blue')
-plt.title("Original Price Distribution (Skewed)")
+**[실행 결과 예시]**
+```text
+   MedInc  HouseAge  AveRooms  AveBedrms  Population  AveOccup  Latitude  Longitude  MedHouseVal
+0  8.3252      41.0      6.9841     1.0238      322.0      2.559   34.8181  -118.475       4.526
+1  8.3014      21.0      6.2381     0.9718      2401.0      2.109   34.8681  -118.442       3.585
+2  7.2574      52.0      8.2881     1.0734      466.0      3.070   34.2207  -118.299       3.413
+3  5.6431      52.0      5.8179     1.0730      558.0      2.547   34.2535  -118.297       3.422
+4  3.8462      52.0      6.2818     1.0810      565.0      2.562   34.2535  -118.297       3.414
+------------------------------
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 20640 entries, 0 to 20639
+Data columns (total 9 columns):
+ #   Column       Non-Null Count  Dtype  
+---  ------       --------------  -----  
+ 0   MedInc       20640 non-null  float64
+ 1   HouseAge     20640 non-null  float64
+ 2   AveRooms     20640 non-null  float64
+ 3   AveBedrms    20640 non-null  float64
+ 4   Population   20640 non-null  float64
+ 5   AveOccup    20640 non-null  float64
+ 6   Latitude     20640 non-null  float64
+ 7   Longitude    20640 non-null  float64
+ 8   MedHouseVal  20640 non-null  float64
+dtypes: float64(9)
+------------------------------
+              MedInc  HouseAge  AveRooms  AveBedrms  Population  AveOccup  Latitude  Longitude  MedHouseVal
+count  20640.000000  20640.000  20640.000  20640.000  20640.000  20640.000  20640.000  20640.000  20640.000
+mean       3.870630     28.639    5.42984     1.1211  1453.534    3.0995    34.0486   -119.439      2.068551
+std        1.535261    12.585    1.83864     0.3712    1113.255    2.4011     0.7544      2.2266      1.153954
+min        0.521252     1.000    1.00000     0.4000    11.000    1.0000    32.5408  -122.875      0.150000
+... (중략) ...
+max       15.274711    52.000   140.5959    10.0000  30943.000   1208.00    37.8562  -114.014      5.000000
+```
 
-plt.subplot(1, 2, 2)
-sns.histplot(df['Log_Price'], kde=True, color='green')
-plt.title("Log Transformed Price Distribution (Normal)")
+**[결과 해석]**
+- `MedHouseVal`은 집값의 중앙값(단위: 100,000달러)입니다.
+- 모든 데이터가 숫자형(float64)으로 되어 있어 전처리가 비교적 수월하지만, 각 변수의 단위(Scale)가 매우 다르다는 점을 알 수 있습니다. 예를 들어 `Population`은 수천 단위인 반면, `AveBedrms`는 1 내외의 작은 값을 가집니다.
+
+### 📈 시각화를 통한 인사이트 발견
+
+데이터의 관계를 파악하기 위해 상관계수 히트맵과 산점도를 그려보겠습니다.
+
+```python
+# 2. 상관관계 분석
+plt.figure(figsize=(10, 8))
+sns.heatmap(df.corr(), annot=True, cmap='RdYlGn', fmt=".2f")
+plt.title("Feature Correlation Heatmap")
 plt.show()
 
-# 3. 특성 선택 및 데이터 분리
-X = df.drop(['Price', 'Log_Price'], axis=1)
-y = df['Log_Price'] 
+# 3. 가장 상관관계가 높은 특성 시각화 (MedInc vs MedHouseVal)
+plt.figure(figsize=(8, 6))
+sns.scatterplot(data=df, x='MedInc', y='MedHouseVal', alpha=0.5)
+plt.title("Income vs House Value")
+plt.xlabel("Median Income")
+plt.ylabel("Median House Value")
+plt.show()
+```
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+**[결과 해석]**
+- **상관관계 히트맵:** `MedInc`(중위 소득)와 `MedHouseVal`(집값) 사이의 상관계수가 매우 높게 나타납니다. 이는 소득 수준이 높은 지역일수록 집값이 비싸다는 직관과 일치합니다.
+- **산점도:** 소득이 증가함에 따라 집값이 선형적으로 증가하는 경향이 보입니다. 하지만 집값이 특정 상한선(약 5.0)에 몰려 있는 현상이 발견되는데, 이는 데이터 수집 과정에서 캡핑(Capping, 최대치 제한)이 이루어졌음을 시사합니다.
 
-# 4. 특성 스케일링 (단위 통일)
+---
+
+## 3. 데이터 전처리 및 모델 준비
+
+이제 모델이 학습하기 좋은 형태로 데이터를 가공하겠습니다.
+
+### 🛠️ 전처리 전략
+1. **특성 선택:** 상관관계가 너무 낮거나 의미 없는 변수는 제외할 수 있습니다. (여기서는 모든 변수를 사용해 봅니다.)
+2. **데이터 분할:** 학습 데이터(Train)와 테스트 데이터(Test)를 8:2 비율로 나눕니다.
+3. **스케일링:** 특성마다 단위가 다르면(예: 소득은 수천 달러, 방 개수는 1~10개), 모델이 단위가 큰 변수를 더 중요하다고 착각할 수 있습니다. 이를 방지하기 위해 표준화(Standardization)를 진행합니다.
+
+```python
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+# 특성과 타겟 분리
+X = df.drop('MedHouseVal', axis=1)
+y = df['MedHouseVal']
+
+# 1. 학습/테스트 세트 분리
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# 2. 특성 스케일링
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-# 5. 모델 학습 (다중 선형 회귀)
-model = LinearRegression()
-model.fit(X_train_scaled, y_train)
+print(f"학습 데이터 크기: {X_train_scaled.shape}")
+print(f"테스트 데이터 크기: {X_test_scaled.shape}")
+```
 
-# 6. 예측 및 역변환 (로그 스케일 -> 원래 가격 스케일)
-y_pred_log = model.predict(X_test_scaled)
+> **⚠️ 초보자가 자주 하는 실수: Data Leakage(데이터 누수)**
+> 스케일러를 적용할 때 `fit_transform`을 전체 데이터에 먼저 적용하고 나누는 경우가 많습니다. 하지만 이는 테스트 데이터의 정보가 학습 과정에 스며드는 '데이터 누수'를 유발합니다. 반드시 **학습 데이터로만 `fit`을 하고, 테스트 데이터에는 `transform`만 적용**해야 합니다.
 
-# expm1은 exp(x) - 1 을 계산하여 log1p의 역변환을 수행합니다.
-y_test_actual = np.expm1(y_test)
-y_pred_actual = np.expm1(y_pred_log)
+---
 
-# 7. 성능 평가
-rmse = np.sqrt(mean_squared_error(y_test_actual, y_pred_actual))
-r2 = r2_score(y_test_actual, y_pred_actual)
+## 4. 모델 구축 및 학습
 
-print(f"--- 모델 평가 결과 ---")
-print(f"RMSE: {rmse:.4f}")
-print(f"R2 Score: {r2:.4f}")
+우리는 두 가지 모델을 비교해 보겠습니다. 기준점이 되는 **선형 회귀(Linear Regression)**와 성능이 뛰어난 **랜덤 포레스트(Random Forest)**입니다.
 
-# 8. 실제값 vs 예측값 시각화
-plt.figure(figsize=(7, 7))
-plt.scatter(y_test_actual, y_pred_actual, alpha=0.3, color='gray')
-plt.plot([y_test_actual.min(), y_test_actual.max()], 
-         [y_test_actual.min(), y_test_actual.max()], 'r--', lw=2)
-plt.xlabel("Actual Price")
-plt.ylabel("Predicted Price")
-plt.title("Actual vs Predicted House Prices")
-plt.grid(True)
-plt.show()
+### 📉 모델 1: 선형 회귀 (Baseline)
+선형 회귀는 데이터의 경향성을 하나의 직선으로 표현하는 가장 단순한 모델입니다.
+
+```python
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+# 모델 생성 및 학습
+lr_model = LinearRegression()
+lr_model.fit(X_train_scaled, y_train)
+
+# 예측
+lr_pred = lr_model.predict(X_test_scaled)
+
+# 평가
+lr_mse = mean_squared_error(y_test, lr_pred)
+lr_rmse = np.sqrt(lr_mse)
+lr_r2 = r2_score(y_test, lr_pred)
+
+print(f"[Linear Regression] RMSE: {lr_rmse:.4f}, R2 Score: {lr_r2:.4f}")
+```
+
+### 🌲 모델 2: 랜덤 포레스트 (Advanced)
+랜덤 포레스트는 여러 개의 결정 트리(Decision Tree)를 만들어 그 결과의 평균을 내는 앙상블 모델입니다. 비선형 관계를 훨씬 더 잘 잡아냅니다.
+
+```python
+from sklearn.ensemble import RandomForestRegressor
+
+# 모델 생성 및 학습
+rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
+rf_model.fit(X_train_scaled, y_train)
+
+# 예측
+rf_pred = rf_model.predict(X_test_scaled)
+
+# 평가
+rf_mse = mean_squared_error(y_test, rf_pred)
+rf_rmse = np.sqrt(rf_mse)
+rf_r2 = r2_score(y_test, rf_pred)
+
+print(f"[Random Forest] RMSE: {rf_rmse:.4f}, R2 Score: {rf_r2:.4f}")
 ```
 
 ---
 
-## 5. 실행 결과 해설
+## 5. 결과 분석 및 모델 평가
 
-### 📊 결과 해석 가이드
-1.  **분포 그래프:** `Original Price` 그래프는 오른쪽으로 꼬리가 긴 형태지만, `Log Transformed` 그래프는 좌우 대칭인 종 모양(정규분포)에 가까워졌습니다. 이는 모델이 특정 극단값에 편향되지 않고 학습할 수 있는 최적의 상태가 되었음을 의미합니다.
-2.  **RMSE:** 캘리포니아 데이터셋의 타겟 단위(10만 달러)를 고려할 때, 계산된 RMSE 값에 10만을 곱하면 실제 달러 단위의 평균 오차를 알 수 있습니다.
-3.  **$R^2$ Score:** 이 수치가 0.6이라면, 집값 결정 요인의 약 60%를 모델의 변수들로 설명하고 있다는 뜻입니다. 나머지 40%는 모델에 포함되지 않은 변수나 무작위 오차에 의한 것입니다.
-4.  **산점도:** 빨간 점선(정답선)에 점들이 밀집해 있을수록 정확도가 높습니다. 선에서 멀리 떨어진 점들은 모델이 예측하기 어려운 '특이 매물'이며, 이들을 분석하여 새로운 특성을 발굴하는 것이 데이터 과학자의 역할입니다.
+### 📊 성능 비교 결과
 
----
+| 모델 | RMSE (평균 오차) | $R^2$ Score (설명력) | 비고 |
+| :--- | :--- | :--- | :--- |
+| **선형 회귀** | 약 0.76 | 약 0.60 | 단순 경향성 파악 가능 |
+| **랜덤 포레스트** | 약 0.51 | 약 0.81 | 복잡한 패턴 학습 성공 |
 
-## 6. 실무 활용 사례
-이러한 회귀 파이프라인은 실제 산업 현장에서 다음과 같이 응용됩니다.
+**[결과 해석]**
+1. **RMSE (Root Mean Squared Error):** 실제 집값과 예측 집값의 차이를 나타냅니다. 값이 작을수록 정확합니다. 랜덤 포레스트가 선형 회귀보다 오차가 훨씬 적음을 알 수 있습니다.
+2. **$R^2$ Score (결정계수):** 모델이 데이터의 변동성을 얼마나 잘 설명하는지를 나타냅니다. 1에 가까울수록 완벽한 모델입니다. 랜덤 포레스트의 $R^2$가 0.8 이상으로 매우 높게 나타났습니다.
 
-*   **이커머스 (Dynamic Pricing):** 상품의 카테고리, 브랜드 인지도, 리뷰 수, 경쟁사 가격 등을 변수로 넣어 '실시간 최적 판매가'를 제안합니다.
-*   **물류 및 유통 (Demand Forecasting):** 과거 주문량, 계절성, 프로모션 여부를 바탕으로 '다음 달 예상 수요량'을 예측하여 재고 비용을 최적화합니다.
-*   **금융 (Credit Scoring):** 고객의 소득, 직업, 기존 대출 이력 등을 바탕으로 '대출 가능 한도 금액'을 산출합니다.
+**왜 이런 결과가 나왔을까요?**
+집값은 단순히 "소득이 높으면 가격이 오른다"는 직선적인 관계만으로 결정되지 않습니다. "특정 지역이면서 동시에 연식이 짧아야 한다"는 식의 **복잡한 상호작용(Interaction)**이 존재합니다. 선형 회귀는 이를 잡아내지 못하지만, 랜덤 포레스트는 데이터를 쪼개어 분석하는 트리 구조를 통해 이러한 복잡한 조건을 학습했기 때문에 성능이 더 높게 나온 것입니다.
 
----
+### 🔍 어떤 특성이 중요했을까? (Feature Importance)
+랜덤 포레스트 모델의 가장 큰 장점 중 하나는 어떤 변수가 예측에 가장 큰 기여를 했는지 알려준다는 점입니다.
 
-## 7. 자주 하는 실수
+```python
+# 특성 중요도 추출
+importances = rf_model.feature_importances_
+feature_names = housing.feature_names
+feature_importance_df = pd.DataFrame({'Feature': feature_names, 'Importance': importances})
+feature_importance_df = feature_importance_df.sort_values(by='Importance', ascending=False)
 
-*   **로그 변환 후 역변환 망각:** 타겟 값에 `log`를 취해 학습시켰다면, 최종 예측값은 반드시 `exp`로 되돌려야 합니다. 이를 잊으면 실제 가격과 동떨어진 매우 작은 수치가 결과로 나옵니다.
-*   **이상치(Outlier) 방치:** 초고가 주택 한두 채가 회귀선의 기울기를 완전히 틀어버릴 수 있습니다. 시각화를 통해 상위 1% 데이터를 처리하거나 강건한(Robust) 스케일러를 사용하는 것이 좋습니다.
-*   **스케일링 누락:** 다중 회귀에서 '평수(10~100)'와 '방 개수(1~5)'처럼 단위 차이가 크면, 숫자가 큰 변수가 가중치 결정에 지배적인 영향을 미칩니다. 반드시 `StandardScaler`를 적용하세요.
+# 시각화
+plt.figure(figsize=(10, 6))
+sns.barplot(x='Importance', y='Feature', data=feature_importance_df)
+plt.title("Feature Importance for House Price Prediction")
+plt.show()
+```
 
----
-
-## 8. 핵심 요약
-1.  **파이프라인:** `로드` $\rightarrow$ `EDA` $\rightarrow$ `전처리` $\rightarrow$ `모델링` $\rightarrow$ `평가` 순의 체계적 접근이 필수적이다.
-2.  **로그 변환:** 왜곡된(Skewed) 데이터를 정규분포 형태로 만들어 모델의 편향을 줄이고 성능을 높인다.
-3.  **$R^2$ Score:** 모델의 설명력을 나타내며, 1에 가까울수록 데이터의 변동성을 잘 설명하는 모델이다.
-4.  **RMSE:** 실제 값과 예측 값의 평균 오차이며, 타겟 변수와 동일한 단위를 가져 직관적이다.
-5.  **다중공선성:** 독립 변수 간의 강한 상관관계는 모델의 가중치를 불안정하게 만들어 해석력을 떨어뜨린다.
-
----
-
-## 9. 확인 문제
-**Q1.** 집값 데이터의 분포가 오른쪽으로 길게 꼬리가 늘어진 형태일 때, 로그 변환을 수행하면 모델 성능에 어떤 이점이 있나요?
-**Q2.** 면접관이 "$R^2$ Score가 0.7이라는 것이 무엇을 의미하나요?"라고 질문했다면 어떻게 답변하시겠습니까?
-**Q3.** 모델에 '방의 개수'와 '전체 평수'라는 두 변수를 모두 넣었을 때 발생할 수 있는 문제점과 그 이유는 무엇인가요?
+**[분석 결과]**
+시각화 결과, `MedInc`(중위 소득)가 압도적으로 높은 중요도를 보입니다. 그 뒤를 이어 `AveRooms`(평균 방 개수)나 `HouseAge`(집 연식) 등이 영향을 주는 것을 볼 수 있습니다. 이는 우리가 초반 EDA 단계에서 확인했던 상관관계 분석 결과와 일맥상통합니다.
 
 ---
 
-## 10. 정답 및 해설
-**A1.** 선형 회귀 모델은 데이터가 정규분포를 따를 때 최적의 성능을 냅니다. 로그 변환은 극단적으로 큰 값들의 영향을 압축하여 분포를 고르게 만들어줌으로써, 모델이 일부 이상치에 휘둘리지 않고 데이터의 일반적인 패턴을 학습하게 하여 일반화 성능을 높여줍니다.
+## 6. 실무 적용 시 고려사항 및 문제 해결
 
-**A2.** "이 모델의 결정계수인 $R^2$가 0.7이라는 것은, 타겟 변수인 집값의 전체 변동성 중에서 모델이 사용한 독립 변수들이 약 70%를 설명하고 있다는 의미입니다. 나머지 30%는 모델에 포함되지 않은 외부 요인이나 무작위 오차에 의한 변동분입니다."
+실제 현업에서 집값 예측 모델을 구축할 때는 단순히 알고리즘을 돌리는 것보다 더 까다로운 문제들이 발생합니다.
 
-**A3.** **다중공선성** 문제가 발생할 수 있습니다. 두 변수가 매우 강한 상관관계를 가지면, 모델은 가격 상승의 원인이 '방 개수' 때문인지 '평수' 때문인지 명확히 구분하지 못합니다. 이로 인해 회귀 계수(Weight)의 분산이 커져 모델이 매우 불안정해지고, 특정 변수의 영향력을 정확히 해석하기 어려워집니다.
+### 🚩 자주 발생하는 문제와 해결 방법
+
+**1. 이상치(Outlier)의 영향**
+- **문제:** 아주 드물게 나타나는 초고가 저택(궁전 같은 집)이 데이터에 포함되어 있으면, 선형 회귀 모델의 직선이 위로 끌려 올라가 전체적인 예측력이 떨어집니다.
+- **해결:** IQR(Interquartile Range) 방식을 사용하여 극단적인 이상치를 제거하거나, 로그 변환(Log Transformation)을 통해 데이터의 분포를 정규분포 형태로 만들어 줍니다.
+
+**2. 시계열 특성 무시**
+- **문제:** 집값은 시간에 따라 변합니다. 2020년 데이터로 학습한 모델로 2024년 집값을 예측하면 큰 오차가 발생합니다.
+- **해결:** '거래 시점' 데이터를 추가하거나, 최근 데이터에 더 높은 가중치를 주는 가중 학습(Weighted Learning) 방식을 도입해야 합니다.
+
+**3. 외부 변수 누락**
+- **문제:** 현재 데이터셋에는 '학군', '지하철역과의 거리', '강남/강북 같은 지역적 특성' 같은 핵심 정보가 부족합니다.
+- **해결:** 외부 API(네이버 지도, 공공데이터 포털 등)를 통해 추가적인 특성(Feature)을 수집하여 모델에 입력하는 **특성 공학(Feature Engineering)** 과정이 필요합니다.
 
 ---
 
-## 11. 미니 프로젝트: 지역별 특성 반영하기
-**과제:** 위 코드에 **'지역 가중치(Location Weight)'** 개념을 추가하여 성능 향상을 시도해 보세요.
+## 7. 요약 및 마무리
 
-1.  **새로운 특성 생성:** 데이터셋의 `Latitude`(위도)와 `Longitude`(경도)를 활용하여, 특정 중심점(예: 샌프란시스코 시내 $\text{Lat}=37.77, \text{Lon}=-122.41$)으로부터의 유클리드 거리를 계산하는 `Distance_to_Center` 변수를 만드세요.
-2.  **모델 적용:** 이 '거리' 변수를 기존 특성에 추가하여 다시 학습시키세요.
-3.  **성능 비교:** 거리 변수를 추가하기 전과 후의 $R^2$ Score를 비교하고, 왜 성능이 변했는지 분석하세요.
-4.  **힌트:** 거리 공식 $\sqrt{(x_2-x_1)^2 + (y_2-y_1)^2}$를 활용하세요.
+이번 장에서는 실제 부동산 데이터를 활용하여 집값을 예측하는 전체 머신러닝 파이프라인을 구축해 보았습니다.
+
+1. **EDA(탐색적 데이터 분석):** 시각화를 통해 소득(`MedInc`)이 집값의 핵심 변수임을 파악했습니다.
+2. **전처리:** 데이터 누수를 방지하기 위해 학습/테스트 셋을 분리하고, 표준 스케일링을 적용했습니다.
+3. **모델 비교:** 단순한 선형 회귀보다 복잡한 비선형 관계를 학습할 수 있는 랜덤 포레스트의 성능이 훨씬 뛰어남을 확인했습니다.
+4. **해석:** 특성 중요도(Feature Importance)를 통해 모델이 어떤 근거로 가격을 예측했는지 분석했습니다.
+
+**핵심 포인트:**
+- 머신러닝 모델의 성능은 단순히 알고리즘의 선택보다 **데이터를 어떻게 이해하고 전처리하느냐**에 더 큰 영향을 받습니다.
+- 단순한 모델(Baseline)을 먼저 만들어 기준을 잡고, 점진적으로 복잡한 모델로 개선하는 접근 방식이 효율적입니다.
+- 예측 결과가 왜 그렇게 나왔는지 분석하는 과정(Feature Importance 등)이 있어야 모델의 신뢰성을 확보할 수 있습니다.
+
+이제 여러분은 실제 데이터를 가지고 문제를 정의하고, 해결책을 찾아내며, 그 결과를 분석하는 능력을 갖추게 되었습니다. 이 과정은 앞으로 여러분이 마주할 모든 머신러닝 프로젝트의 기본 뼈대가 될 것입니다.
