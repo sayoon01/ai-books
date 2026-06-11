@@ -20,9 +20,26 @@ export interface BookMeta {
   title:              string
   language:           string
   model:              string
-  total_chapters:     number
+  doc_type:           string
+  total_chapters:     number   // UI 표시용 (신규 meta의 total 도 여기로 정규화)
   completed_chapters: number
   status:             "done" | "in_progress"
+}
+
+// 구(meta: total_chapters/completed_chapters) · 신(meta: total/completed/doc_type) 메타를 UI 형태로 정규화
+function normalizeMeta(slug: string, raw: Record<string, unknown>): BookMeta {
+  const num = (...vs: unknown[]) =>
+    (vs.find((v) => typeof v === "number") as number | undefined) ?? 0
+  return {
+    slug,
+    title:              String(raw.title ?? slug),
+    language:           String(raw.language ?? "ko"),
+    model:              String(raw.model ?? ""),
+    doc_type:           String(raw.doc_type ?? ""),
+    total_chapters:     num(raw.total, raw.total_chapters),
+    completed_chapters: num(raw.completed, raw.completed_chapters),
+    status:             raw.status === "done" ? "done" : "in_progress",
+  }
 }
 
 export interface Chapter {
@@ -43,7 +60,7 @@ export async function getBooks(): Promise<BookMeta[]> {
         type FileRes = { content: string }
         const file = await get<FileRes>(`${BASE}/contents/${encodeURIComponent(f.name)}/meta.json`)
         const meta = JSON.parse(Buffer.from(file.content, "base64").toString("utf-8"))
-        return { slug: f.name, ...meta } as BookMeta
+        return normalizeMeta(f.name, meta)
       } catch {
         return null
       }
@@ -58,20 +75,20 @@ export async function getBookMeta(slug: string): Promise<BookMeta> {
   type FileRes = { content: string }
   const file = await get<FileRes>(`${BASE}/contents/${encodeURIComponent(slug)}/meta.json`)
   const meta = JSON.parse(Buffer.from(file.content, "base64").toString("utf-8"))
-  return { slug, ...meta }
+  return normalizeMeta(slug, meta)
 }
 
-// 챕터 목록 (chapter-NN.md 파일만 필터링)
+// 작성 단위 목록 (chapter-NN.md 구 · unit-NN.md 신 둘 다 인식)
 export async function getChapters(slug: string): Promise<Chapter[]> {
   type Entry = { name: string; type: string }
   const entries = await get<Entry[]>(`${BASE}/contents/${encodeURIComponent(slug)}`)
 
   return entries
-    .filter((e) => e.type === "file" && /^chapter-\d+\.md$/.test(e.name))
+    .filter((e) => e.type === "file" && /^(chapter|unit)-\d+\.md$/.test(e.name))
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((e) => {
-      const number = parseInt(e.name.replace("chapter-", "").replace(".md", ""), 10)
-      return { number, filename: e.name, title: `챕터 ${number}` }
+      const number = parseInt(e.name.replace(/^(chapter|unit)-/, "").replace(".md", ""), 10)
+      return { number, filename: e.name, title: `${number}장` }
     })
 }
 
