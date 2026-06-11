@@ -2,7 +2,11 @@
 
 ## 개요
 
-로컬 LLM(Ollama + Gemma 4 31B)으로 책을 챕터 단위로 자동 생성하고, GitHub에 커밋한 뒤 Vercel의 Next.js 앱에서 실시간으로 읽어 웹에 게시하는 파이프라인입니다.
+로컬 LLM(Ollama + Gemma 4 31B)으로 **문서를 작성 단위(unit)별로 자동 생성**하고, GitHub에 커밋한 뒤 Vercel의 Next.js 앱에서 읽어 웹에 게시하는 파이프라인입니다.
+
+핵심 설계: **파이프라인은 장르 무관(genre-agnostic)**. 책·기술분석서·소설 등 문서 유형은 코드가 아니라 **`toc/*.json`의 필드(`doc_type` 등)** 가 결정합니다. 실측 근거가 필요한 문서는 **선택 필드 `grounding`** 으로 파일/링크/API의 사실을 주입받습니다(없으면 모델 지식으로 작성).
+
+> 이전에는 책 전용 파이프라인이었으나, 2026-06 일반화되었습니다. (구) `chapters`/`sections` → (신) `units`, (구) `_parse_review` 정규식 → (신) `call_structured` Pydantic 수렴.
 
 ---
 
@@ -10,14 +14,21 @@
 
 ```mermaid
 flowchart TD
-    TOC["📄 toc/*.json\n책 정의"]
-    CLI["main.py\nCLI 진입점"]
-    BW["book_writer.py\n생성 루프"]
+    TOC["📄 toc/*.json\n문서 정의 (doc_type/units/grounding?)"]
+    CLI["main.py\nCLI 진입점 (--toc, --planner)"]
+    GR["grounding.py\n근거 해소 (선택)"]
+    BW["book_writer.py\n생성 루프 (장르 무관)"]
+    LLM["llm.py\n_call / call_structured"]
     OLLAMA["Ollama\ngemma4:31b"]
     GHP["github_push.py\n자동 커밋/푸시"]
 
+    subgraph SRC["근거 소스 (grounding kind별)"]
+        API["mold_api\n:33001 + 엑셀"]
+        FILE["file / url / text"]
+    end
+
     subgraph GITHUB["GitHub repo — sayoon01/ai-books (CMS)"]
-        MD["chapter-NN.md"]
+        MD["unit-NN.md"]
         META["meta.json"]
         README["README.md"]
     end
@@ -27,289 +38,227 @@ flowchart TD
         PAGE["페이지 렌더링"]
     end
 
-    USER["👤 독자"]
-
     TOC --> CLI --> BW
-    BW <-->|ollama.chat| OLLAMA
-    BW -->|챕터 완료마다| GHP
-    GHP -->|git commit+push| GITHUB
+    CLI --> GR
+    SRC --> GR --> BW
+    BW <-->|ollama.chat| LLM <--> OLLAMA
+    BW -->|단위 완료마다| GHP --> GITHUB
     GITHUB -->|REST API / 60s 캐시| GHAPI --> PAGE
-    USER --> WEB
 ```
 
 ---
 
-## 2. 에이전트 파이프라인 — prompts.py × book_writer.py
+## 2. 입력 — `toc/*.json` 통합 스키마
 
-`prompts.py`는 **시스템 프롬프트(엔진 규칙)** 와 **유저 메시지 빌더(책 의도)** 를 분리해 관리합니다.  
-`book_writer.py`는 이를 조합해 Ollama를 호출하고, 결과를 다음 단계로 넘깁니다.
+문서 한 개는 `toc/*.json` 하나로 정의합니다. 모든 장르가 같은 스키마를 씁니다.
 
-```mermaid
-flowchart TD
-    subgraph PROMPTS["prompts.py — 프롬프트 정의"]
-        direction LR
-        subgraph SYS["시스템 프롬프트 (엔진 규칙, 고정)"]
-            WS["WRITE_SYSTEM\n분량·형식·구성 흐름 정책"]
-            RS["REVIEW_SYSTEM\n검수 기준 8항목 + JSON 출력 강제"]
-            VS["REVISE_SYSTEM\nissues 반영 규칙"]
-        end
-        subgraph USR["유저 메시지 빌더 (책 의도, 호출마다 생성)"]
-            WU["write_user(book_config, chapter, previous_summaries)"]
-            RU["review_user(book_config, chapter, draft)"]
-            VU["revise_user(book_config, chapter, draft, review_json)"]
-        end
-    end
-
-    subgraph BW["book_writer.py — 에이전트 호출"]
-        direction TB
-        WC["write_chapter()\nt=0.8 → 초안 draft"]
-        RC1["review_chapter() 1차\nt=0.2 → JSON 파싱"]
-        DEC{"has_errors=True\nor score < 90?"}
-        VC["revise_chapter()\nt=0.5 → 수정 원고"]
-        RC2["review_chapter() 2차\nt=0.2 → 재검수"]
-        FINAL["최종 원고 확정"]
-        QLOG["logs/chapter-NN-review.json\n품질 로그 저장"]
-    end
-
-    OLLAMA["Ollama\ngemma4:31b"]
-
-    WS & WU --> WC
-    RS & RU --> RC1
-    VS & VU --> VC
-    RS & RU --> RC2
-
-    WC <-->|ollama.chat| OLLAMA
-    RC1 <-->|ollama.chat| OLLAMA
-    VC <-->|ollama.chat| OLLAMA
-    RC2 <-->|ollama.chat| OLLAMA
-
-    WC --> RC1 --> DEC
-    DEC -- "No (통과)" --> FINAL
-    DEC -- "Yes (이슈 있음)" --> VC --> RC2 --> FINAL
-    FINAL --> QLOG
-```
-
----
-
-## 3. 챕터 완료 후 GitHub 자동 푸시
-
-챕터 한 개가 완성될 때마다 3번의 커밋이 발생합니다.  
-마지막 챕터 완료 시 README도 갱신됩니다.
-
-```mermaid
-sequenceDiagram
-    participant BW as book_writer.py
-    participant GHP as github_push.py
-    participant FS as 로컬 파일시스템
-    participant GIT as Git / GitHub
-
-    BW->>GHP: push_chapter(slug, num, title, content)
-    GHP->>FS: <slug>/chapter-NN.md 저장
-    GHP->>GIT: git add chapter-NN.md
-    GHP->>GIT: git commit "feat(slug): chapter-NN 제목"
-    GHP->>GIT: git push
-
-    BW->>GHP: update_meta(slug, toc, completed=N)
-    GHP->>FS: <slug>/meta.json 갱신 (진행률/상태)
-    GHP->>GIT: git add meta.json
-    GHP->>GIT: git commit "chore(slug): meta.json 업데이트 (N/전체)"
-    GHP->>GIT: git push
-
-    Note over BW,GIT: 마지막 챕터 완료 시에만
-
-    BW->>GHP: update_readme(slug, toc)
-    GHP->>FS: README.md 책 목록 테이블 재생성
-    GHP->>GIT: git add README.md
-    GHP->>GIT: git commit "docs: README 책 목록 업데이트"
-    GHP->>GIT: git push
-```
-
----
-
-## 디렉토리 구조
-
-```
-ai-books/
-├── generator/          # 책 생성 파이프라인 (Python)
-│   ├── main.py         # CLI 진입점
-│   ├── book_writer.py  # 생성 로직 (에이전트 호출, 루프)
-│   ├── prompts.py      # 시스템 프롬프트 + 유저 메시지 빌더
-│   └── github_push.py  # Git 커밋/푸시
-├── toc/                # 책 목차 정의 (JSON)
-│   └── python-ml.json
-├── output/             # 로컬 생성 결과물
-│   └── <slug>/
-│       ├── chapter-NN.md
-│       └── logs/
-│           └── chapter-NN-review.json  # 품질 로그
-├── web/                # Next.js 프론트엔드
-│   ├── app/
-│   │   ├── page.tsx              # 홈 (책 목록)
-│   │   └── books/[slug]/page.tsx # 책 상세 + 챕터 뷰어
-│   ├── components/
-│   │   ├── BookCard.tsx
-│   │   └── ChapterViewer.tsx     # react-markdown 렌더러
-│   └── lib/
-│       └── github.ts             # GitHub REST API 클라이언트
-└── <slug>/             # GitHub에 실제 올라가는 책 데이터
-    ├── chapter-NN.md
-    └── meta.json
-```
-
----
-
-## 1. 책 정의 — TOC JSON
-
-책 한 권은 `toc/*.json` 파일 하나로 정의합니다.
-
-```json
+```jsonc
 {
-  "title": "파이썬으로 배우는 머신러닝",
+  "title": "...",
   "language": "ko",
+  "doc_type": "기술분석서",          // 모델에게 정체성만 전달. 코드는 분기하지 않음
   "description": "...",
-  "goal": "...",
-  "target_reader": "...",
-  "book_style": "...",
+  "target_reader": "...(독자 + 문체)", // book_style 흡수: 독자층과 톤을 한 필드에
   "writing_guidelines": ["..."],
-  "chapters": [
-    { "number": 1, "title": "머신러닝이란 무엇인가", "description": "..." }
+  "grounding": { "kind": "mold_api", ... },   // 선택. 없으면 모델 지식으로 작성
+  "units": [                          // chapters/sections 통일 (옛 키는 폴백 인식)
+    { "number": 1, "title": "...", "description": "...", "must_cover": ["..."] }
   ]
 }
 ```
 
-**book_config** (책의 의도) — 에이전트 유저 메시지에 전달  
-`title`, `language`, `description`, `goal`, `target_reader`, `book_style`, `writing_guidelines`
-
-**system prompt** (생성 엔진 규칙) — 하드코딩, 에이전트별 고정  
-chapter 구성 흐름, 분량 정책, 출력 형식 등
+- **config**(문서 의도) = `units`·`grounding`을 제외한 전부 → 모든 단계 프롬프트에 주입
+- **units** = 작성 단위 목록. `book_writer._units()`가 `units → chapters → sections` 순으로 폴백
+- `must_cover` 같은 단위 필드는 자유 — 기술서는 `must_cover`, 소설은 `description`에 플롯 비트 등
 
 ---
 
-## 2. 생성 파이프라인 — Generator
+## 3. grounding — 선택·다형 근거 레이어 (`grounding.py`)
 
-### 실행
+`grounding`이 있으면 해소해 프롬프트에 "실측 근거" 블록으로 주입하고, 없으면 모델 지식으로 작성합니다.
 
-```bash
-cd /home/keti/yune/ai-books
-python generator/main.py --toc toc/python-ml.json
+| `kind` | 동작 | payload | ref_keys(계획 검증용) |
+| --- | --- | --- | --- |
+| `mold_api` | `:33001 /api/*` + 엑셀 사전 → `DataDigest`(통계 압축) | digest JSON | `flatten_keys()` |
+| `file` | 로컬 파일(.md/.txt/.csv/.xlsx) 내용/요약 | 내용 | 없음 |
+| `url` | 평문 HTTP fetch | 텍스트/JSON | 없음 |
+| `text` | spec 인라인 텍스트 | 그대로 | 없음 |
+
+- 결과는 `cache/grounding/<slug>.json`에 스냅샷 → **서버가 불안정해도 재현·오프라인 생성** 가능
+- `mold_api`는 서버 다운 시 **엑셀 사전만으로 폴백**(graceful degradation)
+- 토큰 예산(≤~4k tokens) 보호: 상관행렬→`|r|>0.8` 상위 40쌍, 클러스터 123개→개수만, 금형모델→상위 N
+
+---
+
+## 4. 생성 파이프라인 — `book_writer.py` × `prompts.py` × `llm.py`
+
+`prompts.py`는 **범용 시스템 프롬프트 1벌**과 유저 메시지 빌더를 둡니다(장르 색깔은 spec이 채움). `book_writer.py`가 순서를 제어하고, `llm.py`가 Ollama를 호출합니다.
+
+```mermaid
+flowchart TD
+    subgraph PROMPTS["prompts.py (범용 1벌)"]
+        WS["WRITE_SYSTEM"]
+        RS["REVIEW_SYSTEM (+ungrounded 탐지)"]
+        VS["REVISE_SYSTEM"]
+        PS["PLAN_SYSTEM"]
+    end
+    subgraph BW["book_writer.py — generate()"]
+        PL["_plan_unit() t=0.3 (선택)"]
+        WC["_write_unit() t=0.8 → draft"]
+        RC1["_review_unit() t=0.2"]
+        DEC{"has_errors or score<90?"}
+        VC["_revise_unit() t=0.4"]
+        RC2["_review_unit() 재검수"]
+        FINAL["최종 + logs/unit-NN-review.json"]
+    end
+    subgraph LLM["llm.py"]
+        CALL["_call() 자유텍스트"]
+        STRUCT["call_structured() 스키마+self-heal"]
+    end
+
+    PS --> PL --> WC
+    WS --> WC --> RC1 --> DEC
+    RS --> RC1
+    DEC -- No --> FINAL
+    DEC -- Yes --> VC --> RC2 --> FINAL
+    VS --> VC
+    PL & RC1 & RC2 -.->|구조화| STRUCT
+    WC & VC -.->|자유텍스트| CALL
+    STRUCT & CALL <--> OLLAMA["Ollama gemma4:31b"]
 ```
 
-### 에이전트 구조
+**구조화 출력은 판단/계획 단계에만**: Planner·Reviewer는 `call_structured`(스키마 강제), Writer·Reviser는 `_call`(긴 마크다운, 자유 텍스트).
 
-챕터마다 최대 4단계를 거칩니다.
+### 단계 / temperature
 
 ```
-[1/4] Writer  (t=0.8)  초안 작성
-[2/4] Review  (t=0.2)  JSON 검수
-[3/4] Revise  (t=0.5)  이슈 반영 수정   ← score < 90 또는 has_errors 일 때만
-[4/4] Review  (t=0.2)  재검수           ← Revise 실행 시만
+(선택) Planner  t=0.3  → UnitPlan {key_points, data_refs ...}
+       Writer   t=0.8  → 초안 draft (마크다운)
+       Reviewer t=0.2  → ReviewResult {has_errors, score, issues, ungrounded_numbers}
+       Reviser  t=0.4  → 수정 원고     ← score<90 or has_errors 일 때만 (단위당 1회)
+       Reviewer t=0.2  → 재검수          ← Revise 시만
 ```
 
-초기 검수에서 `has_errors=false` & `score >= 90` 이면 Writer 결과를 바로 저장합니다.
+### `call_structured` — 프롬프트 체인 수렴 엔진
 
-### 에이전트별 역할
-
-| 에이전트 | 파일 | temperature | 역할 |
-|---------|------|-------------|------|
-| Writer  | `prompts.py / WRITE_SYSTEM` | 0.8 | 챕터 원고 작성 |
-| Review  | `prompts.py / REVIEW_SYSTEM` | 0.2 | 오류/누락/지침위반 검수, JSON 출력 |
-| Revise  | `prompts.py / REVISE_SYSTEM` | 0.5 | 검수 이슈 반영 수정 |
-
-### 챕터 간 연결 — previous_summaries
-
-각 챕터 완료 후 `"{N}장 {제목}: {description}"` 을 리스트에 누적합니다.  
-다음 챕터 Writer에게 전달해 이전 챕터에서 다룬 내용을 인식하고 중복을 방지합니다.
+옛 `_parse_review`(정규식으로 JSON 도려내기, 실패 시 score=0 강제)를 대체합니다.
 
 ```python
-chapter_summaries = []       # 현재: 전체 누적
-# 나중에 챕터가 많아지면: chapter_summaries[-8:]  ← 한 줄만 수정
+# llm.py
+def call_structured(system, user, schema, temperature, retries=2, post_validate=None):
+    for _ in range(retries + 1):
+        raw = ollama.chat(model=MODEL, format=schema.model_json_schema(), ...)  # 구조화 강제
+        try:
+            obj = schema.model_validate_json(raw)              # ① 스키마 검증
+            return post_validate(obj) if post_validate else obj # ② 코드 검증(선택)
+        except (ValidationError, ValueError) as e:
+            ... # ③ 에러를 모델에 되먹여 재시도(self-heal)
+    raise ConvergenceError(...)                                 # ④ 미수렴 → 단위 플래그 후 진행
 ```
 
-### Review JSON 파싱 안전장치
-
-Gemma가 JSON 대신 자연어를 출력하는 케이스를 3단계로 처리합니다.
-
-1. ` ```json ``` ` 블록 추출
-2. `re.search(r'\{.*\}', text, re.DOTALL)` — 앞뒤 자연어 제거
-3. 파싱 실패 → `has_errors=True, score=0` 으로 강제 Revise
-
-### 품질 로그
-
-챕터마다 `output/<slug>/logs/chapter-NN-review.json` 저장.
-
-```json
-{
-  "chapter": { "number": 1, "title": "..." },
-  "initial_review": { "has_errors": true, "score": 72, "issues": [...] },
-  "revised": true,
-  "re_review": { "has_errors": false, "score": 91, "issues": [] }
-}
-```
+`post_validate`는 스키마만으로 못 잡는 검증 훅 — 예: Planner의 `data_refs`가 `grounding.ref_keys`에 실재하는지 대조(환각 키 차단).
 
 ---
 
-## 3. GitHub — CMS 역할
+## 5. Pydantic 스키마 (`schemas.py`)
 
-별도 DB 없이 GitHub 레포(`sayoon01/ai-books`)가 콘텐츠 저장소입니다.
+| 스키마 | 단계 | 핵심 필드 |
+| --- | --- | --- |
+| `ReviewResult` | Reviewer | `has_errors`, `score`(0~100 제약), `issues[]`, `ungrounded_numbers`(근거 없는 수치) |
+| `Issue` | Reviewer | `type`(Literal 8종), `severity`(low/med/high), `problem`, `fix_instruction` |
+| `UnitPlan` | Planner | `key_points`(3~8), `data_refs`, `required_figures`, `out_of_scope` |
+| `DataDigest` | mold_api grounding | `n_cycles`, `anomaly_rate`, `process_time`, `top_correlations`, `n_clusters`, `models_in_use`, `field_dict` + `flatten_keys()` |
 
-챕터 완료마다 자동 커밋+푸시:
-
-```
-feat(<slug>): chapter-NN <제목>       ← 챕터 본문
-chore(<slug>): meta.json 업데이트     ← 진행률
-docs: README 책 목록 업데이트          ← 전체 책 목록 (완료 후)
-```
-
-`meta.json` 구조:
-
-```json
-{
-  "title": "...",
-  "language": "ko",
-  "model": "gemma4:31b",
-  "total_chapters": 15,
-  "completed_chapters": 7,
-  "status": "in_progress"
-}
-```
+`ungrounded_numbers`는 grounding이 있을 때만 채워집니다(R2 환각 탐지). 책처럼 grounding 없는 문서는 빈 배열.
 
 ---
 
-## 4. 웹 UI — Next.js + Vercel
+## 6. GitHub — CMS 역할 (`github_push.py`)
 
-GitHub REST API로 직접 파일을 읽어 렌더링합니다. 새 챕터가 푸시되면 재배포 없이 60초 캐시 만료 후 자동 반영됩니다.
-
-### 데이터 흐름
+별도 DB 없이 GitHub 레포(`sayoon01/ai-books`)가 콘텐츠 저장소입니다. **작성 단위마다 자동 커밋+푸시**합니다(장르 무관, 항상 켜짐).
 
 ```
-GitHub REST API
-  → getBooks()          루트 디렉토리 폴더 목록 → 각 meta.json
-  → getChapters()       chapter-NN.md 파일 목록
-  → getChapterContent() 챕터 본문 (Base64 디코딩)
+feat(<slug>): unit-NN <제목>          ← 단위 본문
+chore(<slug>): meta.json 업데이트      ← 진행률
+docs: 문서 목록 업데이트                ← 전체 목록 (완료 후)
 ```
 
-### 페이지
+`meta.json`:
+```json
+{
+  "title": "...", "language": "ko", "doc_type": "기술분석서",
+  "model": "gemma4:31b", "total": 4, "completed": 2, "status": "in_progress"
+}
+```
+README 생성 시 구 키(`total_chapters`)도 폴백 인식합니다.
+
+---
+
+## 7. 웹 UI — Next.js + Vercel
+
+GitHub REST API로 파일을 직접 읽어 렌더링하고, 새 단위가 푸시되면 재배포 없이 60초 캐시 만료 후 반영됩니다.
 
 | 경로 | 파일 | 역할 |
 |------|------|------|
-| `/` | `app/page.tsx` | 책 목록 그리드 |
-| `/books/[slug]` | `app/books/[slug]/page.tsx` | 챕터 사이드바 + 본문 |
+| `/` | `app/page.tsx` | 문서 목록 그리드 |
+| `/books/[slug]` | `app/books/[slug]/page.tsx` | 단위 사이드바 + 본문 |
 
-챕터 본문은 `ChapterViewer.tsx`에서 `react-markdown` + `remark-gfm` 으로 렌더링합니다.
+본문은 `ChapterViewer.tsx`에서 `react-markdown` + `remark-gfm`으로 렌더링합니다.
+
+> ⚠️ **알려진 정합 작업**: `web/lib/github.ts`의 `getChapters()`가 아직 `chapter-NN.md`를 읽습니다. 생성기는 이제 `unit-NN.md`를 푸시하므로, 웹이 새 문서를 인식하려면 `unit-NN.md`(또는 둘 다)를 읽도록 갱신이 필요합니다.
 
 ---
 
-## 5. 모델 설정
+## 8. 모델 설정
 
 | 항목 | 값 |
 |------|-----|
 | 모델 | `gemma4:31b` (Ollama 로컬) |
 | num_ctx | 32768 |
-| repeat_penalty | 1.2 |
-| temperature | 에이전트별 상이 (0.2 / 0.5 / 0.8) |
+| repeat_penalty | 1.2 (`_call`) |
+| temperature | 단계별 (Plan 0.3 / Write 0.8 / Review 0.2 / Revise 0.4) |
+| 구조화 출력 | `ollama.chat(format=schema.model_json_schema())` (ollama ≥0.4) |
 
 ---
 
-## 6. 향후 개선 계획
+## 9. 디렉터리 구조
 
-`FUTURE_PIPELINE_DESIGN.md` 참고 — Writer / Critic / Editor를 다른 모델로 분리하는 설계가 문서화되어 있습니다.
+```
+ai-books/
+├── generator/
+│   ├── main.py          # CLI 진입점 (--toc, --planner)
+│   ├── book_writer.py   # 생성 루프 (장르 무관, generate())
+│   ├── prompts.py       # 범용 시스템 프롬프트 + 유저 빌더
+│   ├── llm.py           # _call / call_structured (Pydantic 수렴)
+│   ├── schemas.py       # ReviewResult / UnitPlan / DataDigest ...
+│   ├── grounding.py     # 근거 해소 (mold_api/file/url/text) + 캐시
+│   ├── digest/          # mold_api 내부 (ApiSource/ExcelSource/build)
+│   └── github_push.py   # Git 커밋/푸시 (units)
+├── toc/                 # 문서 정의 (JSON) — 모든 장르
+│   ├── python-ml.json
+│   └── mold-dx-report.json
+├── data/                # grounding 원본 (엑셀 등)
+├── cache/grounding/     # 해소된 근거 스냅샷 (재현성)
+├── output/<slug>/       # 로컬 생성 결과 (unit-NN.md + logs/)
+├── web/                 # Next.js 프론트엔드
+└── <slug>/              # GitHub에 푸시되는 문서 데이터 (unit-NN.md + meta.json)
+```
+
+---
+
+## 10. 실행
+
+```bash
+python generator/main.py --toc toc/python-ml.json              # 책 (grounding 없음)
+python generator/main.py --toc toc/mold-dx-report.json --planner   # 기술서 (grounding 자동)
+
+# grounding 스냅샷 수동 재생성 (API 복구 후 등)
+cd generator && python -m digest.build --force
+```
+
+---
+
+## 11. 관련 문서
+
+- [PIPELINE.md](PIPELINE.md) — 단위 생성 파이프라인 상세
+- [MOLD_DX_AGENT_DESIGN.md](MOLD_DX_AGENT_DESIGN.md) — 금형 DX 기술분석서 설계

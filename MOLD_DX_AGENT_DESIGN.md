@@ -3,7 +3,20 @@
 > 작성일: 2026-06-11
 > **개정 2026-06-11: 방향 전환** — 별도 `report_agent/` 패키지를 신규 구축하던 방침을 폐기하고, **기존 `generator/`(책 에이전트)를 일반화해 한 벌의 파이프라인으로 업그레이드**한다. 기술서는 그 일반화된 파이프라인의 한 *모드*다. (이전 전제였던 R5 "책 코드 무수정"은 폐기.) 이유: 별도 포크 시 Pydantic 수렴처럼 **책에도 이득인 개선이 책에 적용되지 않는 모순**이 생김.
 > 목적: 금형 사출 데이터(금형DX 과제)를 입력받아 **기술분석서**(분석 범위 / SW 개발 방향 / 라이브러리 / 프로토타입 가능성·효과)를 자동 작성한다. 이를 위해 책 생성 파이프라인을 **장르 무관(genre-agnostic) 구조로 일반화**한다.
-> 관련 문서: [ARCHITECTURE.md](ARCHITECTURE.md) · [PIPELINE.md](PIPELINE.md) · [FUTURE_PIPELINE_DESIGN.md](FUTURE_PIPELINE_DESIGN.md)
+> 관련 문서: [ARCHITECTURE.md](ARCHITECTURE.md) · [PIPELINE.md](PIPELINE.md)
+
+> ✅ **구현 완료 (2026-06-11).** 이 문서는 구현 *전* 설계라, 실제 코드와 일부 명칭/세부가 다릅니다. **현행 사실은 [ARCHITECTURE.md](ARCHITECTURE.md)·[PIPELINE.md](PIPELINE.md)가 정본**이며, 아래는 설계 의도 기록으로 둡니다.
+>
+> | 설계(이 문서) | 실제 구현 |
+> | --- | --- |
+> | `report_spec.json` / `specs/` | `toc/mold-dx-report.json` (입력은 `toc/` 단일) |
+> | `sections` | `units` (옛 `chapters`/`sections` 폴백) |
+> | `SectionPlan` / `SectionDraft` | `UnitPlan` / Draft는 **자유 텍스트**(스키마 미적용 — 긴 본문) |
+> | `DigestSource`/`CompositeSource` + `digest=None` 인자 | `grounding.py`의 **다형 resolver**(`mold_api`/`file`/`url`/`text`), spec의 `grounding` 필드로 주입 |
+> | `DataDigest.clusters` | `n_clusters`(개수만 — 123개 중심값은 토큰 예산상 미주입) |
+> | 운영모델 2종(IsolationForest·GradientBoosting) | 실측 **5종**(IF, GB×3: moldid/cycletype/cycletime, LogReg: warmup) |
+> | `specs/digest_cache.json` | `cache/grounding/` 스냅샷 |
+> | `book_style` 필드 | `target_reader`에 흡수 |
 
 ---
 
@@ -116,7 +129,7 @@ flowchart LR
 
 ---
 
-## 3. 전체 아키텍처 (기술서 에이전트 내부)
+## 3. 전체 아키텍처 (일반화된 파이프라인 — 기술서 모드 기준)
 
 ```mermaid
 flowchart TD
@@ -333,35 +346,43 @@ def call_structured(system, user, schema: type[BaseModel], retries=2):
 
 ---
 
-## 8. 코드 배치 — 독립 패키지 + (선택적) 공용 코어
+## 8. 코드 배치 — `generator/`를 제자리에서 일반화
 
-**기존 `generator/`(책)는 건드리지 않는다.** 기술서 엔진은 별도 디렉터리로 분리한다.
+별도 패키지를 만들지 않는다. **기존 `generator/`를 한 벌의 장르 무관 파이프라인으로 확장**한다. 책은 같은 코드에 `digest=None`을 넘겨 기존과 동일하게 동작한다(R5: 회귀 0).
 
 ```
-generator/            # 📘 책 에이전트 — 무수정 (현행 그대로)
-core/                 # (선택) 공용 코어 — 책에서 추출하거나, 우선 복붙
-  ├── llm.py          #   call_structured() : Pydantic 수렴 엔진
-  └── loop.py         #   Writer→Review→Revise 제너릭 루프
-report_agent/         # 📊 기술서 에이전트 — 이번 신규
-  ├── digest/         #   Data Digest Adapter (Excel/API/Composite)
-  ├── schemas.py      #   DataDigest, SectionPlan/Draft/ReviewResult
-  ├── report_prompts.py
-  └── generate_report.py
+generator/
+  ├── llm.py            # 🆕 call_structured() : Pydantic 수렴 엔진 (_call 흡수)
+  ├── schemas.py        # 🆕 SectionPlan, Draft, ReviewResult, DataDigest ...
+  ├── digest/           # 🆕 데이터 문서용 플러그 (책 모드에선 미사용)
+  │   ├── base.py       #     DigestSource(Protocol)
+  │   ├── api_source.py #     ApiSource (httpx, 평문 HTTP)
+  │   ├── excel_source.py
+  │   └── composite.py  #     옵션 C
+  ├── prompts.py        # ✏️ PLAN 추가 + REVIEW를 스키마 기반으로 정리
+  ├── book_writer.py    # ✏️ generate_book → 일반화된 generate() (digest 옵셔널 인자)
+  ├── github_push.py    # (그대로)
+  └── main.py           # ✏️ 장르/스펙/digest 선택해 generate() 호출
+toc/
+  └── python-ml.json    # 책 입력 사양 (기존)
 specs/
-  └── mold_dx_report.json   # report_spec (4개 섹션)
+  ├── mold_dx_report.json   # 🆕 기술서 입력 사양 (4개 섹션)
+  └── digest_cache.json     # 🆕 :33001 스냅샷 (재현성·오프라인)
 ```
 
-책 파이프라인의 **개념 대응**(차용 대상이지, 수정 대상이 아님):
+기존 개념의 **일반화 매핑** (별도 파일이 아니라 *같은 함수가 두 모드를 처리*):
 
-| 책 개념 | 기술서 대응 | 비고 |
+| 기존(책) | 일반화 후 | 변경 성격 |
 | --- | --- | --- |
-| `toc/*.json` | `specs/*.json` | 섹션 정의 |
-| `book_config` | `DataDigest` + report meta | **데이터 그라운딩 추가** |
-| `previous_summaries` | `previous_sections` | 동일 아이디어 |
-| `_parse_review`(정규식) | `call_structured`(Pydantic) | **신규(책엔 역적용 안 함)** |
-| `generate_book` 루프 | `generate_report` | 구조 동일, 별도 파일 |
+| `toc/*.json` | `toc/*.json` + `specs/*.json` | 둘 다 "입력 사양" 슬롯 |
+| `book_config` | `config` + `digest`(옵셔널) | **그라운딩 플러그 추가** |
+| `chapter` | `unit`(챕터=섹션의 한 사례) | 명칭만 일반화 |
+| `previous_summaries` | `previous_units` | 동일 아이디어 |
+| `_parse_review`(정규식) | `call_structured`(Pydantic) | **교체 — 책도 수혜** |
+| (없음) | `Planner`(선택 단계) | **신규 — 책=Enricher, 기술서=섹션설계** |
+| `generate_book` | `generate(config, units, digest=None)` | **일반화 — 별도 파일 아님** |
 
-**공용 코어 추출 시점은 선택**이다. 처음엔 `report_agent/`가 루프를 자체 보유(복붙)해 빠르게 검증하고, 책·기술서·소설 3종이 안정되면 `core/`로 리팩터링한다. (조기 추상화 회피)
+> **조기 추상화 회피**: 별도 `core/` 추출이나 소설 모드는 지금 만들지 않는다. 책·기술서 2모드가 한 함수에서 안정적으로 돌면, 그때 필요에 따라 분리한다.
 
 ---
 
@@ -382,16 +403,16 @@ specs/
 
 ## 10. 현재 아키텍처 대비 장단점 (피드백 요구)
 
-### 10.1 "현재 책 생성기" 대비
+### 10.1 일반화 전 / 후 (같은 파이프라인의 before/after)
 
-| 항목 | 현재(책) | 제안(기술분석서) | 평가 |
+| 항목 | 현재(책) | 일반화 후(책 모드 / 기술서 모드) | 평가 |
 | --- | --- | --- | --- |
-| 입력 | TOC 텍스트 | TOC + **데이터 digest** | 근거 기반으로 진화 |
-| 사실성 | 모델 지식 의존(환각 가능) | **digest 그라운딩 + ungrounded 검출** | 👍 신뢰성↑ |
-| 출력 검증 | 정규식 JSON | **Pydantic 스키마 + self-heal** | 👍 수렴성↑ |
-| 단계 수 | 4 | 5(Planner 추가) | 비용↑(트레이드오프) |
-| 재사용 | — | 루프·프롬프트 자산 90% 재사용 | 👍 |
-| 신규 복잡도 | — | 어댑터/소스 매핑 추가 | 👎 유지보수 포인트↑ |
+| 입력 | TOC 텍스트 | TOC(책) / report_spec + **digest**(기술서) | 근거 기반으로 진화 |
+| 사실성 | 모델 지식 의존(환각 가능) | 책=동일 / 기술서=**digest 그라운딩 + ungrounded 검출** | 👍 신뢰성↑ |
+| 출력 검증 | 정규식 JSON | **Pydantic 스키마 + self-heal (두 모드 공통)** | 👍 수렴성↑, **책도 수혜** |
+| 단계 수 | 4 | 5(Planner 선택 단계) | 비용↑(트레이드오프) |
+| 코드 | 책 전용 | **한 벌 공유**, 차이는 주입값 | 👍 중복 0 |
+| 신규 복잡도 | — | digest 어댑터/소스 매핑(데이터 모드만) | 👎 유지보수 포인트↑ |
 
 ### 10.2 "에이전트 없이 사람이 작성" 대비
 - 👍 데이터 갱신 시 **분석서 재생성 자동화**, 일관된 형식, 수치 근거 자동 인용
@@ -407,15 +428,14 @@ specs/
 
 | 단계 | 산출물 | 비고 |
 | --- | --- | --- |
-| P0 | `report_agent/` 패키지 골격 + `httpx`로 `/api/*` 스냅샷 → `digest_cache.json` | 책 코드 무수정, 서버 의존 제거 |
-| P1 | `digest/` 어댑터 + `DataDigest` Pydantic 모델 | 엑셀+API 병합(옵션 C) |
-| P2 | `call_structured()` + 단계 스키마 4종 | 피드백 1번(수렴) — 처음엔 report_agent 자체 보유 |
-| P3 | `specs/mold_dx_report.json` + `report_prompts.py` | 4개 섹션 |
-| P4 | `generate_report()` 루프 (책 루프 복붙 후 digest 연결) | 책 `generate_book`은 그대로 |
+| P0 | `generator/llm.py`: `call_structured()` + `_call` 흡수, `schemas.py` 골격 | 데이터 없이 self-heal 동작 검증 |
+| P1 | **책 모드를 새 엔진 위로 이전** — `_parse_review` → `ReviewResult` 스키마, 정규식 제거 | **회귀 0 확인**(기존 책 재생성 비교) |
+| P2 | Planner 단계 추가(선택 플래그) + `SectionPlan` 스키마 | 책=Enricher / 데이터=섹션설계 |
+| P3 | `digest/` 어댑터 + `DataDigest` + `httpx` 스냅샷 → `specs/digest_cache.json` | 엑셀+API 병합(옵션 C), 서버 의존 제거 |
+| P4 | `specs/mold_dx_report.json` + 기술서 프롬프트 + `generate(config, units, digest)` 연결 | 같은 함수가 두 모드 처리 |
 | P5 | 기술분석서 생성 → 전문가 검수 → 반영 | 사람 20% 검수 |
-| P6 | (선택) 3종 안정화 후 `core/`로 공용 루프 추출 | 조기 추상화 회피 |
 
-권장 착수 순서: **P0 → P2(수렴 엔진) → P1 → P3 → P4**. P0/P2를 먼저 하면 데이터 없이도 골격을 검증할 수 있다.
+권장 착수 순서: **P0 → P1 → P2 → P3 → P4**. P0~P2는 데이터 없이도 검증 가능하며, **P1에서 책 회귀 0을 먼저 확정**한 뒤 데이터 그라운딩(P3~)을 얹는 게 안전하다.
 
 ---
 
