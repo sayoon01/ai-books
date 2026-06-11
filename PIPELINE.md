@@ -117,6 +117,77 @@ generate_book()                 챕터 루프 전체 제어
 
 ---
 
+## 에이전트별 역할 상세
+
+### 1. Writer (t=0.8) — 창의적 초안
+
+| 항목 | 내용 |
+| --- | --- |
+| 시스템 | `WRITE_SYSTEM` — 분량(3000~5000단어), 마크다운 형식, `writing_guidelines` 최우선, 구성 흐름(개념→설명→예시→요약) |
+| 유저 | `write_user(book_config, chapter, previous_summaries)` — 책 설정 + 이전 챕터 요약 + 현재 챕터 정보 |
+| 출력 | 완결된 마크다운 원고 (`draft`) |
+
+### 2. Review (t=0.2) — 일관된 검수
+
+| 항목 | 내용 |
+| --- | --- |
+| 시스템 | `REVIEW_SYSTEM` — 검수 기준 8항목 + JSON 출력 형식 강제 |
+| 유저 | `review_user(book_config, chapter, draft)` — 책 설정 + 챕터 정보 + 검수 대상 원고 |
+| 출력 | JSON (아래 형식) |
+
+```json
+{
+  "has_errors": true,
+  "score": 85,
+  "issues": [
+    {
+      "type": "factual_error",
+      "severity": "high",
+      "problem": "문제 설명",
+      "original_text": "원문 발췌",
+      "fix_instruction": "수정 지시"
+    }
+  ],
+  "summary": "전체 검수 요약"
+}
+```
+
+`type` 예시: `factual_error` · `logical_error` · `missing_content` · …  
+`severity`: `low` · `medium` · `high`
+
+**score는 LLM이 스스로 매깁니다.** 코드는 `score < 90` 또는 `has_errors=True`일 때만 Revise로 보냅니다.
+
+```python
+# generator/book_writer.py — generate_book()
+if review_data.get("has_errors") or review_data.get("score", 100) < 90:
+    revised = revise_chapter(...)
+```
+
+### 3. Revise (t=0.5) — 이슈 반영 수정
+
+| 항목 | 내용 |
+| --- | --- |
+| 시스템 | `REVISE_SYSTEM` — `issues` 반드시 반영, 좋은 부분 유지, 불필요한 변경 금지 |
+| 유저 | `revise_user(book_config, chapter, draft, review_json)` — 검수 결과 JSON + 원문 |
+| 출력 | 수정된 원고 (`revised`) |
+
+### 4. Re-Review (t=0.2) — 재검수 (로그용)
+
+- `review_chapter()`를 `revised`에 다시 호출
+- 재검수 결과가 나빠도 `final = revised`로 저장 — Revise를 1회만 돌려 무한루프 방지
+- 잔여 `high` severity 이슈는 콘솔에만 출력
+
+```python
+# generator/book_writer.py — generate_book()
+re_review = review_chapter(config, chapter, revised, step="4/4")
+final = revised  # 재검수 점수와 무관하게 revised 채택
+
+remaining = [i for i in re_review.get("issues", []) if i.get("severity") == "high"]
+print(f"  [4/4] 재검수 후 잔여 이슈 {len(remaining)}건 — 현재 버전으로 저장")
+```
+
+---
+
 ## score는 누가 정하는가
 
 **Gemma(LLM)가 스스로 판단합니다.**
@@ -131,8 +202,6 @@ generate_book()                 챕터 루프 전체 제어
   4. writing_guidelines 위반
   5. 챕터 주제에서 벗어난 내용
   6. 용어·인물·설정·문체의 불일치
-  7. 독자가 오해할 수 있는 모호한 설명
-  8. 불필요한 반복 또는 장황한 내용
 ```
 
 | 주체 | 역할 |
@@ -150,33 +219,84 @@ temperature=0.2라 매 호출마다 점수가 크게 흔들리지는 않지만, 
 
 ---
 
-## 챕터 간 연결 — previous_summaries
+## 챕터 간 연결 - previous_summaries 
 
 Writer는 각 챕터를 독립적으로 쓰면 책 전체가 따로 놀 수 있습니다.  
-이를 방지하기 위해 완성된 챕터의 요약을 리스트로 누적해 다음 챕터 Writer에게 전달합니다.
+이를 방지하기 위해 완성된 챕터 정보를 리스트로 누적해 다음 챕터 Writer에게 전달합니다.
+
+### 코드 위치 (3곳)
+
+**① 누적·전달 — `generate_book()`**
 
 ```python
-# generate_book() 루프
-chapter_summaries = []
+# generator/book_writer.py
+chapter_summaries = []  # 나중에 [-8:] 슬라이싱으로 교체 가능
 
 for chapter in chapters:
-    draft = write_chapter(config, chapter, chapter_summaries[:])  # 현재: 전체 전달
+    ...
+    draft = write_chapter(config, chapter, chapter_summaries[:])
     ...
     chapter_summaries.append(f"{num}장 {ctitle}: {chapter.get('description', '')}")
-    # 나중에 챕터가 많아지면 → chapter_summaries[-8:]  한 줄만 수정
 ```
 
-Writer가 받는 유저 메시지에 다음 섹션이 추가됩니다:
+**② Writer에 전달 — `write_chapter()`**
+
+```python
+# generator/book_writer.py
+def write_chapter(book_config: dict, chapter: dict, previous_summaries: list = None) -> str:
+    ...
+    return _call(WRITE_SYSTEM, write_user(book_config, chapter, previous_summaries), temperature=0.8)
+```
+
+**③ 프롬프트에 삽입 — `write_user()`**
+
+```python
+# generator/prompts.py
+def write_user(book_config: dict, chapter: dict, previous_summaries: list = None) -> str:
+    prev_section = ""
+    if previous_summaries:
+        prev_text = "\n".join(previous_summaries)
+        prev_section = f"\n이전 챕터 요약:\n{prev_text}\n"
+    ...
+```
+
+### 무엇이 쌓이는가
+
+실제 원고 요약이 아니라, **TOC의 `chapter.description`** 이 문자열로 누적됩니다.
 
 ```
-이전 챕터 요약:
 1장 머신러닝이란 무엇인가: 머신러닝의 개념과 종류를 소개하고...
 2장 파이썬 개발 환경 구축: Anaconda 설치부터 가상환경 설정까지...
 ```
 
+챕터 N을 쓸 때는 **1 ~ N-1장 description만** 전달됩니다 (`chapter_summaries[:]`로 복사본 전달).
+
+### 중복 방지·흐름 유지 메커니즘
+
+| 레이어 | 역할 |
+| --- | --- |
+| `previous_summaries` | Writer에게 "이미 다룬 챕터 범위"를 알려줌 → 같은 주제를 처음부터 다시 설명하는 것을 억제 |
+| `WRITE_SYSTEM` | "불필요한 반복은 피하세요", "내용이 자연스럽게 이어지도록" |
+| `REVIEW_SYSTEM` | 검수 기준 8번 — "불필요한 반복 또는 장황한 내용" (`redundancy`) |
+| `chapter.description` | 현재 챕터가 무엇을 새로 다뤄야 하는지 명시 → 이전 챕터와 겹치지 않게 범위 분리 |
+
+즉, **Writer 단계에서 선제적으로 맥락을 주고, Review 단계에서 사후 검증**하는 2중 구조입니다.
+
+### 확장 포인트
+
+챕터가 많아지면 컨텍스트 초과를 막기 위해 **한 줄만** 바꾸면 됩니다.
+
+```python
+# 현재: 전체 전달
+draft = write_chapter(config, chapter, chapter_summaries[:])
+
+# 나중에: 최근 8장만
+draft = write_chapter(config, chapter, chapter_summaries[-8:])
+```
+
 ---
 
-## JSON 파싱 안전장치
+## 부가 안전장치 — JSON 파싱
 
 Gemma가 JSON 대신 자연어를 섞어 출력하는 경우를 `_parse_review()`에서 3단계로 처리합니다.
 
