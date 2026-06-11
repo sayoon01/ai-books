@@ -106,7 +106,7 @@ generate_book()                 챕터 루프 전체 제어
       │  revised 원고를 같은 방식으로 재검수               │
       │  결과와 무관하게 final = revised 로 저장           │
       │  (무한루프 방지 — 1회만)                          │
-      └─────────────────────────────────────────────────┘      <img width="464" height="312" alt="image" src="https://github.com/user-attachments/assets/90263fd2-91f4-4cc5-a3a0-47792e293baa" />
+      └─────────────────────────────────────────────────┘     
 
               │
               ▼
@@ -116,6 +116,8 @@ generate_book()                 챕터 루프 전체 제어
   chapter-NN-review.json  품질 로그 (initial_review / revised / re_review)
   chapter_summaries     += "{N}장 {제목}: {description}"  (다음 챕터에 전달)
 ```
+<img width="464" height="312" alt="image" src="https://github.com/user-attachments/assets/684ad65c-944c-4085-ae33-e1c3ad17d20e" />
+<img width="1219" height="610" alt="image" src="https://github.com/user-attachments/assets/545077b1-9acc-423a-ab82-641b9b1d1d0a" />
 
 ---
 
