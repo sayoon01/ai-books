@@ -1,6 +1,7 @@
 # 챕터 생성 파이프라인 상세 설명
+<img width="1057" height="612" alt="image" src="https://github.com/user-attachments/assets/6ad5062d-2bee-49a1-9bc4-5bbe3e76c7e5" />
 
-## 파이프라인이란
+
 
 책 한 챕터를 완성하기까지 거치는 **Writer → Review → Revise → Re-review** 4단계 흐름입니다.  
 모든 단계는 같은 모델(gemma4:31b)을 쓰지만, 시스템 프롬프트와 temperature가 달라 역할이 분리됩니다.
@@ -220,6 +221,7 @@ temperature=0.2라 매 호출마다 점수가 크게 흔들리지는 않지만, 
 ---
 
 ## 챕터 간 연결 - previous_summaries 
+<img width="1075" height="716" alt="image" src="https://github.com/user-attachments/assets/6a262910-b04d-46ed-b359-3abdf5230f47" />
 
 Writer는 각 챕터를 독립적으로 쓰면 책 전체가 따로 놀 수 있습니다.  
 이를 방지하기 위해 완성된 챕터 정보를 리스트로 누적해 다음 챕터 Writer에게 전달합니다.
@@ -299,26 +301,6 @@ draft = write_chapter(config, chapter, chapter_summaries[-8:])
 ## 부가 안전장치 — JSON 파싱
 
 Gemma가 JSON 대신 자연어를 섞어 출력하는 경우를 `_parse_review()`에서 3단계로 처리합니다.
-
-```python
-# 1단계: ```json ... ``` 블록 추출
-if "```" in text:
-    text = text.split("```")[1]
-    if text.startswith("json"):
-        text = text[4:]
-
-# 2단계: 앞뒤 자연어 제거 — {} 사이만 추출
-match = re.search(r'\{.*\}', text, re.DOTALL)
-if match:
-    text = match.group()
-
-# 3단계: 파싱 실패 → 강제 Revise
-try:
-    return json.loads(text.strip())
-except Exception:
-    return {"has_errors": True, "score": 0, ...}  # 검수 실패 = 이슈 있음으로 처리
-```
-
 파싱 실패를 `has_errors=False`로 처리하면 망한 검수가 통과처리되므로, 반드시 `has_errors=True`로 강제합니다.
 
 ---
