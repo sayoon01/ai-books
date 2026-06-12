@@ -3,6 +3,6 @@
   "language": "ko",
   "model": "gemma4:31b",
   "total": 9,
-  "completed": 9,
-  "status": "done"
+  "completed": 1,
+  "status": "in_progress"
 }
