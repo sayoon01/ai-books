@@ -7,7 +7,7 @@ from prompts import (
 )
 from llm import _call, call_structured, ConvergenceError
 from schemas import ReviewResult, UnitPlan
-from grounding import resolve_grounding
+from grounding import resolve_grounding, ungrounded_numbers
 from github_push import push_unit, update_meta, update_readme
 
 # 작성 단위 키 (신규 표준 units, 옛 toc 폴백)
@@ -46,18 +46,25 @@ def _plan_unit(config, unit, previous, grounding) -> UnitPlan:
 
     def _check(plan: UnitPlan) -> UnitPlan:
         if grounding and grounding.ref_keys:
-            bad = [r for r in plan.data_refs if r not in grounding.ref_keys]
+            bad = sorted({r for b in plan.beats for r in b.refs
+                          if r not in grounding.ref_keys})
             if bad:
-                raise ValueError(f"근거에 없는 data_refs: {bad}")
+                raise ValueError(f"근거에 없는 beat refs: {bad}")
+        if grounding:
+            # evidence는 '근거 전사'이므로 모든 수치가 근거에 실재해야 한다(결정적 검증).
+            ev = " ".join(e for b in plan.beats for e in b.evidence)
+            bad_nums = ungrounded_numbers(ev, grounding.payload)
+            if bad_nums:
+                raise ValueError(f"근거에 없는 evidence 수치: {bad_nums}")
         return plan
 
     return call_structured(PLAN_SYSTEM, plan_user(config, unit, previous, gtext),
                            UnitPlan, temperature=0.3, post_validate=_check)
 
 
-def _write_unit(config, unit, previous, gtext) -> str:
+def _write_unit(config, unit, previous, gtext, plan=None) -> str:
     print(f"  [초안] {unit.get('title', '')}")
-    return _call(WRITE_SYSTEM, write_user(config, unit, previous, gtext), temperature=0.8)
+    return _call(WRITE_SYSTEM, write_user(config, unit, previous, gtext, plan), temperature=0.8)
 
 
 def _review_unit(config, unit, draft, gtext, step="검수") -> ReviewResult:
@@ -101,29 +108,41 @@ def generate(doc: dict, output_dir: Path, slug: str, *, use_planner: bool = Fals
         print(f"--- 단위 {num}: {utitle} ---")
 
         draft = None
+        plan = None
         quality_log = {"unit": {"number": num, "title": utitle},
                        "revised": False, "re_review": None, "flagged": False}
         try:
-            ctx = unit
             if use_planner:
                 plan = _plan_unit(config, unit, summaries[:], grounding)
-                ctx = {**unit, "_plan": plan.model_dump()}
                 quality_log["plan"] = plan.model_dump()
 
-            draft = _write_unit(config, ctx, summaries[:], gtext)
-            review = _review_unit(config, ctx, draft, gtext)
+            plan_dump = plan.model_dump() if plan else None
+            draft = _write_unit(config, unit, summaries[:], gtext, plan_dump)
+            review = _review_unit(config, unit, draft, gtext)
             quality_log["initial_review"] = review.model_dump()
             final = draft
 
-            if review.has_errors or review.score < 90:
-                revised = _revise_unit(config, ctx, draft, review, gtext)
-                re_review = _review_unit(config, ctx, revised, gtext, step="재검수")
+            # 결정적 수치 검증: 본문 수치가 근거에 실재하는지 코드로 대조(LLM 판단과 무관).
+            draft_bad = ungrounded_numbers(draft, gtext) if grounding else []
+            if draft_bad:
+                review.ungrounded_numbers = sorted(
+                    set(review.ungrounded_numbers) | set(draft_bad))
+                quality_log["ungrounded_detected"] = draft_bad
+                print(f"  [근거검증] 본문 미근거 수치 {len(draft_bad)}건: {draft_bad[:8]}")
+
+            if review.has_errors or review.score < 90 or draft_bad:
+                revised = _revise_unit(config, unit, draft, review, gtext)
+                re_review = _review_unit(config, unit, revised, gtext, step="재검수")
                 final = revised
                 quality_log["revised"] = True
                 quality_log["re_review"] = re_review.model_dump()
-                if re_review.has_errors or re_review.score < 90:
+                re_bad = ungrounded_numbers(revised, gtext) if grounding else []
+                if re_bad:
+                    quality_log["ungrounded_remaining"] = re_bad
+                if re_review.has_errors or re_review.score < 90 or re_bad:
                     remaining = [x for x in re_review.issues if x.severity == "high"]
-                    print(f"  [재검수] 잔여 high 이슈 {len(remaining)}건 — 현재 버전으로 저장")
+                    print(f"  [재검수] 잔여 high {len(remaining)}건, 미근거수치 {len(re_bad)}건 "
+                          f"— 현재 버전으로 저장")
             else:
                 print(f"  [수정 불필요] score {review.score} — 저장")
 
@@ -145,7 +164,9 @@ def generate(doc: dict, output_dir: Path, slug: str, *, use_planner: bool = Fals
         push_unit(slug, num, utitle, content)
         update_meta(slug, doc, completed=num)
 
-        desc = unit.get("description") or unit.get("intent", "")
+        # 다음 단위 연결: 설계의 bridge_to_next가 있으면 그것을, 없으면 단위 설명을 요약으로.
+        desc = (plan.bridge_to_next if plan and plan.bridge_to_next
+                else unit.get("description") or unit.get("intent", ""))
         summaries.append(f"{num}. {utitle}: {desc}")
         print()
 

@@ -41,23 +41,48 @@ class ReviewResult(BaseModel):
 
 
 # =========================
-# PLANNER (선택 단계)
+# OUTLINE PLANNER (선택 단계)
 # =========================
-# Writer 앞에서 "무엇을 다룰지"만 구조체로 확정한다. 본문은 쓰지 않는다.
+# Writer 앞에서 본문 골격(outline)을 확정한다. 본문은 쓰지 않는다.
+# 체크리스트(순서 없는 key_points)가 아니라 순서 있는 beats로 — writer가
+# "창작"이 아니라 "설계서 구현"을 하도록 만든다. 분산↓, 하한↑.
 # 장르 무관(챕터/섹션/장면/에피소드 공통) — 그래서 이름은 UnitPlan.
+
+BeatRole = Literal["setup", "evidence", "analysis", "contrast", "payoff", "bridge"]
+
+
+class Beat(BaseModel):
+    """아웃라인의 한 노드 = 본문의 한 섹션. 위→아래로 읽으면 하나의 흐름이 된다."""
+    claim: str = Field(description="완결된 단언 한 문장(토픽 나열 금지). 예: '쿨링타임이 변동의 최대 요인이다'")
+    role: BeatRole = Field(description="이 beat가 글에서 하는 기능(도입/근거/분석/대조/결론/전환)")
+    refs: list[str] = Field(
+        default_factory=list,
+        description="이 beat가 인용할 근거 키만(데이터 모드). 예: 'anomaly_rate', 'process_time.cool'. 없으면 빈 배열.",
+    )
+    evidence: list[str] = Field(
+        default_factory=list,
+        description="claim을 뒷받침하는 근거 속 실제 수치·사실·인용. 근거(grounding)에서 그대로 옮긴다(지어내지 않음). 근거가 없으면 빈 배열. 예: 'anomaly_rate=3.2%', '쿨링타임 p99=18s'.",
+    )
+    figure: str | None = Field(default=None, description="이 beat에 붙일 표/그림 제목(선택)")
+    weight: Literal["minor", "normal", "major"] = Field(
+        default="normal", description="분량·깊이 배분. major는 더 깊게, minor는 짧게.",
+    )
+
 
 class UnitPlan(BaseModel):
     unit_id: str = Field(description="대상 작성 단위 식별자")
-    key_points: list[str] = Field(
+    thesis: str = Field(description="이 단위가 결국 말하려는 것 한 문장. 모든 beat가 이를 받친다.")
+    beats: list[Beat] = Field(
         min_length=3, max_length=8,
-        description="이 단위가 다룰 핵심 논점. 각 항목은 한 문장.",
+        description="thesis를 전개하는 순서 있는 본문 골격. 위→아래로 하나의 논증/서사가 되도록 배열.",
     )
-    data_refs: list[str] = Field(
+    builds_on: list[str] = Field(
         default_factory=list,
-        description="인용할 digest 키 경로만(데이터 모드). 예: 'anomaly_rate', 'process_time.cool'.",
+        description="이전 단위에서 이미 다뤄 반복하지 않을 내용.",
     )
-    required_figures: list[str] = Field(default_factory=list, description="필요한 표/그림 제목 목록")
-    out_of_scope: list[str] = Field(default_factory=list, description="이 단위에서 다루지 않을 것")
+    out_of_scope: list[str] = Field(default_factory=list, description="이 단위에서 다루지 않을 것(옆 단위 몫).")
+    hook: str = Field(default="", description="도입 한 문장(선택).")
+    bridge_to_next: str = Field(default="", description="다음 단위로 넘기는 한 문장(선택).")
 
 
 # =========================
