@@ -16,9 +16,10 @@ def _prev(previous_summaries) -> str:
     if not previous_summaries:
         return ""
     return "\n이전 내용 요약:\n" + "\n".join(previous_summaries) + "\n"
-    
+
+
 # =========================
-# PLANNER (범용, 선택 단계)
+# PLANNER (범용, 선택 단계) — Writer 앞 단계라 코드도 WRITER 위에 둔다
 # =========================
 PLAN_SYSTEM = """
 당신은 작성 전 설계자입니다. 본문은 쓰지 말고, 이 단위의 본문 골격(outline)만 확정합니다.
@@ -48,6 +49,19 @@ PLAN_SYSTEM = """
 
 출력은 제공된 JSON 스키마를 정확히 따르세요.
 """
+
+
+def plan_user(config, unit, previous_summaries=None, grounding_text=""):
+    return f"""
+문서 설정:
+{json.dumps(config, ensure_ascii=False, indent=2)}
+{_prev(previous_summaries)}{_ground(grounding_text)}
+설계할 작성 단위:
+{json.dumps(unit, ensure_ascii=False, indent=2)}
+
+이 단위의 본문 골격(thesis, 순서 있는 beats)을 설계해주세요.
+"""
+
 
 # =========================
 # WRITER (범용)
@@ -186,16 +200,4 @@ def revise_user(config, unit, draft, review_json, grounding_text=""):
 {draft}
 
 검수 결과를 반영해 최종 원고로 수정해주세요.
-"""
-
-
-def plan_user(config, unit, previous_summaries=None, grounding_text=""):
-    return f"""
-문서 설정:
-{json.dumps(config, ensure_ascii=False, indent=2)}
-{_prev(previous_summaries)}{_ground(grounding_text)}
-설계할 작성 단위:
-{json.dumps(unit, ensure_ascii=False, indent=2)}
-
-이 단위의 본문 골격(thesis, 순서 있는 beats)을 설계해주세요.
 """
