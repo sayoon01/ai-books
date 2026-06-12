@@ -6,7 +6,7 @@
 로컬 LLM(Ollama·gemma4:31b)으로 **문서 유형 무관(genre-agnostic)** 하게 글을 단위별로 생성하고, GitHub를 CMS 삼아 Next.js(Vercel)로 게시하는 파이프라인. 장르는 코드가 아니라 `toc/*.json`이 정하고, 실측 근거가 필요하면 선택 필드 `grounding`으로 주입한다.
 
 ## 2. 아키텍처 3계층
-1. **입력** — `toc/*.json` 단일 스키마(`doc_type`/`target_reader`/`writing_guidelines`/`units`/선택 `grounding`). `units`로 통일(옛 `chapters`/`sections` 폴백).
+1. **입력** — `toc/*.json` 단일 스키마(`description`/`target_reader`/`writing_guidelines`/`units`/선택 `grounding`). `units`로 통일(옛 `chapters`/`sections` 폴백).
 2. **grounding(선택·다형)** — `grounding.py`의 resolver(`mold_api`/`file`/`url`/`text`). 결과는 `cache/grounding/`에 스냅샷. `ref_keys`는 데이터에서 재귀 자동 추출(하드코딩 없음).
 3. **생성 파이프라인** — (선택)Planner→Writer→Reviewer→Reviser→재검수. 판단/계획은 `call_structured`(Pydantic 스키마 강제 + self-heal), 생성은 `_call`(자유 마크다운).
 

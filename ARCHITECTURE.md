@@ -4,7 +4,7 @@
 
 로컬 LLM(Ollama + Gemma 4 31B)으로 **문서를 작성 단위(unit)별로 자동 생성**하고, GitHub에 커밋한 뒤 Vercel의 Next.js 앱에서 읽어 웹에 게시하는 파이프라인입니다.
 
-핵심 설계: **파이프라인은 장르 무관(genre-agnostic)**. 책·기술분석서·소설 등 문서 유형은 코드가 아니라 **`toc/*.json`의 필드(`doc_type` 등)** 가 결정합니다. 실측 근거가 필요한 문서는 **선택 필드 `grounding`** 으로 파일/링크/API의 사실을 주입받습니다(없으면 모델 지식으로 작성).
+핵심 설계: **파이프라인은 장르 무관(genre-agnostic)**. 책·기술분석서·소설 등 문서의 정체성·독자·문체는 코드가 아니라 **`toc/*.json`의 필드(`description`·`target_reader`·`writing_guidelines`)** 가 결정합니다. 실측 근거가 필요한 문서는 **선택 필드 `grounding`** 으로 파일/링크/API의 사실을 주입받습니다(없으면 모델 지식으로 작성).
 
 > 이전에는 책 전용 파이프라인이었으나, 2026-06 일반화되었습니다. (구) `chapters`/`sections` → (신) `units`, (구) `_parse_review` 정규식 → (신) `call_structured` Pydantic 수렴.
 
@@ -14,7 +14,7 @@
 
 ```mermaid
 flowchart TD
-    TOC["📄 toc/*.json\n문서 정의 (doc_type/units/grounding?)"]
+    TOC["📄 toc/*.json\n문서 정의 (description/units/grounding?)"]
     CLI["main.py\nCLI 진입점 (--toc, --planner)"]
     GR["grounding.py\n근거 해소 (선택)"]
     BW["book_writer.py\n생성 루프 (장르 무관)"]
@@ -56,8 +56,7 @@ flowchart TD
 {
   "title": "...",
   "language": "ko",
-  "doc_type": "기술분석서",          // 모델에게 정체성만 전달. 코드는 분기하지 않음
-  "description": "...",
+  "description": "...",                  // 문서 정체성. 코드는 분기하지 않음
   "target_reader": "...(독자 + 문체)", // book_style 흡수: 독자층과 톤을 한 필드에
   "writing_guidelines": ["..."],
   "grounding": { "kind": "mold_api", ... },   // 선택. 없으면 모델 지식으로 작성
@@ -188,7 +187,7 @@ docs: 문서 목록 업데이트                ← 전체 목록 (완료 후)
 `meta.json`:
 ```json
 {
-  "title": "...", "language": "ko", "doc_type": "기술분석서",
+  "title": "...", "language": "ko",
   "model": "gemma4:31b", "total": 4, "completed": 2, "status": "in_progress"
 }
 ```

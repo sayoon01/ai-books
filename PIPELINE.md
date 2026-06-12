@@ -26,7 +26,7 @@ llm.py            →  "실제로 어떻게 호출할지" (_call / call_structur
 ```
 WRITE_SYSTEM    ─┐
 REVIEW_SYSTEM   ─┼─ 시스템 프롬프트 (엔진 규칙, 장르 무관 고정)
-REVISE_SYSTEM   ─┤   장르 색깔은 spec(doc_type/description/writing_guidelines)이 채움
+REVISE_SYSTEM   ─┤   장르 색깔은 spec(description/target_reader/writing_guidelines)이 채움
 PLAN_SYSTEM     ─┘
 
 write_user()    ─┐
@@ -67,7 +67,7 @@ call_structured()  스키마 강제(format=) + 검증 실패 시 self-heal 재�
 
 ```
 [입력]
-  config              = TOC에서 추출 (doc_type / target_reader / writing_guidelines 등)
+  config              = TOC에서 추출 (description / target_reader / writing_guidelines 등)
   unit                = 현재 단위 (number / title / description / must_cover?)
   grounding           = resolve_grounding(spec.grounding)  (없으면 None)
   previous_summaries  = 이전 단위 누적 목록

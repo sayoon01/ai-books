@@ -52,7 +52,6 @@ def update_meta(slug: str, doc: dict, completed: int) -> None:
     meta = {
         "title":     doc["title"],
         "language":  doc.get("language", "ko"),
-        "doc_type":  doc.get("doc_type", ""),
         "model":     "gemma4:31b",
         "total":     total,
         "completed": completed,
@@ -74,8 +73,8 @@ def update_readme(slug: str, doc: dict) -> None:
     for meta_file in sorted(REPO_ROOT.glob("*/meta.json")):
         docs[meta_file.parent.name] = json.loads(meta_file.read_text(encoding="utf-8"))
 
-    rows = ["| 제목 | 유형 | 언어 | 진행 | 모델 | 상태 |",
-            "|---|---|---|---|---|---|"]
+    rows = ["| 제목 | 언어 | 진행 | 모델 | 상태 |",
+            "|---|---|---|---|---|"]
     for s, m in docs.items():
         status = "✅ 완료" if m.get("status") == "done" else "🔄 진행중"
         # 구 키(total_chapters) 폴백
@@ -83,7 +82,6 @@ def update_readme(slug: str, doc: dict) -> None:
         done = m.get("completed", m.get("completed_chapters", "?"))
         rows.append(
             f"| [{m['title']}](./{s}) "
-            f"| {m.get('doc_type', '')} "
             f"| {m.get('language', 'ko')} "
             f"| {done}/{total} "
             f"| {m.get('model', '')} "

@@ -3,7 +3,8 @@
   python generator/main.py --toc toc/python-ml.json          # 책 (grounding 없음)
   python generator/main.py --toc toc/mold-dx-report.json --planner   # 기술서 (grounding 있음)
 
-문서 유형은 toc JSON의 doc_type/필드가 정한다. grounding 필드가 있으면 자동 해소된다.
+문서 정체성·독자·문체는 toc JSON의 description/target_reader/writing_guidelines가 정한다.
+grounding 필드가 있으면 자동 해소된다.
 """
 import argparse
 import json
