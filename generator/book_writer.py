@@ -46,16 +46,16 @@ def _plan_unit(config, unit, previous, grounding) -> UnitPlan:
 
     def _check(plan: UnitPlan) -> UnitPlan:
         if grounding and grounding.ref_keys:
-            bad = sorted({r for b in plan.beats for r in b.refs
+            bad = sorted({r for s in plan.steps for r in s.refs
                           if r not in grounding.ref_keys})
             if bad:
-                raise ValueError(f"근거에 없는 beat refs: {bad}")
+                raise ValueError(f"근거에 없는 step refs: {bad}")
         if grounding:
-            # evidence는 '근거 전사'이므로 모든 수치가 근거에 실재해야 한다(결정적 검증).
-            ev = " ".join(e for b in plan.beats for e in b.evidence)
-            bad_nums = ungrounded_numbers(ev, grounding.payload)
+            # 근거가 있으면 support는 실제 근거에서만 가져와야 한다(결정적 수치 검증).
+            sup = " ".join(t for s in plan.steps for t in s.support)
+            bad_nums = ungrounded_numbers(sup, grounding.payload)
             if bad_nums:
-                raise ValueError(f"근거에 없는 evidence 수치: {bad_nums}")
+                raise ValueError(f"근거에 없는 support 수치: {bad_nums}")
         return plan
 
     return call_structured(PLAN_SYSTEM, plan_user(config, unit, previous, gtext),
@@ -67,20 +67,45 @@ def _write_unit(config, unit, previous, gtext, plan=None) -> str:
     return _call(WRITE_SYSTEM, write_user(config, unit, previous, gtext, plan), temperature=0.8)
 
 
-def _review_unit(config, unit, draft, gtext, step="검수") -> ReviewResult:
+def _review_unit(config, unit, draft, gtext, step="검수", plan=None) -> ReviewResult:
     print(f"  [{step}] 검수 중...")
-    result = call_structured(REVIEW_SYSTEM, review_user(config, unit, draft, gtext),
+    result = call_structured(REVIEW_SYSTEM, review_user(config, unit, draft, gtext, plan),
                              ReviewResult, temperature=0.2)
     print(f"         → score: {result.score}  issues: {len(result.issues)}  "
           f"has_errors: {result.has_errors}  ungrounded: {len(result.ungrounded_numbers)}")
     return result
 
 
-def _revise_unit(config, unit, draft, review: ReviewResult, gtext) -> str:
+def _revise_unit(config, unit, draft, review: ReviewResult, gtext, plan=None) -> str:
     print("  [수정] 수정 중...")
     return _call(REVISE_SYSTEM,
-                 revise_user(config, unit, draft, review.model_dump_json(indent=2), gtext),
+                 revise_user(config, unit, draft, review.model_dump_json(indent=2), gtext, plan),
                  temperature=0.5)
+
+
+# 게이트 기준 — 두 family를 다르게 다룬다.
+# - 위반(사실·논리·누락·이탈·미근거 단정)은 "고친다": 0이 될 때까지.
+# - 품질(깊이·명료·구성·설득·창의·문체)은 "끌어올린다": 점수가 오르는 한 계속, 천장이면 수용.
+# doc_type로 장르 분기하지 않고, reviewer가 해당 없는 축을 높게 주는 전제의 범용 임계.
+QUALITY_GATE = 80   # 이 점수 미만 축이 있으면 끌어올림 대상
+TARGET_SCORE = 90   # 종합 목표 점수
+MAX_PASSES = 3      # 재수정 최대 횟수 (무한루프·천장 방지)
+
+# "반드시 고칠" 오류/위반 타입. 나머지(*_problem)는 "끌어올릴" 품질.
+VIOLATION_TYPES = {
+    "factual_error", "logical_error", "missing_content",
+    "off_topic", "unsupported_claim",
+}
+
+
+def _violations(review: ReviewResult) -> list:
+    """반드시 고쳐야 할 오류/위반 issue (품질 issue 제외)."""
+    return [i for i in review.issues if i.type in VIOLATION_TYPES]
+
+
+def _weak_axes(review: ReviewResult) -> dict[str, int]:
+    """QUALITY_GATE 미만인 품질 축 {이름: 점수} — 끌어올림 대상."""
+    return {k: v for k, v in review.quality.model_dump().items() if v < QUALITY_GATE}
 
 
 # =========================
@@ -118,33 +143,74 @@ def generate(doc: dict, output_dir: Path, slug: str, *, use_planner: bool = Fals
 
             plan_dump = plan.model_dump() if plan else None
             draft = _write_unit(config, unit, summaries[:], gtext, plan_dump)
-            review = _review_unit(config, unit, draft, gtext)
+            review = _review_unit(config, unit, draft, gtext, plan=plan_dump)
             quality_log["initial_review"] = review.model_dump()
+            quality_log["passes"] = []
             final = draft
 
-            # 결정적 수치 검증: 본문 수치가 근거에 실재하는지 코드로 대조(LLM 판단과 무관).
-            draft_bad = ungrounded_numbers(draft, gtext) if grounding else []
-            if draft_bad:
-                review.ungrounded_numbers = sorted(
-                    set(review.ungrounded_numbers) | set(draft_bad))
-                quality_log["ungrounded_detected"] = draft_bad
-                print(f"  [근거검증] 본문 미근거 수치 {len(draft_bad)}건: {draft_bad[:8]}")
+            # 위반은 0이 될 때까지 "고치고", 품질은 점수가 오르는 한 "끌어올린다".
+            passes = 0
+            while passes < MAX_PASSES:
+                # 결정적 수치 검증: 본문 수치가 근거에 실재하는지 코드로 대조(LLM 판단과 무관).
+                bad_nums = ungrounded_numbers(final, gtext) if grounding else []
+                if bad_nums:
+                    review.ungrounded_numbers = sorted(
+                        set(review.ungrounded_numbers) | set(bad_nums))
 
-            if review.has_errors or review.score < 90 or draft_bad:
-                revised = _revise_unit(config, unit, draft, review, gtext)
-                re_review = _review_unit(config, unit, revised, gtext, step="재검수")
-                final = revised
-                quality_log["revised"] = True
-                quality_log["re_review"] = re_review.model_dump()
+                violations = _violations(review)      # 고칠 것
+                weak = _weak_axes(review)             # 끌어올릴 것
+                must_fix = bool(review.has_errors or violations or bad_nums)
+                want_lift = bool(weak) or review.score < TARGET_SCORE
+
+                if passes == 0:
+                    if bad_nums:
+                        quality_log["ungrounded_detected"] = bad_nums
+                        print(f"  [근거검증] 본문 미근거 수치 {len(bad_nums)}건: {bad_nums[:8]}")
+                    if weak:
+                        quality_log["weak_axes"] = weak
+                        print(f"  [품질] 약한 축: {weak}")
+
+                if not must_fix and not want_lift:
+                    if passes == 0:
+                        print(f"  [수정 불필요] score {review.score} — 저장")
+                    break
+
+                kind = "고침+끌어올림" if must_fix else "끌어올림"
+                print(f"  [수정·{passes + 1}] ({kind}) 위반 {len(violations)} · 약한축 {list(weak)}")
+                revised = _revise_unit(config, unit, final, review, gtext, plan=plan_dump)
+                re_review = _review_unit(config, unit, revised, gtext, step="재검수", plan=plan_dump)
+                improved = re_review.score > review.score
+                passes += 1
+
                 re_bad = ungrounded_numbers(revised, gtext) if grounding else []
-                if re_bad:
-                    quality_log["ungrounded_remaining"] = re_bad
-                if re_review.has_errors or re_review.score < 90 or re_bad:
-                    remaining = [x for x in re_review.issues if x.severity == "high"]
-                    print(f"  [재검수] 잔여 high {len(remaining)}건, 미근거수치 {len(re_bad)}건 "
-                          f"— 현재 버전으로 저장")
-            else:
-                print(f"  [수정 불필요] score {review.score} — 저장")
+                quality_log["passes"].append({
+                    "re_review": re_review.model_dump(),
+                    "improved": improved,
+                    "ungrounded_remaining": re_bad,
+                    "weak_axes_remaining": _weak_axes(re_review),
+                })
+
+                final = revised
+                review = re_review
+
+                # 끌어올림만 남았는데(위반·미근거 없음) 점수가 더 안 오르면 천장 → 수용.
+                if not (re_review.has_errors or _violations(re_review) or re_bad) and not improved:
+                    print(f"  [천장] 품질 점수 정체(score {re_review.score}) — 현재 버전 수용")
+                    break
+
+            quality_log["revised"] = passes > 0
+
+            # 종료 후 잔여 위반/미근거 점검 → 경고(고침은 0이 목표였으므로).
+            final_bad = ungrounded_numbers(final, gtext) if grounding else []
+            final_violations = _violations(review)
+            if final_violations or final_bad or review.has_errors:
+                high = [i for i in final_violations if i.severity == "high"]
+                quality_log["unresolved"] = {
+                    "violations": [i.model_dump() for i in final_violations],
+                    "ungrounded": final_bad,
+                }
+                print(f"  [잔여] 위반 {len(final_violations)}건(high {len(high)}) · "
+                      f"미근거수치 {len(final_bad)}건 — 현재 버전으로 저장")
 
         except ConvergenceError as e:
             quality_log["flagged"] = True

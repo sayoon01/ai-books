@@ -52,7 +52,7 @@ def call_structured(
     """
     스키마를 강제(ollama format=)하고 검증한다. 실패하면 에러를 모델에 되먹여 재시도.
 
-    post_validate: 스키마만으로 못 잡는 코드 검증 훅(예: Planner.data_refs를
+    post_validate: 스키마만으로 못 잡는 코드 검증 훅(예: Planner beat.refs를
                    grounding.ref_keys와 대조). 실패 시 예외를 던지면 같은
                    루프에서 self-heal 재시도된다.
     """

@@ -25,7 +25,7 @@ _MAX_FILE_CHARS = 12000  # 토큰 예산 보호용 절단 한도
 @dataclass
 class Grounding:
     payload: str                          # 프롬프트에 주입할 텍스트
-    ref_keys: set[str] = field(default_factory=set)  # Planner data_refs 검증용(없으면 빈 set)
+    ref_keys: set[str] = field(default_factory=set)  # Planner beat.refs 검증용(없으면 빈 set)
     provenance: dict = field(default_factory=dict)
 
     def to_json(self) -> str:
@@ -42,7 +42,7 @@ class Grounding:
 # -------- 범용 키 추출 (도메인 무관) --------
 def flatten_keys(obj, prefix: str = "") -> set[str]:
     """구조화 데이터(dict/list)를 재귀로 훑어 점(.) 경로 키 집합을 만든다.
-    Planner.data_refs 교차검증용. 도메인별로 키를 손으로 적지 않는다."""
+    Planner beat.refs 교차검증용. 도메인별로 키를 손으로 적지 않는다."""
     keys: set[str] = set()
     if isinstance(obj, dict):
         for k, v in obj.items():
