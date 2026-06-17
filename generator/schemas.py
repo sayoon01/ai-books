@@ -74,7 +74,9 @@ class ChapterSpec(BaseModel):
 
 
 class OutlinePlan(BaseModel):
-    chapters: list[ChapterSpec] = Field(min_length=1, description="앞→뒤로 누적되는 챕터 목차")
+    # max_length 필수: 상한이 없으면 ollama 제약 디코딩이 배열을 못 닫고 무한히 늘어진다.
+    chapters: list[ChapterSpec] = Field(min_length=1, max_length=20,
+                                        description="앞→뒤로 누적되는 챕터 목차")
 
 
 # =========================

@@ -7,6 +7,7 @@
 - 모델은 gemma4:31b 고정 (별도 llm.py 없이 이 파일에 내장).
 """
 import json
+import re
 from pathlib import Path
 from typing import Callable, TypeVar
 
@@ -113,11 +114,26 @@ def _strip_title_h1(text: str) -> str:
 # =========================
 # 목차 자동 생성
 # =========================
+def _parse_json(raw: str) -> dict:
+    """자유 텍스트 응답에서 JSON 객체만 추출해 파싱."""
+    text = raw.strip()
+    if "```" in text:
+        text = text.split("```")[1]
+        if text.startswith("json"):
+            text = text[4:]
+    m = re.search(r"\{.*\}", text, re.DOTALL)
+    if m:
+        text = m.group()
+    return json.loads(text.strip())
+
+
 def plan_outline(config: dict, gtext: str, n: int = DEFAULT_CHAPTER_COUNT) -> list[dict]:
     src = "근거 자료" if gtext else "책 설명(description)"
     print(f"  [목차 생성] {src} 기반 {n}개 챕터 생성 중...")
-    plan = call_structured(OUTLINE_SYSTEM, outline_user(config, gtext, n),
-                           OutlinePlan, temperature=0.5)
+    # 목차는 구조화 출력(format=schema) 대신 자유 텍스트+파싱.
+    # 제약 디코딩이 목차(리스트) 생성에서 비정상적으로 느려 자유 생성으로 대체한다.
+    raw = _call(OUTLINE_SYSTEM, outline_user(config, gtext, n), temperature=0.5)
+    plan = OutlinePlan(**_parse_json(raw))           # JSON 파싱 후 Pydantic 검증
     chapters = [c.model_dump() for c in plan.chapters]
     for i, c in enumerate(chapters, 1):
         if not c.get("number"):
