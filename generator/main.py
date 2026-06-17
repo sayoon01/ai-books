@@ -1,10 +1,9 @@
 """
 실행 방법:
-  python generator/main.py --toc toc/python-ml.json          # 책 (grounding 없음)
-  python generator/main.py --toc toc/mold-dx-report.json --planner   # 기술서 (grounding 있음)
+  python generator/main.py --toc toc/python-ml.json
 
 문서 정체성·독자·문체는 toc JSON의 description/target_reader/writing_guidelines가 정한다.
-grounding 필드가 있으면 자동 해소된다.
+chapters가 없으면 grounding(없으면 description)으로 목차를 자동 생성한다.
 """
 import argparse
 import json
@@ -22,9 +21,9 @@ def title_to_slug(title: str) -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="AI 문서 생성기 (장르 무관)")
+    parser = argparse.ArgumentParser(description="AI 책/문서 생성기")
     parser.add_argument("--toc", required=True, help="문서 사양 JSON 경로 (toc/*.json)")
-    parser.add_argument("--planner", action="store_true", help="Planner 단계 활성화")
+    parser.add_argument("--planner", action="store_true", help="챕터별 설계(Planner) 단계 활성화")
     args = parser.parse_args()
 
     doc_path = Path(args.toc)
