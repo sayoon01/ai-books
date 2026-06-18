@@ -24,7 +24,12 @@ def main():
     parser = argparse.ArgumentParser(description="AI 책/문서 생성기")
     parser.add_argument("--toc", required=True, help="문서 사양 JSON 경로 (toc/*.json)")
     parser.add_argument("--planner", action="store_true", help="챕터별 설계(Planner) 단계 활성화")
+    parser.add_argument("--no-push", action="store_true", help="자동 커밋·푸시 끄고 로컬 생성만")
     args = parser.parse_args()
+
+    if args.no_push:
+        import github_push
+        github_push.set_push(False)
 
     doc_path = Path(args.toc)
     if not doc_path.exists():
