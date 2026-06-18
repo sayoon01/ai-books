@@ -23,7 +23,8 @@ from prompts import (
 )
 from schemas import ReviewResult, OutlinePlan, UnitPlan
 from grounding import resolve_grounding, unverified_numbers
-from github_push import push_chapter, update_meta, update_readme
+from github_push import push_chapter, update_meta, update_readme, push_pdf, REPO_ROOT
+from pdf_export import build_pdf
 
 
 # =========================
@@ -100,6 +101,20 @@ def _config(doc: dict) -> dict:
 
 def _chapters(doc: dict) -> list:
     return doc.get("chapters", [])
+
+
+def _slugify(text: str) -> str:
+    """제목 → 파일명 슬러그. 한국어(\\w)는 보존하고 공백/언더스코어는 '-'로."""
+    s = text.lower().strip()
+    s = re.sub(r"[^\w\s-]", "", s)
+    s = re.sub(r"[\s_]+", "-", s)
+    s = re.sub(r"-+", "-", s)          # 연속 하이픈 합치기
+    return s.strip("-")
+
+
+def _chapter_filename(num: int, title: str) -> str:
+    slug = _slugify(title)
+    return f"chapter-{num:02d}-{slug}.md" if slug else f"chapter-{num:02d}.md"
 
 
 def _strip_title_h1(text: str) -> str:
@@ -311,14 +326,14 @@ def generate(doc: dict, output_dir: Path, slug: str, *, use_planner: bool = Fals
             final = draft if draft is not None else f"<!-- 생성 실패: {e} -->"
 
         content = f"# {num}. {ctitle}\n\n{_strip_title_h1(final)}"
-        filename = f"chapter-{num:02d}.md"
+        filename = _chapter_filename(num, ctitle)
         (output_dir / filename).write_text(content, encoding="utf-8")
         (log_dir / f"chapter-{num:02d}-review.json").write_text(
             json.dumps(quality_log, ensure_ascii=False, indent=2), encoding="utf-8")
         print(f"  저장: {filename}")
 
         # 자동 푸시
-        push_chapter(slug, num, ctitle, content)
+        push_chapter(slug, num, ctitle, content, filename=filename)
         update_meta(slug, doc, completed=num)
 
         # 다음 챕터 연결: 설계의 thesis가 있으면 그것을, 없으면 챕터 설명을 요약으로.
@@ -326,6 +341,14 @@ def generate(doc: dict, output_dir: Path, slug: str, *, use_planner: bool = Fals
                 else chapter.get("description", ""))
         summaries.append(f"{num}. {ctitle}: {desc}")
         print()
+
+    # 전권 PDF 생성 + 푸시 (실패해도 생성 자체는 성공 처리)
+    try:
+        pdf_path = build_pdf(REPO_ROOT / slug, slug, title)
+        if pdf_path:
+            push_pdf(slug, pdf_path)
+    except Exception as e:
+        print(f"  [PDF] 생성 실패(건너뜀): {e}")
 
     update_readme(slug, doc)
     print(f"[완료] {title}")

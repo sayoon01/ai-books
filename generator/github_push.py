@@ -20,12 +20,14 @@ def _git(args: list[str]) -> str:
     return result.stdout.strip()
 
 
-def push_chapter(slug: str, chapter_num: int, chapter_title: str, content: str) -> None:
+def push_chapter(slug: str, chapter_num: int, chapter_title: str, content: str,
+                 filename: str | None = None) -> None:
     """챕터 파일을 저장하고 GitHub에 커밋+푸시"""
     book_dir = REPO_ROOT / slug
     book_dir.mkdir(parents=True, exist_ok=True)
 
-    filename = f"chapter-{chapter_num:02d}.md"
+    if filename is None:
+        filename = f"chapter-{chapter_num:02d}.md"
     (book_dir / filename).write_text(content, encoding="utf-8")
 
     _git(["add", str(book_dir / filename)])
@@ -54,6 +56,16 @@ def update_meta(slug: str, toc: dict, completed: int) -> None:
     _git(["add", str(meta_path)])
     _git(["commit", "-m", f"chore({slug}): meta.json 업데이트 ({completed}/{total})"])
     _git(["push"])
+
+
+def push_pdf(slug: str, pdf_path: Path) -> None:
+    """생성된 PDF를 커밋+푸시"""
+    _git(["add", str(pdf_path)])
+    result = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=REPO_ROOT)
+    if result.returncode != 0:
+        _git(["commit", "-m", f"feat({slug}): {pdf_path.name} 생성"])
+        _git(["push"])
+        print(f"  [GitHub] PDF 푸시 완료: {slug}/{pdf_path.name}")
 
 
 def update_readme(slug: str, toc: dict) -> None:
