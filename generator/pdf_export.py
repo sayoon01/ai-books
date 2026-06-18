@@ -2,7 +2,8 @@
 완성된 챕터 마크다운을 한 권으로 합쳐 '출판물 수준' PDF로 변환한다.
 구성: 표지 → 판권지 → 목차(페이지번호) → 본문(러닝헤더·페이지번호·코드하이라이팅)
 - 출력명: {slug}-v{N}.pdf  (기존 PDF를 보고 버전 자동 증가)
-- markdown → HTML → weasyprint. 한글은 Noto Serif CJK KR.
+- markdown → HTML → weasyprint.
+- language(ko/en 등)에 맞춰 라벨·폰트·<html lang>을 자동 전환. 모르는 언어는 en 폴백.
 의존성: weasyprint, markdown, pygments
 """
 import datetime as _dt
@@ -14,19 +15,49 @@ from markdown.extensions.toc import TocExtension
 from pygments.formatters import HtmlFormatter
 from weasyprint import HTML, CSS
 
-# ── 본문 글꼴 (시스템 설치 폰트). 더 모던하게 하려면 Pretendard 등을 설치해 교체. ──
-SERIF = '"Noto Serif CJK KR", serif'
-SANS  = '"Noto Sans CJK KR", sans-serif'
-MONO  = '"D2Coding", "Noto Sans Mono CJK KR", monospace'
+# ── 언어별 글꼴 (시스템 설치 폰트). CJK는 Noto Serif CJK, 그 외는 라틴 serif. ──
+_CJK_LANGS = {"ko", "ja", "zh", "zh-cn", "zh-tw", "zh-hans", "zh-hant"}
+_FONTS_CJK = ('"Noto Serif CJK KR", serif',
+              '"Noto Sans CJK KR", sans-serif',
+              '"D2Coding", "Noto Sans Mono CJK KR", monospace')
+_FONTS_LATIN = ('"Noto Serif", "DejaVu Serif", serif',
+                '"Noto Sans", "DejaVu Sans", sans-serif',
+                '"DejaVu Sans Mono", monospace')
 
-_CSS = f"""
+# ── 언어별 라벨 (없는 언어는 en 폴백) ──
+_LABELS = {
+    "ko": {"eyebrow": "AI 생성 도서", "toc": "목차", "published": "발행일",
+           "author": "지은이", "model": "생성 모델", "version": "버전",
+           "note": "본 문서는 자동 생성 파이프라인으로 작성·검수되었습니다.",
+           "rights": "All rights reserved."},
+    "en": {"eyebrow": "AI GENERATED BOOK", "toc": "Table of Contents", "published": "Published",
+           "author": "Author", "model": "Model", "version": "Version",
+           "note": "This document was written and reviewed by an automated generation pipeline.",
+           "rights": "All rights reserved."},
+}
+
+
+def _lang_assets(language: str):
+    """언어 코드 → (라벨 dict, (serif, sans, mono), is_cjk)."""
+    lang = (language or "ko").lower()
+    base = lang.split("-")[0]
+    labels = _LABELS.get(lang) or _LABELS.get(base) or _LABELS["en"]
+    is_cjk = lang in _CJK_LANGS or base in {"ko", "ja", "zh"}
+    return labels, (_FONTS_CJK if is_cjk else _FONTS_LATIN), is_cjk
+
+
+def _make_css(serif: str, sans: str, mono: str, is_cjk: bool) -> str:
+    """폰트/언어에 맞춘 스타일시트. {BOOK_TITLE}은 caller가 치환."""
+    # CJK는 단어 중간 줄바꿈 방지(keep-all), 라틴은 기본 줄바꿈.
+    wrap = "word-break: keep-all; line-break: strict;" if is_cjk else ""
+    return f"""
 /* ===== 페이지 기본 (본문) : 러닝헤더 + 가운데 페이지번호 ===== */
 @page {{
     size: A4;
     margin: 25mm 22mm 22mm 22mm;
-    @top-center   {{ content: string(book-title); font: 8pt {SANS}; color:#888; }}
-    @top-right    {{ content: string(chapter);    font: 8pt {SANS}; color:#888; }}
-    @bottom-center{{ content: counter(page);       font: 9pt {SANS}; color:#555; }}
+    @top-center   {{ content: string(book-title); font: 8pt {sans}; color:#888; }}
+    @top-right    {{ content: string(chapter);    font: 8pt {sans}; color:#888; }}
+    @bottom-center{{ content: counter(page);       font: 9pt {sans}; color:#555; }}
 }}
 @page :first {{ @top-center{{content:none}} @top-right{{content:none}} @bottom-center{{content:none}} }}
 
@@ -36,29 +67,28 @@ _CSS = f"""
 @page toc      {{ @top-right{{content:none}} }}
 
 html {{ string-set: book-title "{{BOOK_TITLE}}"; }}
-body {{ font-family:{SERIF}; font-size:10.5pt; line-height:1.75; color:#1a1a1a;
-        word-break: keep-all; line-break: strict; text-align: justify;
-        hanging-punctuation: allow-end; }}
+body {{ font-family:{serif}; font-size:10.5pt; line-height:1.75; color:#1a1a1a;
+        {wrap} text-align: justify; hanging-punctuation: allow-end; }}
 
 /* ===== 표지 ===== */
 .cover {{ page: cover; break-after: page; height:100vh; display:flex;
           flex-direction:column; justify-content:center; align-items:center;
           text-align:center; padding:0 25mm; background:#0f2540; color:#fff; }}
-.cover .eyebrow {{ font:11pt {SANS}; letter-spacing:.35em; opacity:.7; margin-bottom:1.5em; }}
-.cover h1 {{ font:bold 32pt {SANS}; line-height:1.3; margin:0; border:none; color:#fff; }}
-.cover .subtitle {{ font:14pt {SERIF}; opacity:.85; margin-top:1em; }}
+.cover .eyebrow {{ font:11pt {sans}; letter-spacing:.35em; opacity:.7; margin-bottom:1.5em; }}
+.cover h1 {{ font:bold 32pt {sans}; line-height:1.3; margin:0; border:none; color:#fff; }}
+.cover .subtitle {{ font:14pt {serif}; opacity:.85; margin-top:1em; }}
 .cover .rule {{ width:60px; height:3px; background:#c9a14a; margin:2em 0; }}
-.cover .meta {{ font:10pt {SANS}; opacity:.75; margin-top:auto; padding-bottom:25mm; line-height:1.8; }}
+.cover .meta {{ font:10pt {sans}; opacity:.75; margin-top:auto; padding-bottom:25mm; line-height:1.8; }}
 
 /* ===== 판권지 ===== */
-.colophon {{ page: colophon; break-after: page; font:9pt {SANS}; color:#444;
+.colophon {{ page: colophon; break-after: page; font:9pt {sans}; color:#444;
              padding-top:45vh; line-height:1.9; }}
 .colophon strong {{ color:#1a1a1a; }}
 .colophon p {{ break-inside: avoid; }}
 
 /* ===== 목차 ===== */
 nav.toc {{ page: toc; break-after: page; }}
-nav.toc > h2 {{ font:bold 18pt {SANS}; color:#0f2540; border-bottom:2px solid #0f2540;
+nav.toc > h2 {{ font:bold 18pt {sans}; color:#0f2540; border-bottom:2px solid #0f2540;
                 padding-bottom:.3em; margin-bottom:1em; }}
 nav.toc ul {{ list-style:none; padding-left:0; }}
 nav.toc li {{ margin:.4em 0; display:flex; }}
@@ -69,10 +99,10 @@ nav.toc a::after {{ content: target-counter(attr(href), page); color:#888; }}
 
 /* ===== 본문 ===== */
 h1 {{ string-set: chapter content(); break-before: page; break-after: avoid;
-      font:bold 22pt {SANS}; color:#0f2540; padding-top:1em;
+      font:bold 22pt {sans}; color:#0f2540; padding-top:1em;
       border-bottom:3px solid #c9a14a; padding-bottom:.4em; margin-bottom:1em; }}
-h2 {{ font:bold 14pt {SANS}; color:#0f2540; margin:1.6em 0 .5em; break-after: avoid; }}
-h3 {{ font:bold 12pt {SANS}; margin:1.2em 0 .4em; break-after: avoid; }}
+h2 {{ font:bold 14pt {sans}; color:#0f2540; margin:1.6em 0 .5em; break-after: avoid; }}
+h3 {{ font:bold 12pt {sans}; margin:1.2em 0 .4em; break-after: avoid; }}
 p  {{ margin:.55em 0; orphans:2; widows:2; }}
 strong {{ color:#0f2540; }}
 a {{ color:#1a5276; }}
@@ -89,16 +119,16 @@ blockquote {{ border-left:4px solid #c9a14a; background:#faf7ef; margin:1em 0;
               padding:.6em 1em; color:#444; }}
 
 /* 코드 */
-code {{ font-family:{MONO}; font-size:9pt; background:#f0f2f4;
+code {{ font-family:{mono}; font-size:9pt; background:#f0f2f4;
         padding:1px 4px; border-radius:3px; }}
-pre {{ font-family:{MONO}; font-size:8.5pt; line-height:1.5; background:#f6f8fa;
+pre {{ font-family:{mono}; font-size:8.5pt; line-height:1.5; background:#f6f8fa;
        border:1px solid #e1e4e8; border-radius:6px; padding:.9em 1em;
        white-space:pre-wrap; break-inside: avoid; }}
 pre code {{ background:none; padding:0; }}
 
 img {{ max-width:100%; }}
 figure {{ text-align:center; margin:1.2em 0; }}
-figcaption {{ font:9pt {SANS}; color:#777; margin-top:.4em; }}
+figcaption {{ font:9pt {sans}; color:#777; margin-top:.4em; }}
 """
 
 
@@ -115,9 +145,9 @@ def _chapter_files(book_dir: Path) -> list[Path]:
 
 
 def build_pdf(book_dir: Path, slug: str, title: str, *,
-              subtitle: str = "", author: str = "AI Book Generator",
+              language: str = "ko", subtitle: str = "", author: str = "AI Book Generator",
               model: str = "", date_str: str = "", version: int | None = None) -> Path | None:
-    """책 폴더의 챕터들을 합쳐 PDF 생성. version 미지정 시 다음 버전 자동 산정."""
+    """책 폴더의 챕터들을 합쳐 PDF 생성. language로 라벨·폰트 전환, version 미지정 시 자동 산정."""
     chapters = _chapter_files(book_dir)
     if not chapters:
         print("  [PDF] 챕터 md가 없어 건너뜀")
@@ -126,6 +156,8 @@ def build_pdf(book_dir: Path, slug: str, title: str, *,
     if version is None:
         version = _next_version(book_dir, slug)
     date_str = date_str or _dt.date.today().isoformat()
+    L, (serif, sans, mono), is_cjk = _lang_assets(language)
+    lang_attr = (language or "ko").lower()
     raw_md = "\n\n".join(c.read_text(encoding="utf-8") for c in chapters)
 
     # 한 번에 변환해야 헤딩 id·TOC가 일관됨
@@ -139,30 +171,30 @@ def build_pdf(book_dir: Path, slug: str, title: str, *,
 
     cover = f"""
     <section class="cover">
-      <div class="eyebrow">AI GENERATED BOOK</div>
+      <div class="eyebrow">{L['eyebrow']}</div>
       <h1>{title}</h1>
       {f'<div class="subtitle">{subtitle}</div>' if subtitle else ''}
       <div class="rule"></div>
       <div class="meta">{author} · {date_str}<br>
-        {f'{model} · ' if model else ''}Version {version}</div>
+        {f'{model} · ' if model else ''}{L['version']} {version}</div>
     </section>"""
 
     colophon = f"""
     <section class="colophon">
       <p><strong>{title}</strong></p>
       {f'<p>{subtitle}</p>' if subtitle else ''}
-      <p>발행일 {date_str}<br>
-         지은이 {author}<br>
-         {f'생성 모델 {model}<br>' if model else ''}
-         버전 v{version}<br>
-         본 문서는 자동 생성 파이프라인으로 작성·검수되었습니다.</p>
-      <p>© {date_str[:4]} {author}. All rights reserved.</p>
+      <p>{L['published']} {date_str}<br>
+         {L['author']} {author}<br>
+         {f"{L['model']} {model}<br>" if model else ''}
+         {L['version']} v{version}<br>
+         {L['note']}</p>
+      <p>© {date_str[:4]} {author}. {L['rights']}</p>
     </section>"""
 
-    toc = f'<nav class="toc"><h2>목차</h2>{toc_html}</nav>'
+    toc = f'<nav class="toc"><h2>{L["toc"]}</h2>{toc_html}</nav>'
 
     full_html = (
-        f'<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8">'
+        f'<!DOCTYPE html><html lang="{lang_attr}"><head><meta charset="utf-8">'
         f'<title>{title}</title>'
         f'<meta name="author" content="{author}">'
         f'<meta name="description" content="{subtitle or title}">'
@@ -170,8 +202,9 @@ def build_pdf(book_dir: Path, slug: str, title: str, *,
         f'</head><body>{cover}{colophon}{toc}<main>{body_html}</main></body></html>'
     )
 
-    css = CSS(string=_CSS.replace("{BOOK_TITLE}", title) + "\n" + pyg_css)
+    css_text = _make_css(serif, sans, mono, is_cjk).replace("{BOOK_TITLE}", title)
+    css = CSS(string=css_text + "\n" + pyg_css)
     out_path = book_dir / f"{slug}-v{version}.pdf"
     HTML(string=full_html).write_pdf(str(out_path), stylesheets=[css])
-    print(f"  [PDF] 생성: {out_path.name} (챕터 {len(chapters)}개)")
+    print(f"  [PDF] 생성: {out_path.name} (챕터 {len(chapters)}개, lang={lang_attr})")
     return out_path
