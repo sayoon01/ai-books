@@ -1,5 +1,8 @@
 # AI Book 생성 파이프라인 개선 검토 (2026.06.18)
 
+<img width="1536" height="1024" alt="ChatGPT Image 2026년 6월 18일 오후 05_49_45" src="https://github.com/user-attachments/assets/80894e91-de6d-4284-a805-f6e11c43dbc8" />
+
+
 ## 개요
 
 AI Book 생성기는 기본적으로 다음 구조로 동작합니다.
