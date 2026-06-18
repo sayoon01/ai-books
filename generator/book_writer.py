@@ -344,7 +344,9 @@ def generate(doc: dict, output_dir: Path, slug: str, *, use_planner: bool = Fals
 
     # 전권 PDF 생성 + 푸시 (실패해도 생성 자체는 성공 처리)
     try:
-        pdf_path = build_pdf(REPO_ROOT / slug, slug, title)
+        pdf_path = build_pdf(REPO_ROOT / slug, slug, title,
+                             subtitle=config.get("description", "")[:80],
+                             model=MODEL)
         if pdf_path:
             push_pdf(slug, pdf_path)
     except Exception as e:

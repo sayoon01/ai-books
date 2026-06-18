@@ -1,72 +1,177 @@
 """
-완성된 챕터 마크다운을 한 권으로 합쳐 PDF로 변환한다.
+완성된 챕터 마크다운을 한 권으로 합쳐 '출판물 수준' PDF로 변환한다.
+구성: 표지 → 판권지 → 목차(페이지번호) → 본문(러닝헤더·페이지번호·코드하이라이팅)
 - 출력명: {slug}-v{N}.pdf  (기존 PDF를 보고 버전 자동 증가)
-- markdown → HTML → weasyprint, 한글 폰트(Noto Serif CJK KR) 지정.
+- markdown → HTML → weasyprint. 한글은 Noto Serif CJK KR.
+의존성: weasyprint, markdown, pygments
 """
+import datetime as _dt
 import re
 from pathlib import Path
 
 import markdown
-from weasyprint import HTML
+from markdown.extensions.toc import TocExtension
+from pygments.formatters import HtmlFormatter
+from weasyprint import HTML, CSS
 
-# 한글 본문용 CSS. 시스템에 깔린 Noto Serif CJK KR을 사용한다.
-_CSS = """
-@page { size: A4; margin: 22mm 20mm; }
-body { font-family: "Noto Serif CJK KR", serif; font-size: 11pt; line-height: 1.7;
-       color: #1a1a1a; }
-h1 { font-size: 20pt; margin: 1.4em 0 0.6em; page-break-before: always; }
-h1:first-of-type { page-break-before: avoid; }
-h2 { font-size: 15pt; margin: 1.2em 0 0.5em; }
-h3 { font-size: 12.5pt; margin: 1em 0 0.4em; }
-p { margin: 0.5em 0; text-align: justify; }
-code, pre { font-family: "Noto Sans Mono CJK KR", monospace; font-size: 9.5pt; }
-pre { background: #f4f4f4; padding: 0.8em; border-radius: 4px; white-space: pre-wrap; }
-table { border-collapse: collapse; width: 100%; margin: 0.8em 0; }
-th, td { border: 1px solid #ccc; padding: 5px 8px; font-size: 10pt; }
-.cover { text-align: center; page-break-after: always; }
-.cover h1 { font-size: 30pt; page-break-before: avoid; margin-top: 35vh; }
+# ── 본문 글꼴 (시스템 설치 폰트). 더 모던하게 하려면 Pretendard 등을 설치해 교체. ──
+SERIF = '"Noto Serif CJK KR", serif'
+SANS  = '"Noto Sans CJK KR", sans-serif'
+MONO  = '"D2Coding", "Noto Sans Mono CJK KR", monospace'
+
+_CSS = f"""
+/* ===== 페이지 기본 (본문) : 러닝헤더 + 가운데 페이지번호 ===== */
+@page {{
+    size: A4;
+    margin: 25mm 22mm 22mm 22mm;
+    @top-center   {{ content: string(book-title); font: 8pt {SANS}; color:#888; }}
+    @top-right    {{ content: string(chapter);    font: 8pt {SANS}; color:#888; }}
+    @bottom-center{{ content: counter(page);       font: 9pt {SANS}; color:#555; }}
+}}
+@page :first {{ @top-center{{content:none}} @top-right{{content:none}} @bottom-center{{content:none}} }}
+
+/* 표지 / 판권지 : 머리말·꼬리말 없음 */
+@page cover    {{ margin:0; @top-center{{content:none}} @top-right{{content:none}} @bottom-center{{content:none}} }}
+@page colophon {{ @top-center{{content:none}} @top-right{{content:none}} @bottom-center{{content:none}} }}
+@page toc      {{ @top-right{{content:none}} }}
+
+html {{ string-set: book-title "{{BOOK_TITLE}}"; }}
+body {{ font-family:{SERIF}; font-size:10.5pt; line-height:1.75; color:#1a1a1a;
+        word-break: keep-all; line-break: strict; text-align: justify;
+        hanging-punctuation: allow-end; }}
+
+/* ===== 표지 ===== */
+.cover {{ page: cover; break-after: page; height:100vh; display:flex;
+          flex-direction:column; justify-content:center; align-items:center;
+          text-align:center; padding:0 25mm; background:#0f2540; color:#fff; }}
+.cover .eyebrow {{ font:11pt {SANS}; letter-spacing:.35em; opacity:.7; margin-bottom:1.5em; }}
+.cover h1 {{ font:bold 32pt {SANS}; line-height:1.3; margin:0; border:none; color:#fff; }}
+.cover .subtitle {{ font:14pt {SERIF}; opacity:.85; margin-top:1em; }}
+.cover .rule {{ width:60px; height:3px; background:#c9a14a; margin:2em 0; }}
+.cover .meta {{ font:10pt {SANS}; opacity:.75; margin-top:auto; padding-bottom:25mm; line-height:1.8; }}
+
+/* ===== 판권지 ===== */
+.colophon {{ page: colophon; break-after: page; font:9pt {SANS}; color:#444;
+             padding-top:45vh; line-height:1.9; }}
+.colophon strong {{ color:#1a1a1a; }}
+.colophon p {{ break-inside: avoid; }}
+
+/* ===== 목차 ===== */
+nav.toc {{ page: toc; break-after: page; }}
+nav.toc > h2 {{ font:bold 18pt {SANS}; color:#0f2540; border-bottom:2px solid #0f2540;
+                padding-bottom:.3em; margin-bottom:1em; }}
+nav.toc ul {{ list-style:none; padding-left:0; }}
+nav.toc li {{ margin:.4em 0; display:flex; }}
+nav.toc li li {{ padding-left:1.4em; font-size:9.5pt; color:#555; }}
+nav.toc a {{ text-decoration:none; color:inherit; flex:1;
+             display:flex; justify-content:space-between; }}
+nav.toc a::after {{ content: target-counter(attr(href), page); color:#888; }}
+
+/* ===== 본문 ===== */
+h1 {{ string-set: chapter content(); break-before: page; break-after: avoid;
+      font:bold 22pt {SANS}; color:#0f2540; padding-top:1em;
+      border-bottom:3px solid #c9a14a; padding-bottom:.4em; margin-bottom:1em; }}
+h2 {{ font:bold 14pt {SANS}; color:#0f2540; margin:1.6em 0 .5em; break-after: avoid; }}
+h3 {{ font:bold 12pt {SANS}; margin:1.2em 0 .4em; break-after: avoid; }}
+p  {{ margin:.55em 0; orphans:2; widows:2; }}
+strong {{ color:#0f2540; }}
+a {{ color:#1a5276; }}
+
+/* 표 */
+table {{ border-collapse:collapse; width:100%; margin:1em 0; font-size:9.5pt;
+         break-inside: avoid; }}
+thead {{ background:#0f2540; color:#fff; }}
+th,td {{ border:1px solid #d0d0d0; padding:6px 9px; text-align:left; }}
+tbody tr:nth-child(even) {{ background:#f6f8fa; }}
+
+/* 인용 / 노트 */
+blockquote {{ border-left:4px solid #c9a14a; background:#faf7ef; margin:1em 0;
+              padding:.6em 1em; color:#444; }}
+
+/* 코드 */
+code {{ font-family:{MONO}; font-size:9pt; background:#f0f2f4;
+        padding:1px 4px; border-radius:3px; }}
+pre {{ font-family:{MONO}; font-size:8.5pt; line-height:1.5; background:#f6f8fa;
+       border:1px solid #e1e4e8; border-radius:6px; padding:.9em 1em;
+       white-space:pre-wrap; break-inside: avoid; }}
+pre code {{ background:none; padding:0; }}
+
+img {{ max-width:100%; }}
+figure {{ text-align:center; margin:1.2em 0; }}
+figcaption {{ font:9pt {SANS}; color:#777; margin-top:.4em; }}
 """
 
 
 def _next_version(book_dir: Path, slug: str) -> int:
-    """{slug}-v*.pdf 중 최대 버전 +1 (없으면 1)."""
-    nums = []
-    for p in book_dir.glob(f"{slug}-v*.pdf"):
-        m = re.match(rf"{re.escape(slug)}-v(\d+)\.pdf$", p.name)
-        if m:
-            nums.append(int(m.group(1)))
+    nums = [int(m.group(1)) for p in book_dir.glob(f"{slug}-v*.pdf")
+            if (m := re.match(rf"{re.escape(slug)}-v(\d+)\.pdf$", p.name))]
     return (max(nums) + 1) if nums else 1
 
 
 def _chapter_files(book_dir: Path) -> list[Path]:
-    """chapter-NN[-슬러그].md 를 번호 순으로."""
     files = list(book_dir.glob("chapter-*.md"))
-    def key(p: Path) -> int:
-        m = re.match(r"chapter-(\d+)", p.name)
-        return int(m.group(1)) if m else 0
-    return sorted(files, key=key)
+    return sorted(files, key=lambda p: int(re.match(r"chapter-(\d+)", p.name).group(1))
+                  if re.match(r"chapter-(\d+)", p.name) else 0)
 
 
-def build_pdf(book_dir: Path, slug: str, title: str) -> Path | None:
-    """책 폴더의 챕터들을 합쳐 다음 버전 PDF를 생성. 챕터가 없으면 None."""
+def build_pdf(book_dir: Path, slug: str, title: str, *,
+              subtitle: str = "", author: str = "AI Book Generator",
+              model: str = "", date_str: str = "", version: int | None = None) -> Path | None:
+    """책 폴더의 챕터들을 합쳐 PDF 생성. version 미지정 시 다음 버전 자동 산정."""
     chapters = _chapter_files(book_dir)
     if not chapters:
         print("  [PDF] 챕터 md가 없어 건너뜀")
         return None
 
-    md_parts = "\n\n".join(c.read_text(encoding="utf-8") for c in chapters)
-    body_html = markdown.markdown(md_parts, extensions=["tables", "fenced_code"])
+    if version is None:
+        version = _next_version(book_dir, slug)
+    date_str = date_str or _dt.date.today().isoformat()
+    raw_md = "\n\n".join(c.read_text(encoding="utf-8") for c in chapters)
+
+    # 한 번에 변환해야 헤딩 id·TOC가 일관됨
+    md = markdown.Markdown(extensions=[
+        "extra", "sane_lists", "codehilite",
+        TocExtension(toc_depth="1-2", permalink=False),
+    ], extension_configs={"codehilite": {"guess_lang": False}})
+    body_html = md.convert(raw_md)
+    toc_html = md.toc                      # <div class="toc"><ul>…</ul></div>
+    pyg_css = HtmlFormatter().get_style_defs(".codehilite")
+
+    cover = f"""
+    <section class="cover">
+      <div class="eyebrow">AI GENERATED BOOK</div>
+      <h1>{title}</h1>
+      {f'<div class="subtitle">{subtitle}</div>' if subtitle else ''}
+      <div class="rule"></div>
+      <div class="meta">{author} · {date_str}<br>
+        {f'{model} · ' if model else ''}Version {version}</div>
+    </section>"""
+
+    colophon = f"""
+    <section class="colophon">
+      <p><strong>{title}</strong></p>
+      {f'<p>{subtitle}</p>' if subtitle else ''}
+      <p>발행일 {date_str}<br>
+         지은이 {author}<br>
+         {f'생성 모델 {model}<br>' if model else ''}
+         버전 v{version}<br>
+         본 문서는 자동 생성 파이프라인으로 작성·검수되었습니다.</p>
+      <p>© {date_str[:4]} {author}. All rights reserved.</p>
+    </section>"""
+
+    toc = f'<nav class="toc"><h2>목차</h2>{toc_html}</nav>'
+
     full_html = (
-        f'<div class="cover"><h1>{title}</h1></div>\n{body_html}'
+        f'<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8">'
+        f'<title>{title}</title>'
+        f'<meta name="author" content="{author}">'
+        f'<meta name="description" content="{subtitle or title}">'
+        f'<meta name="generator" content="{model or "ai-books"}">'
+        f'</head><body>{cover}{colophon}{toc}<main>{body_html}</main></body></html>'
     )
 
-    version = _next_version(book_dir, slug)
+    css = CSS(string=_CSS.replace("{BOOK_TITLE}", title) + "\n" + pyg_css)
     out_path = book_dir / f"{slug}-v{version}.pdf"
-    HTML(string=full_html).write_pdf(str(out_path), stylesheets=[__css()])
+    HTML(string=full_html).write_pdf(str(out_path), stylesheets=[css])
     print(f"  [PDF] 생성: {out_path.name} (챕터 {len(chapters)}개)")
     return out_path
-
-
-def __css():
-    from weasyprint import CSS
-    return CSS(string=_CSS)
