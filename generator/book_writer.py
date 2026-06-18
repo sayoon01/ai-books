@@ -224,6 +224,7 @@ def generate(doc: dict, output_dir: Path, slug: str, *, use_planner: bool = Fals
     log_dir.mkdir(exist_ok=True)
 
     chapters = _chapters(doc)
+    auto_outline = not chapters                        # chapters 없으면 AI가 목차 생성
     if not chapters:                                   # 목차 자동 생성
         chapters = plan_outline(config, gtext)
         (output_dir / "_outline.json").write_text(
@@ -346,8 +347,8 @@ def generate(doc: dict, output_dir: Path, slug: str, *, use_planner: bool = Fals
     try:
         pdf_path = build_pdf(REPO_ROOT / slug, slug, title,
                              language=config.get("language", "ko"),
-                             subtitle=config.get("description", "")[:80],
-                             model=MODEL)
+                             subtitle=config.get("description", ""),
+                             model=MODEL, auto_outline=auto_outline)
         if pdf_path:
             push_pdf(slug, pdf_path)
     except Exception as e:

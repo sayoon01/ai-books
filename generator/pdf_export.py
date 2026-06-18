@@ -28,10 +28,12 @@ _FONTS_LATIN = ('"Noto Serif", "DejaVu Serif", serif',
 _LABELS = {
     "ko": {"eyebrow": "AI 생성 도서", "toc": "목차", "published": "발행일",
            "author": "지은이", "model": "생성 모델", "version": "버전",
+           "outline": "목차 구성", "outline_ai": "AI 생성 목차", "outline_given": "지정 목차",
            "note": "본 문서는 자동 생성 파이프라인으로 작성·검수되었습니다.",
            "rights": "All rights reserved."},
     "en": {"eyebrow": "AI GENERATED BOOK", "toc": "Table of Contents", "published": "Published",
            "author": "Author", "model": "Model", "version": "Version",
+           "outline": "Outline", "outline_ai": "AI-generated", "outline_given": "Provided",
            "note": "This document was written and reviewed by an automated generation pipeline.",
            "rights": "All rights reserved."},
 }
@@ -146,8 +148,10 @@ def _chapter_files(book_dir: Path) -> list[Path]:
 
 def build_pdf(book_dir: Path, slug: str, title: str, *,
               language: str = "ko", subtitle: str = "", author: str = "AI Book Generator",
-              model: str = "", date_str: str = "", version: int | None = None) -> Path | None:
-    """책 폴더의 챕터들을 합쳐 PDF 생성. language로 라벨·폰트 전환, version 미지정 시 자동 산정."""
+              model: str = "", date_str: str = "", version: int | None = None,
+              auto_outline: bool | None = None) -> Path | None:
+    """책 폴더의 챕터들을 합쳐 PDF 생성. language로 라벨·폰트 전환, version 미지정 시 자동 산정.
+    auto_outline: True=AI 생성 목차, False=지정 목차, None=표기 안 함."""
     chapters = _chapter_files(book_dir)
     if not chapters:
         print("  [PDF] 챕터 md가 없어 건너뜀")
@@ -186,6 +190,7 @@ def build_pdf(book_dir: Path, slug: str, title: str, *,
       <p>{L['published']} {date_str}<br>
          {L['author']} {author}<br>
          {f"{L['model']} {model}<br>" if model else ''}
+         {f"{L['outline']} {L['outline_ai'] if auto_outline else L['outline_given']}<br>" if auto_outline is not None else ''}
          {L['version']} v{version}<br>
          {L['note']}</p>
       <p>© {date_str[:4]} {author}. {L['rights']}</p>
