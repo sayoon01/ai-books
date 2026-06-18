@@ -30,11 +30,13 @@ _LABELS = {
     "ko": {"eyebrow": "AI 생성 도서", "toc": "목차", "published": "발행일",
            "author": "지은이", "model": "생성 모델", "version": "버전",
            "outline": "목차 구성", "outline_ai": "AI 생성 목차", "outline_given": "지정 목차",
+           "writing_time": "작성 소요 시간",
            "note": "본 문서는 자동 생성 파이프라인으로 작성·검수되었습니다.",
            "rights": "All rights reserved."},
     "en": {"eyebrow": "AI GENERATED BOOK", "toc": "Table of Contents", "published": "Published",
            "author": "Author", "model": "Model", "version": "Version",
            "outline": "Outline", "outline_ai": "AI-generated", "outline_given": "Provided",
+           "writing_time": "Writing time",
            "note": "This document was written and reviewed by an automated generation pipeline.",
            "rights": "All rights reserved."},
 }
@@ -135,6 +137,20 @@ figcaption {{ font:9pt {sans}; color:#777; margin-top:.4em; }}
 """
 
 
+def _fmt_dur(seconds: float) -> str:
+    """초 → '1h 23m 4s' / '12m 30s' / '45s' 형태."""
+    s = int(round(seconds))
+    h, rem = divmod(s, 3600)
+    m, sec = divmod(rem, 60)
+    parts = []
+    if h:
+        parts.append(f"{h}h")
+    if m or h:
+        parts.append(f"{m}m")
+    parts.append(f"{sec}s")
+    return " ".join(parts)
+
+
 def _next_version(book_dir: Path, slug: str) -> int:
     nums = [int(m.group(1)) for p in book_dir.glob(f"{slug}-v*.pdf")
             if (m := re.match(rf"{re.escape(slug)}-v(\d+)\.pdf$", p.name))]
@@ -150,9 +166,10 @@ def _chapter_files(book_dir: Path) -> list[Path]:
 def build_pdf(book_dir: Path, slug: str, title: str, *,
               language: str = "ko", subtitle: str = "", author: str = "AI Book Generator",
               model: str = "", date_str: str = "", version: int | None = None,
-              auto_outline: bool | None = None) -> Path | None:
+              auto_outline: bool | None = None, gen_seconds: float | None = None) -> Path | None:
     """책 폴더의 챕터들을 합쳐 PDF 생성. language로 라벨·폰트 전환, version 미지정 시 자동 산정.
-    auto_outline: True=AI 생성 목차, False=지정 목차, None=표기 안 함."""
+    auto_outline: True=AI 생성 목차, False=지정 목차, None=표기 안 함.
+    gen_seconds: 본문 작성에 걸린 총 시간(초). 주면 판권지에 표기."""
     chapters = _chapter_files(book_dir)
     if not chapters:
         print("  [PDF] 챕터 md가 없어 건너뜀")
@@ -193,6 +210,7 @@ def build_pdf(book_dir: Path, slug: str, title: str, *,
          {L['author']} {author}<br>
          {f"{L['model']} {model}<br>" if model else ''}
          {f"{L['outline']} {L['outline_ai'] if auto_outline else L['outline_given']}<br>" if auto_outline is not None else ''}
+         {f"{L['writing_time']} {_fmt_dur(gen_seconds)}<br>" if gen_seconds else ''}
          {L['version']} v{version}<br>
          {L['note']}</p>
       <p>© {date_str[:4]} {author}. {L['rights']}</p>

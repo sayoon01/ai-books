@@ -8,6 +8,8 @@
 """
 import json
 import re
+import time
+from datetime import datetime
 from pathlib import Path
 from typing import Callable, TypeVar
 
@@ -32,6 +34,8 @@ from pdf_export import build_pdf
 # =========================
 MODEL = "gemma4:31b"
 _OPTIONS = {"temperature": 0.7, "num_ctx": 32768, "repeat_penalty": 1.2}
+# 멀티 요청 사이 모델이 언로드돼 요청이 멈추는 것 방지 (런너 유지).
+_KEEP_ALIVE = "30m"
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -45,6 +49,7 @@ def _call(system: str, user: str, temperature: float) -> str:
     res = ollama.chat(
         model=MODEL,
         options={**_OPTIONS, "temperature": temperature},
+        keep_alive=_KEEP_ALIVE,
         messages=[{"role": "system", "content": system},
                   {"role": "user", "content": user}],
     )
@@ -63,6 +68,7 @@ def call_structured(system: str, user: str, schema: type[T], temperature: float,
             model=MODEL,
             format=schema.model_json_schema(),          # ★ 구조화 출력 강제
             options={**_OPTIONS, "temperature": temperature},
+            keep_alive=_KEEP_ALIVE,
             messages=msg,
         )["message"]["content"]
         try:
@@ -236,11 +242,14 @@ def generate(doc: dict, output_dir: Path, slug: str, *, use_planner: bool = Fals
     print(f"\n생성 시작: {title}  (챕터 {len(chapters)}개, grounding={g_src})\n")
 
     summaries = []  # 이전 챕터 요약 (다음 챕터 프롬프트에 주입)
+    t_start = time.perf_counter()
+    chapter_times: list[float] = []
 
     for i, chapter in enumerate(chapters, 1):
         num = chapter.get("number", i)
         ctitle = chapter["title"]
         print(f"--- 챕터 {num}: {ctitle} ---")
+        t_ch = time.perf_counter()
 
         draft = None
         plan = None
@@ -329,9 +338,12 @@ def generate(doc: dict, output_dir: Path, slug: str, *, use_planner: bool = Fals
         content = f"# {num}. {ctitle}\n\n{_strip_title_h1(final)}"
         filename = _chapter_filename(num, ctitle)
         (output_dir / filename).write_text(content, encoding="utf-8")
+        ch_elapsed = time.perf_counter() - t_ch
+        chapter_times.append(ch_elapsed)
+        quality_log["elapsed_sec"] = round(ch_elapsed, 1)
         (log_dir / f"chapter-{num:02d}-review.json").write_text(
             json.dumps(quality_log, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(f"  저장: {filename}")
+        print(f"  저장: {filename}  (소요 {ch_elapsed:.0f}s)")
 
         # 자동 푸시
         push_chapter(slug, num, ctitle, content, filename=filename)
@@ -343,19 +355,30 @@ def generate(doc: dict, output_dir: Path, slug: str, *, use_planner: bool = Fals
         summaries.append(f"{num}. {ctitle}: {desc}")
         print()
 
+    gen_elapsed = time.perf_counter() - t_start   # 본문 작성 총 시간(PDF 렌더 전까지)
+
     # 전권 PDF 생성 + 푸시 (실패해도 생성 자체는 성공 처리)
     try:
         pdf_path = build_pdf(REPO_ROOT / slug, slug, title,
                              language=config.get("language", "ko"),
                              subtitle=config.get("description", ""),
-                             model=MODEL, auto_outline=auto_outline)
+                             model=MODEL, auto_outline=auto_outline,
+                             gen_seconds=gen_elapsed)
         if pdf_path:
             push_pdf(slug, pdf_path)
     except Exception as e:
         print(f"  [PDF] 생성 실패(건너뜀): {e}")
 
-    update_readme(slug, doc)
-    print(f"[완료] {title}")
+    # 총 소요 시간 기록
+    total = time.perf_counter() - t_start
+    mins, secs = divmod(int(total), 60)
+    avg = (sum(chapter_times) / len(chapter_times)) if chapter_times else 0
+    print(f"[완료] {title}  — 총 {mins}분 {secs}초 "
+          f"(챕터 {len(chapter_times)}개, 평균 {avg:.0f}s/챕터, planner={'on' if use_planner else 'off'})")
+    with (log_dir / "generation_time.log").open("a", encoding="utf-8") as f:
+        f.write(f"{datetime.now().isoformat(timespec='seconds')}\t{slug}\t"
+                f"total={total:.0f}s\tchapters={len(chapter_times)}\t"
+                f"avg={avg:.0f}s\tplanner={'on' if use_planner else 'off'}\n")
 
 
 # 하위호환 — 기존 호출부 유지
