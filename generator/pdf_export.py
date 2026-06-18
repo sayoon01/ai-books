@@ -8,6 +8,7 @@
 """
 import datetime as _dt
 import re
+import time
 from pathlib import Path
 
 import markdown
@@ -157,6 +158,7 @@ def build_pdf(book_dir: Path, slug: str, title: str, *,
         print("  [PDF] 챕터 md가 없어 건너뜀")
         return None
 
+    t0 = time.perf_counter()
     if version is None:
         version = _next_version(book_dir, slug)
     date_str = date_str or _dt.date.today().isoformat()
@@ -210,6 +212,17 @@ def build_pdf(book_dir: Path, slug: str, title: str, *,
     css_text = _make_css(serif, sans, mono, is_cjk).replace("{BOOK_TITLE}", title)
     css = CSS(string=css_text + "\n" + pyg_css)
     out_path = book_dir / f"{slug}-v{version}.pdf"
+    t_render = time.perf_counter()
     HTML(string=full_html).write_pdf(str(out_path), stylesheets=[css])
-    print(f"  [PDF] 생성: {out_path.name} (챕터 {len(chapters)}개, lang={lang_attr})")
+    render_s = time.perf_counter() - t_render
+    total_s = time.perf_counter() - t0
+    print(f"  [PDF] 생성: {out_path.name} (챕터 {len(chapters)}개, lang={lang_attr}) "
+          f"— 렌더 {render_s:.1f}s / 전체 {total_s:.1f}s")
+    # 빌드 시간 기록 (gitignore된 output/<slug>/logs 아래, 있으면 누적)
+    log_dir = book_dir.parent / "output" / slug / "logs"
+    if log_dir.exists():
+        with (log_dir / "pdf_build.log").open("a", encoding="utf-8") as f:
+            f.write(f"{_dt.datetime.now().isoformat(timespec='seconds')}\t"
+                    f"{out_path.name}\tchapters={len(chapters)}\t"
+                    f"render={render_s:.1f}s\ttotal={total_s:.1f}s\n")
     return out_path
