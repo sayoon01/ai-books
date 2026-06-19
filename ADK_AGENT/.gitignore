@@ -1,0 +1,10 @@
+# 가상환경 (대용량 — 커밋 금지)
+.venv/
+
+# 파이썬 캐시
+__pycache__/
+*.pyc
+
+# 스모크/스파이크 테스트 산출물
+spikes/smoke_out/
+spikes/*.log

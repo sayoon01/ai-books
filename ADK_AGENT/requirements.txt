@@ -1,0 +1,17 @@
+# ADK_AGENT — Google ADK 기반 책 생성기 (generator/ 와 독립)
+# 신 그래프 Workflow API 사용 → google-adk>=2.3.0 필수.
+google-adk>=2.3.0
+litellm>=1.89
+ollama>=0.6
+
+# 소스 reader 의존성 (실제 사용 시점에만 import; 쓰는 포맷만 설치하면 됨)
+openpyxl        # .xlsx
+pypdf           # .pdf
+python-docx     # .docx
+httpx           # url
+trafilatura     # url 본문 추출
+
+# PDF 출력 (선택 — pdf_export 사용 시)
+# weasyprint
+# markdown
+# pygments

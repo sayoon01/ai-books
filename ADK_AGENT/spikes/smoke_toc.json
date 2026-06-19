@@ -1,0 +1,10 @@
+{
+  "title": "ADK 스모크 테스트 책",
+  "language": "ko",
+  "description": "ADK 그래프 파이프라인이 1개 챕터를 끝까지 생성하는지 확인하기 위한 최소 테스트 책.",
+  "target_reader": "개발자",
+  "writing_guidelines": "간결하고 명확하게. 소제목(##)으로 구분하고 800자 이상 작성.",
+  "chapters": [
+    {"number": 1, "title": "그래프 파이프라인 개요", "description": "write→guard→review→gate→revise 흐름을 소개한다."}
+  ]
+}
