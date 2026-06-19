@@ -12,6 +12,7 @@ from google.adk.workflow import FunctionNode
 from core.llm import make_gemma
 from core.textutil import strip_title_h1
 from agent.prompts import WRITE_OUTPUT_POLICY, ground_block, prev_block, chapter_block
+from agent.trace import record
 
 WRITE_MAX = 3        # 초안 재작성 상한
 
@@ -40,6 +41,9 @@ def length_guard_fn(ctx):
         s["flagged"] = True
         print(f"    [가드] 끝까지 {len(body)}자 — flagged 후 진행")
         ctx.route = "ok"
+
+    record(ctx, stage="write", attempt=s["write_count"], chars=len(body),
+           route=ctx.route, draft=s.get("draft", ""))
 
 
 def build_write_node() -> LlmAgent:

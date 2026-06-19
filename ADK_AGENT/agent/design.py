@@ -8,7 +8,7 @@ Design 단계 — 책 구조(chapters) + 집필 지시문(write_brief) + 소스 
 import json
 from pathlib import Path
 
-from core.llm import call_structured
+from core.llm import call_parsed
 from agent.prompts import DESIGN_SYS, design_user
 from agent.schemas import DesignPlan
 
@@ -37,7 +37,7 @@ def run_or_load_design(config: dict, source_text: str, output_dir: Path, *,
     src = "소스 자료" if source_text else "책 설명(description)"
     print(f"  [design] {src} 기반 설계 생성 중...")
     plan = _fill_numbers(
-        call_structured(DESIGN_SYS, design_user(config, source_text, n), DesignPlan, 0.3))
+        call_parsed(DESIGN_SYS, design_user(config, source_text, n), DesignPlan, 0.3))
     design_path.write_text(
         json.dumps(plan.model_dump(), ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"  [design] 생성 완료 → design.json (챕터 {len(plan.chapters)}개, "

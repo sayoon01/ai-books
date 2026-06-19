@@ -132,6 +132,52 @@ def _strip_title_h1(text: str) -> str:
     return text
 
 
+# LaTeX 기호 → 유니코드 (선형식은 평문화, 구조적 수식만 보존)
+_MATH_SYM = {
+    r"\rightarrow": "→", r"\Rightarrow": "⇒", r"\to": "→", r"\leftarrow": "←",
+    r"\times": "×", r"\div": "÷", r"\pm": "±", r"\cdot": "·", r"\ast": "*",
+    r"\leq": "≤", r"\le": "≤", r"\geq": "≥", r"\ge": "≥",
+    r"\neq": "≠", r"\approx": "≈", r"\sim": "~", r"\gg": "≫", r"\ll": "≪",
+    r"\Delta": "Δ", r"\delta": "δ", r"\sigma": "σ", r"\mu": "μ", r"\Sigma": "Σ",
+    r"\alpha": "α", r"\beta": "β", r"\theta": "θ", r"\lambda": "λ",
+    r"\ldots": "…", r"\dots": "…", r"\cdots": "…",
+    r"\uparrow": "↑", r"\downarrow": "↓", r"\supset": "⊃", r"\subset": "⊂",
+}
+# 이런 구조 명령이 든 구간은 선형 평문화가 불가 → 원본 보존(수식 렌더러용)
+_MATH_STRUCT = re.compile(r"\\(frac|sqrt|int|prod|sum|begin|matrix|binom|partial|lim)\b")
+
+
+def _conv_math(inner: str) -> str | None:
+    """$...$ 한 덩어리를 평문/유니코드로. 구조적 수식이면 None(=보존)."""
+    if _MATH_STRUCT.search(inner):
+        return None
+    s = inner
+    s = s.replace(r"^\circ\text{C}", "°C").replace(r"\^\circ", "°").replace(r"^\circ", "°")
+    s = re.sub(r"\\text\{([^{}]*)\}", r"\1", s)        # \text{Max} → Max
+    s = s.replace(r"\circ", "°")
+    for k, v in _MATH_SYM.items():
+        s = s.replace(k, v)
+    s = re.sub(r"_\{([^{}]*)\}", r"_\1", s)            # T_{End} → T_End
+    s = re.sub(r"\^\{([^{}]*)\}", r"^\1", s)           # x^{2} → x^2
+    s = s.replace(r"\_", "_").replace(r"\,", ",").replace(r"\ ", " ").replace(r"\\", " ")
+    s = s.replace("{", "").replace("}", "")
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def _normalize_math(text: str) -> str:
+    """LLM이 섞어 쓴 LaTeX 기호/선형식을 평문·유니코드로 정규화.
+    코드펜스(```)는 건드리지 않고, 구조적 수식($$\\frac…$$ 등)만 원본 보존."""
+    def _repl(m):
+        conv = _conv_math(m.group(1))
+        return m.group(0) if conv is None else conv
+
+    parts = re.split(r"(```.*?```)", text, flags=re.DOTALL)
+    for i in range(0, len(parts), 2):                  # 코드펜스 바깥(짝수)만
+        parts[i] = re.sub(r"\$\$(.+?)\$\$", _repl, parts[i], flags=re.DOTALL)   # 블록
+        parts[i] = re.sub(r"(?<!\$)\$([^$\n]+)\$(?!\$)", _repl, parts[i])       # 인라인
+    return "".join(parts)
+
+
 # =========================
 # 목차 자동 생성
 # =========================
@@ -335,7 +381,7 @@ def generate(doc: dict, output_dir: Path, slug: str, *, use_planner: bool = Fals
             print(f"  [미수렴] {e} — 플래그 후 진행")
             final = draft if draft is not None else f"<!-- 생성 실패: {e} -->"
 
-        content = f"# {num}. {ctitle}\n\n{_strip_title_h1(final)}"
+        content = f"# {num}. {ctitle}\n\n{_normalize_math(_strip_title_h1(final))}"
         filename = _chapter_filename(num, ctitle)
         (output_dir / filename).write_text(content, encoding="utf-8")
         ch_elapsed = time.perf_counter() - t_ch

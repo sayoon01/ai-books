@@ -11,6 +11,7 @@ from core.llm import call_structured, ConvergenceError
 from core.source_reader import unverified_numbers
 from agent.schemas import ReviewResult
 from agent.prompts import REVIEW_SYSTEM, review_user
+from agent.trace import record
 
 PASS_MAX = 3         # review→revise 재수정 상한
 VIOLATION_TYPES = {
@@ -27,12 +28,21 @@ def review_fn(ctx):
             review_user(s["config"], s["chapter"], s["draft"], s.get("grounding", "")),
             ReviewResult, temperature=0.2)
         s["review"] = review.model_dump()
+        # keep-best: revise 가 초안을 망가뜨려도(점수 급락) 최고 점수 버전을 보존한다.
+        # (배경: revise 가 본문 대신 "수정 완료" 메시지를 뱉어 4808자→1045자로 붕괴한 사건.)
+        if review.score > s.get("best_score", -1):
+            s["best_score"] = review.score
+            s["best_draft"] = s.get("draft", "")
+            s["best_review"] = review.model_dump()
         print(f"    [검수] score {review.score} · issues {len(review.issues)} · "
-              f"needs_revision {review.needs_revision}")
+              f"needs_revision {review.needs_revision} · best {s.get('best_score')}")
+        record(ctx, stage="review", reviewed_draft=s.get("draft", ""),
+               review=review.model_dump())
     except ConvergenceError as e:
         s["flagged"] = True
         s["force_done"] = True
         print(f"    [검수 미수렴] {e} — flagged 후 종료")
+        record(ctx, stage="review", error=str(e), reviewed_draft=s.get("draft", ""))
 
 
 def gate_fn(ctx):
@@ -70,6 +80,10 @@ def gate_fn(ctx):
         kind = "고침+끌어올림" if must_fix else "끌어올림"
         print(f"    [게이트] 재수정({kind}) 위반 {len(violations)} · 약한축 {list(weak)}")
         ctx.route = "revise"
+
+    record(ctx, stage="gate", route=ctx.route, decision=kind, score=review.score,
+           pass_count=s["pass_count"], violations=len(violations),
+           weak_axes=weak, unverified=bad)
 
 
 def build_review_node() -> FunctionNode:

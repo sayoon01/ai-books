@@ -76,13 +76,15 @@ async def generate(doc: dict, output_dir: Path, slug: str, *,
         sess = await runner.session_service.create_session(
             app_name="adk_book", user_id="u",
             state={**base, "chapter": ch, "prev_summaries": summaries[:],
-                   "last_score": -1, "write_count": 0, "pass_count": 0})
+                   "last_score": -1, "best_score": -1, "write_count": 0,
+                   "pass_count": 0, "history": []})
         async for _ in runner.run_async(user_id="u", session_id=sess.id, new_message=_GO):
             pass
         st = (await runner.session_service.get_session(
             app_name="adk_book", user_id="u", session_id=sess.id)).state
 
-        final = st.get("draft", "") or f"<!-- 생성 실패: draft 없음 -->"
+        # keep-best: 최고 점수 초안을 최종으로(없으면 마지막 draft 폴백).
+        final = st.get("best_draft") or st.get("draft", "") or "<!-- 생성 실패: draft 없음 -->"
         flagged = st.get("flagged", False)
         final_bad = unverified_numbers(final, grounding) if grounding else []
 
@@ -94,9 +96,12 @@ async def generate(doc: dict, output_dir: Path, slug: str, *,
         chapter_times.append(ch_elapsed)
         (log_dir / f"chapter-{num:02d}.json").write_text(json.dumps({
             "chapter": {"number": num, "title": ctitle},
-            "flagged": flagged, "review": st.get("review"),
+            "flagged": flagged, "best_score": st.get("best_score"),
+            "final_review": st.get("best_review") or st.get("review"),
             "write_count": st.get("write_count"), "pass_count": st.get("pass_count"),
             "unverified_remaining": final_bad, "elapsed_sec": round(ch_elapsed, 1),
+            # 전 과정: write(초안) → review(매 패스) → gate(판정) 순서대로 누적
+            "history": st.get("history", []),
         }, ensure_ascii=False, indent=2), encoding="utf-8")
         flag = "  ⚠flagged" if flagged else ""
         print(f"  저장: {filename}  (소요 {ch_elapsed:.0f}s){flag}")

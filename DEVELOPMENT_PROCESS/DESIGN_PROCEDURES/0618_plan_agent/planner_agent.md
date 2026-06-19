@@ -205,5 +205,5 @@ Outline → Planner → Write → Review → Revise
 
 * Planner Agent 추가 시 생성 품질 향상 확인
 * V2 구조가 V1 대비 자연스러운 결과 생성
-* Grounding 파서 개선 필요
 * Planner 포함 구조를 기본 파이프라인으로 검토
+* 추가로 Grounding 파서 개선 필요
