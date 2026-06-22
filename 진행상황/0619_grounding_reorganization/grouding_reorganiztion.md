@@ -1,5 +1,7 @@
 # Grounding 재구성 — 금형 자동 해석 가이드 (2026.06.19)
 
+<img width="1088" height="720" alt="image" src="https://github.com/user-attachments/assets/73c4aa7b-b8f4-47bf-83bd-df3812d746cf" />
+
 ## 개요
 
 기존 책 생성 파이프라인은 Grounding 문서(필드 설명 자료)를 그대로 모델에 넘겨
