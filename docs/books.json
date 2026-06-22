@@ -1,0 +1,145 @@
+{
+  "systems": [
+    {
+      "id": "5_AGENT",
+      "label": "🟦 5_AGENT — 기존 generator 파이프라인",
+      "books": [
+        {
+          "slug": "금형-사출-데이터-해석-보고서",
+          "path": "5_AGENT/금형-사출-데이터-해석-보고서",
+          "title": "금형 사출 데이터 해석 보고서",
+          "language": "ko",
+          "model": "gemma4:31b",
+          "total": 9,
+          "completed": 9,
+          "status": "done",
+          "chapters": [
+            "unit-01.md",
+            "unit-02.md",
+            "unit-03.md",
+            "unit-04.md",
+            "unit-05.md",
+            "unit-06.md",
+            "unit-07.md",
+            "unit-08.md",
+            "unit-09.md"
+          ],
+          "pdfs": []
+        },
+        {
+          "slug": "금형-사출-센서-데이터-자동-해석-가이드",
+          "path": "5_AGENT/금형-사출-센서-데이터-자동-해석-가이드",
+          "title": "금형 사출 센서 데이터 자동 해석 가이드",
+          "language": "ko",
+          "model": "gemma4:31b",
+          "total": 10,
+          "completed": 10,
+          "status": "done",
+          "chapters": [
+            "chapter-01-금형-사출-데이터-해석의-목적과-기초-체계.md",
+            "chapter-02-기본-식별-정보-필드-해석-제품과-공정의-정의.md",
+            "chapter-03-공정-상태-및-사이클-시간-필드-해석.md",
+            "chapter-04-온도-센서t1t8의-기초-측정-시점별-의미-start-end.md",
+            "chapter-05-온도-센서의-정점-및-도달-시간-해석-max-detect-maxdetect.md",
+            "chapter-06-압력-센서p1p8-데이터-해석-최대치와-도달-시간.md",
+            "chapter-07-공정-단계별-소요-시간-필드와-단위-변환-규칙.md",
+            "chapter-08-데이터-오독-방지를-위한-접미사-suffix-체계-심화-학습.md",
+            "chapter-09-미제공-필드-처리-및-데이터-공백의-해석.md",
+            "chapter-10-종합-실습-단일-shot-데이터의-전체-흐름-해석하기.md"
+          ],
+          "pdfs": [
+            "금형-사출-센서-데이터-자동-해석-가이드-v1.pdf",
+            "금형-사출-센서-데이터-자동-해석-가이드-v2.pdf"
+          ]
+        },
+        {
+          "slug": "금형-사출-센서-데이터-필드-해석-가이드",
+          "path": "5_AGENT/금형-사출-센서-데이터-필드-해석-가이드",
+          "title": "금형 사출 센서 데이터 필드 해석 가이드",
+          "language": "ko",
+          "model": "gemma4:31b",
+          "total": 8,
+          "completed": 8,
+          "status": "done",
+          "chapters": [
+            "chapter-01-데이터-구조-개요-무엇을-측정한-데이터인가.md",
+            "chapter-02-식별소재조건-필드-이-샷은-무엇을-찍었나.md",
+            "chapter-03-사이클-타임과-휴지시간-cycleinterval-해석.md",
+            "chapter-04-온도-센서-t18과-접미사-시점이-다른-네-가지-온도.md",
+            "chapter-05-압력-센서-p18-무엇을-언제-측정하나.md",
+            "chapter-06-공정-6단계-시간-사출-한-사이클의-시간-구조.md",
+            "chapter-07-알람기타-메타-필드-보조-정보-읽기.md",
+            "chapter-08-종합-이-데이터로-무엇을-읽을-수-있는가.md"
+          ],
+          "pdfs": [
+            "금형-사출-센서-데이터-필드-해석-가이드-v1.pdf",
+            "금형-사출-센서-데이터-필드-해석-가이드-v2.pdf"
+          ]
+        },
+        {
+          "slug": "파이썬으로-배우는-머신러닝",
+          "path": "5_AGENT/파이썬으로-배우는-머신러닝",
+          "title": "파이썬으로 배우는 머신러닝",
+          "language": "ko",
+          "model": "gemma4:31b",
+          "total": 15,
+          "completed": 15,
+          "status": "done",
+          "chapters": [
+            "chapter-01-머신러닝이란-무엇인가.md",
+            "chapter-02-파이썬-머신러닝-개발-환경-구축.md",
+            "chapter-03-numpy와-pandas.md",
+            "chapter-04-데이터-시각화.md",
+            "chapter-05-데이터-전처리.md",
+            "chapter-06-지도학습.md",
+            "chapter-07-회귀.md",
+            "chapter-08-분류.md",
+            "chapter-09-비지도학습과-군집화.md",
+            "chapter-10-모델-평가와-성능-개선.md",
+            "chapter-11-과적합과-하이퍼파라미터-튜닝.md",
+            "chapter-12-앙상블과-실전-머신러닝.md",
+            "chapter-13-실전-프로젝트-타이타닉-생존자-예측.md",
+            "chapter-14-실전-프로젝트-집값-예측.md",
+            "chapter-15-실전-프로젝트-영화-추천-시스템.md"
+          ],
+          "pdfs": [
+            "파이썬으로-배우는-머신러닝-v1.pdf",
+            "파이썬으로-배우는-머신러닝-v2.pdf"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ADK_AGENT",
+      "label": "🟩 ADK_AGENT — 신규 Google ADK 파이프라인",
+      "books": [
+        {
+          "slug": "금형-사출-센서-데이터-자동-해석-가이드",
+          "path": "ADK_AGENT/금형-사출-센서-데이터-자동-해석-가이드",
+          "title": "금형 사출 센서 데이터 자동 해석 가이드",
+          "language": "ko",
+          "model": "gemma4:31b",
+          "total": 10,
+          "completed": 10,
+          "status": "done",
+          "chapters": [
+            "chapter-01-금형-사출-데이터-해석의-목적과-기초.md",
+            "chapter-02-데이터-필드-명명-규칙과-접미사-해석.md",
+            "chapter-03-사이클-타입cycle-type의-정의와-분류-체계.md",
+            "chapter-04-정상normal-및-유휴idle-사이클의-해석.md",
+            "chapter-05-미연결no-signal-및-센서-오류sensor-error-판정.md",
+            "chapter-06-워밍업warmup-사이클과-t-detect의-실체.md",
+            "chapter-07-온도t-센서-데이터-필드-상세-해석.md",
+            "chapter-08-압력p-센서-데이터-필드-상세-해석.md",
+            "chapter-09-공정-시간-및-사이클-인터벌cycleinterval-해석.md",
+            "chapter-10-운전-현황-상태값-및-데이터-품질-진단.md"
+          ],
+          "pdfs": [
+            "금형-사출-센서-데이터-자동-해석-가이드-v2.pdf",
+            "금형-사출-센서-데이터-자동-해석-가이드-v3.pdf"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Generated Books</title>
+<style>
+  :root { --bg:#0f1115; --card:#1a1d24; --line:#2a2f3a; --fg:#e6e8ec; --mut:#9aa3b2;
+          --blue:#3b82f6; --green:#22c55e; --acc:#7c93ff; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+         line-height:1.6; }
+  a { color:var(--acc); text-decoration:none; }
+  header { padding:28px 20px 8px; max-width:1000px; margin:0 auto; }
+  header h1 { margin:0 0 4px; font-size:24px; }
+  header p { margin:0; color:var(--mut); font-size:14px; }
+  main { max-width:1000px; margin:0 auto; padding:12px 20px 60px; }
+  .sys { margin-top:28px; }
+  .sys h2 { font-size:18px; border-bottom:1px solid var(--line); padding-bottom:8px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
+  .card h3 { margin:0 0 10px; font-size:16px; }
+  .badges { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+  .badge { font-size:12px; color:var(--mut); border:1px solid var(--line);
+           border-radius:999px; padding:2px 9px; }
+  .btns { display:flex; flex-wrap:wrap; gap:8px; }
+  .btn { font-size:13px; padding:6px 11px; border-radius:8px; border:1px solid var(--line);
+         background:#222633; color:var(--fg); cursor:pointer; }
+  .btn:hover { border-color:var(--acc); }
+  .btn.primary { background:var(--acc); color:#0b0e14; border-color:var(--acc); font-weight:600; }
+  /* reader */
+  #reader { display:none; }
+  .rtop { display:flex; align-items:center; gap:12px; margin:18px 0; flex-wrap:wrap; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { font-size:13px; padding:5px 10px; border-radius:8px; border:1px solid var(--line);
+          background:var(--card); color:var(--mut); cursor:pointer; }
+  .chip.active { background:var(--acc); color:#0b0e14; border-color:var(--acc); font-weight:600; }
+  #content { background:var(--card); border:1px solid var(--line); border-radius:12px;
+             padding:24px 28px; overflow-x:auto; }
+  #content h1,#content h2 { border-bottom:1px solid var(--line); padding-bottom:6px; }
+  #content table { border-collapse:collapse; }
+  #content th,#content td { border:1px solid var(--line); padding:6px 10px; }
+  #content code { background:#0b0e14; padding:2px 5px; border-radius:4px; }
+  #content pre { background:#0b0e14; padding:14px; border-radius:8px; overflow-x:auto; }
+  .muted { color:var(--mut); }
+</style>
+</head>
+<body>
+<header>
+  <h1>📚 AI Generated Books</h1>
+  <p>AI가 생성·검수한 기술 도서 — 생성 시스템별 정리. 제목의 <b>챕터 보기</b>로 본문을 바로 읽을 수 있습니다.</p>
+</header>
+<main>
+  <div id="list"></div>
+  <div id="reader">
+    <div class="rtop">
+      <button class="btn" onclick="showList()">← 목록</button>
+      <strong id="rtitle"></strong>
+      <span id="rpdf" class="btns"></span>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div id="content" class="muted">챕터를 선택하세요.</div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+const OWNER="sayoon01", REPO="ai-books", BRANCH="main";
+const RAW = `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}`;
+const BLOB = `https://github.com/${OWNER}/${REPO}/blob/${BRANCH}`;
+const enc = p => p.split("/").map(encodeURIComponent).join("/");
+const $ = id => document.getElementById(id);
+let DATA = null, cur = null;
+
+function badge(t){ return `<span class="badge">${t}</span>`; }
+
+function render(){
+  const el = $("list"); el.innerHTML = "";
+  for (const sys of DATA.systems){
+    const sec = document.createElement("div"); sec.className = "sys";
+    sec.innerHTML = `<h2>${sys.label}</h2>`;
+    const grid = document.createElement("div"); grid.className = "grid";
+    sys.books.forEach((b, i) => {
+      const id = `${sys.id}::${i}`;
+      const pdfBtns = b.pdfs.map(p =>
+        `<a class="btn" target="_blank" href="${BLOB}/${enc(b.path)}/${enc(p)}">📄 ${p.match(/-v\d+/)?p.match(/-v\d+/)[0].slice(1):"PDF"}</a>`).join("");
+      const card = document.createElement("div"); card.className = "card";
+      card.innerHTML = `
+        <h3>${b.title}</h3>
+        <div class="badges">${badge(b.language)}${badge("챕터 "+b.completed+"/"+b.total)}${badge(b.model)}${badge(b.status==="done"?"✅ 완료":"진행중")}</div>
+        <div class="btns">
+          <button class="btn primary" data-id="${id}">📖 챕터 보기</button>
+          ${pdfBtns}
+          <a class="btn" target="_blank" href="${BLOB}/${enc(b.path)}">↗ GitHub</a>
+        </div>`;
+      card.querySelector("[data-id]").onclick = () => openBook(sys.id, i);
+      grid.appendChild(card);
+    });
+    sec.appendChild(grid); el.appendChild(sec);
+  }
+}
+
+function openBook(sysId, idx){
+  const sys = DATA.systems.find(s=>s.id===sysId);
+  cur = sys.books[idx];
+  $("list").style.display="none"; $("reader").style.display="block";
+  $("rtitle").textContent = cur.title;
+  $("rpdf").innerHTML = cur.pdfs.map(p =>
+    `<a class="btn" target="_blank" href="${BLOB}/${enc(cur.path)}/${enc(p)}">📄 ${p.match(/-v\d+/)?p.match(/-v\d+/)[0].slice(1):"PDF"}</a>`).join("");
+  $("chips").innerHTML = cur.chapters.map((c,i)=>
+    `<span class="chip" data-i="${i}">${i+1}장</span>`).join("");
+  $("chips").querySelectorAll(".chip").forEach(ch=>
+    ch.onclick=()=>loadChapter(parseInt(ch.dataset.i)));
+  window.scrollTo(0,0);
+  if (cur.chapters.length) loadChapter(0);
+  else $("content").textContent = "챕터가 없습니다.";
+}
+
+async function loadChapter(i){
+  $("chips").querySelectorAll(".chip").forEach((c,j)=>c.classList.toggle("active", j===i));
+  $("content").innerHTML = '<span class="muted">불러오는 중…</span>';
+  try{
+    const url = `${RAW}/${enc(cur.path)}/${enc(cur.chapters[i])}`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error(res.status);
+    $("content").innerHTML = marked.parse(await res.text());
+    window.scrollTo(0,0);
+  }catch(e){ $("content").innerHTML = `<span class="muted">불러오기 실패: ${e}</span>`; }
+}
+
+function showList(){ $("reader").style.display="none"; $("list").style.display="block"; }
+
+fetch("books.json").then(r=>r.json()).then(d=>{DATA=d; render();})
+  .catch(e=>$("list").innerHTML=`<p class="muted">books.json 로드 실패: ${e}</p>`);
+</script>
+</body>
+</html>
