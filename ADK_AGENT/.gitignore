@@ -5,16 +5,20 @@
 __pycache__/
 *.pyc
 
-# 생성 산출물 (로컬 전용)
-output/
+# 생성 산출물 (기본 로컬 전용). 아래 책은 산출물 커밋 허용( logs/ 제외).
+output/*
+!output/금형-사출-센서-데이터-자동-해석-가이드/
+output/금형-사출-센서-데이터-자동-해석-가이드/*
+!output/금형-사출-센서-데이터-자동-해석-가이드/**
+output/금형-사출-센서-데이터-자동-해석-가이드/logs/**
 
 # 스모크/스파이크 테스트 산출물
 spikes/smoke_out/
 spikes/*.log
 spikes/*.out
 
-# 관측 비밀키 (Langfuse 키 등) — .env.example 만 커밋
-observability/.env
+# 관측 스택 (로컬 전용 — GitHub 미추적)
+observability/
 
 # 실행 로그
 output_run.log

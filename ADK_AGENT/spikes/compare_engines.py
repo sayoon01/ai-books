@@ -70,19 +70,30 @@ class GpuSampler(threading.Thread):
 
     def run(self):
         t0 = time.perf_counter()
-        while not self._stop_evt.is_set():
-            t_rel = round(time.perf_counter() - t0, 1)
-            try:
-                for idx, mem, util in self._query():
-                    self.rows.append((t_rel, idx, mem, util))
-            except Exception:
-                pass
-            self._stop_evt.wait(self.interval)
+        # 증분 저장: 매 샘플마다 CSV에 바로 쓰고 flush → 끝에서 죽어도 그때까지는 디스크에 남음.
+        with self.csv_path.open("w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow(["t_rel_sec", "gpu_index", "mem_used_mib", "util_pct"])
+            f.flush()
+            while not self._stop_evt.is_set():
+                t_rel = round(time.perf_counter() - t0, 1)
+                try:
+                    for idx, mem, util in self._query():
+                        row = (t_rel, idx, mem, util)
+                        self.rows.append(row)
+                        w.writerow(row)
+                    f.flush()
+                except Exception:
+                    pass
+                self._stop_evt.wait(self.interval)
 
     def stop(self):
         self._stop_evt.set()
 
     def dump(self):
+        """run()에서 이미 증분 저장됨. 호환용 안전망 — 파일이 없을 때만 메모리에서 복구."""
+        if self.csv_path.exists():
+            return
         with self.csv_path.open("w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
             w.writerow(["t_rel_sec", "gpu_index", "mem_used_mib", "util_pct"])
