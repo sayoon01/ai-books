@@ -2,7 +2,7 @@
 ADK 기반 책/문서 생성기 (generator/ 와 독립).
 
 실행:
-  .venv/bin/python main.py --toc ../toc/some.json
+  .venv/bin/python main.py --toc toc/mold-dx-auto.json
   .venv/bin/python main.py --toc ... --no-push        # 로컬 생성만(파일 output/ 에만)
   .venv/bin/python main.py --toc ... --redesign       # design.json 강제 재생성
 
@@ -28,9 +28,14 @@ def title_to_slug(title: str) -> str:
 def main():
     parser = argparse.ArgumentParser(description="ADK 기반 AI 책/문서 생성기")
     parser.add_argument("--toc", required=True, help="문서 사양 JSON 경로")
-    parser.add_argument("--no-push", action="store_true", help="자동 푸시·PDF 끄고 로컬 생성만")
+    parser.add_argument("--no-push", action="store_true", help="GitHub 자동 푸시 끄고 로컬 생성만")
+    parser.add_argument("--no-pdf", action="store_true", help="PDF 생성 끄기")
     parser.add_argument("--redesign", action="store_true", help="design.json 무시하고 재생성")
-    parser.add_argument("--out", default=None, help="출력 폴더(기본 ../output/<slug>)")
+    parser.add_argument("--out", default=None, help="출력 폴더(기본 ./output/<slug>)")
+    parser.add_argument("--no-trace", action="store_true",
+                        help="트레이싱 끄기. 기본은 자동 — env(PHOENIX/LANGFUSE) 설정된 백엔드로 자동 전송")
+    parser.add_argument("--engine", choices=["graph", "agent"], default="graph",
+                        help="챕터 엔진. graph=신 그래프(기본), agent=표준 멀티에이전트(Sequential/Loop)")
     args = parser.parse_args()
 
     doc_path = Path(args.toc)
@@ -40,11 +45,11 @@ def main():
 
     doc = json.loads(doc_path.read_text(encoding="utf-8"))
     slug = title_to_slug(doc["title"])
-    output_dir = Path(args.out) if args.out else Path(__file__).parent.parent / "output" / slug
+    output_dir = Path(args.out) if args.out else Path(__file__).parent / "output" / slug
 
     asyncio.run(generate(doc, output_dir, slug,
                          force_redesign=args.redesign, push=not args.no_push,
-                         do_pdf=not args.no_push))
+                         do_pdf=not args.no_pdf, trace=not args.no_trace, engine=args.engine))
 
 
 if __name__ == "__main__":

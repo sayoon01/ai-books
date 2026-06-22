@@ -18,11 +18,13 @@ import ollama
 from pydantic import BaseModel, ValidationError
 
 from core.textutil import parse_json
+from core.config import (MODEL, LLM_TEMPERATURE, LLM_NUM_CTX,
+                         LLM_REPEAT_PENALTY, LLM_KEEP_ALIVE)
 
-MODEL = "gemma4:31b"
-_OPTIONS = {"temperature": 0.7, "num_ctx": 32768, "repeat_penalty": 1.2}
+_OPTIONS = {"temperature": LLM_TEMPERATURE, "num_ctx": LLM_NUM_CTX,
+            "repeat_penalty": LLM_REPEAT_PENALTY}
 # 멀티 요청 사이 모델 언로드로 멈추는 것 방지 (런너 유지).
-_KEEP_ALIVE = "30m"
+_KEEP_ALIVE = LLM_KEEP_ALIVE
 
 T = TypeVar("T", bound=BaseModel)
 

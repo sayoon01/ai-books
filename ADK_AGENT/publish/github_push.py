@@ -5,10 +5,10 @@ import json
 import subprocess
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).parent.parent.parent  # ai-books/ (publish/ 한 단계 더 깊음)
+from core.config import REPO_ROOT, PUSH_ENABLED        # ai-books/ 루트, 푸시 기본값
 
 # 파일은 로컬에 항상 쓰되, git commit/push만 켜고 끈다 (--no-push 용).
-PUSH_ENABLED = True
+# PUSH_ENABLED 는 config 기본값으로 시작하되 set_push() 로 런타임 토글된다.
 
 
 def set_push(enabled: bool) -> None:

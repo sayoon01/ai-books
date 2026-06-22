@@ -5,6 +5,16 @@
 __pycache__/
 *.pyc
 
+# 생성 산출물 (로컬 전용)
+output/
+
 # 스모크/스파이크 테스트 산출물
 spikes/smoke_out/
 spikes/*.log
+spikes/*.out
+
+# 관측 비밀키 (Langfuse 키 등) — .env.example 만 커밋
+observability/.env
+
+# 실행 로그
+output_run.log

@@ -236,8 +236,8 @@ def build_pdf(book_dir: Path, slug: str, title: str, *,
     total_s = time.perf_counter() - t0
     print(f"  [PDF] 생성: {out_path.name} (챕터 {len(chapters)}개, lang={lang_attr}) "
           f"— 렌더 {render_s:.1f}s / 전체 {total_s:.1f}s")
-    # 빌드 시간 기록 (gitignore된 output/<slug>/logs 아래, 있으면 누적)
-    log_dir = book_dir.parent / "output" / slug / "logs"
+    # 빌드 시간 기록 (책 폴더의 logs 아래, 있으면 누적)
+    log_dir = book_dir / "logs"
     if log_dir.exists():
         with (log_dir / "pdf_build.log").open("a", encoding="utf-8") as f:
             f.write(f"{_dt.datetime.now().isoformat(timespec='seconds')}\t"

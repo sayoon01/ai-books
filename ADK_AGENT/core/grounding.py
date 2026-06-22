@@ -1,11 +1,12 @@
 """
-소스 reader (얇은 dumb 추출) + 결정적 수치 검증.
+grounding — 소스 읽기(dumb 추출) + 수치 검증 + 프롬프트 블록화.
 
-설계: "읽기(dumb)"만 코드에 남기고, "해석·요약·목차화(smart)"는 Design 에이전트로 올린다.
-입력 JSON의 `source`(파일경로 또는 URL) 한 줄을 받아 텍스트로 해소 → state["source_text"].
-kind는 문자열에서 추론(http*면 url, 아니면 파일). 결과는 cache/ 에 스냅샷(오프라인 재생성).
-
-generator/grounding.py 의 reader/resolver/unverified_numbers 를 복사·단순화한 것(원본 무수정).
+grounding 은 전 단계를 가로지른다: design(생성)·write/review/revise(소비)·검증.
+그 관련 기능을 한 곳에 모은다.
+  - read_source        : `source`(파일/URL) 한 줄 → 텍스트(캐시 스냅샷). "읽기(dumb)"만.
+  - unverified_numbers : 본문 수치 중 자료에서 확인 안 되는 값 검출(결정적).
+  - ground_block       : grounding 텍스트를 프롬프트 블록 + 사용 원칙으로 포맷(write/review/revise 공용).
+"해석·요약·목차화(smart)"는 Design 에이전트 몫. generator/grounding.py 를 복사·단순화(원본 무수정).
 """
 from pathlib import Path
 import hashlib
@@ -13,9 +14,25 @@ import importlib
 import json
 import re
 
-_ROOT = Path(__file__).resolve().parent.parent.parent   # ai-books/ (core/ 한 단계 더 깊음)
-_CACHE_DIR = _ROOT / "cache" / "adk_source"
-_MAX_FILE_CHARS = 12000                                  # 토큰 예산 보호용 절단 한도
+from core.config import REPO_ROOT, MAX_FILE_CHARS
+
+_CACHE_DIR = REPO_ROOT / "cache" / "adk_source"
+_MAX_FILE_CHARS = MAX_FILE_CHARS                         # 토큰 예산 보호용 절단 한도
+
+
+def ground_block(grounding_text: str) -> str:
+    """참고 기반 자료 블록 + 사용 원칙(한 곳에서만 정의). write/review/revise 공용."""
+    if not grounding_text:
+        return ""
+    return (
+        "\n[참고 기반 자료]\n"
+        "아래 자료는 본문 작성의 주요 참고 기반입니다.\n"
+        "자료의 핵심 내용, 용어, 사례, 수치, 관점을 우선 반영하세요.\n"
+        "자료와 충돌하는 내용은 쓰지 마세요.\n"
+        "독자의 이해를 돕는 일반 지식, 배경 설명, 비유, 예시 등은 자유롭게 사용할 수 있습니다.\n"
+        "단, 자료에 없는 구체 수치·고유 사실·출처성 주장은 확정적으로 단정하지 마세요.\n\n"
+        f"{grounding_text}\n"
+    )
 
 
 def _require(mod: str, pip: str):
