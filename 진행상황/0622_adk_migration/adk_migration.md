@@ -2,6 +2,8 @@
 
 > 갱신: 2026.06.22 — `generator/` → `ADK_AGENT/` 이관 이후 현재 코드 상태와,
 > 챕터 엔진 두 갈래(`graph` / `agent`)의 차이·비교 산출물을 정리한다.
+> 
+<img width="1078" height="725" alt="image" src="https://github.com/user-attachments/assets/58a764ea-95e1-4476-ad41-1800b34c4a9e" />
 
 기존 책 생성기(`generator/`)를 **Google ADK 기반 파이프라인(`ADK_AGENT/`)**으로 옮겼다.
 레거시는 `5_AGENT/`로 아카이브했고, `ADK_AGENT/`가 메인이다.
