@@ -12,8 +12,7 @@ from google.adk.workflow import FunctionNode
 from core.llm import call_structured, ConvergenceError
 from core.grounding import unverified_numbers, ground_block
 from core.config import PASS_MAX        # review→revise 재수정 상한
-from agent.schemas import ReviewResult
-from agent.trace import record
+from agent.common import ReviewResult, record
 
 
 # =========================

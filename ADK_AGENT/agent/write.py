@@ -13,8 +13,7 @@ from core.llm import make_gemma
 from core.textutil import strip_title_h1
 from core.config import WRITE_MAX        # 초안 재작성 상한
 from core.grounding import ground_block
-from agent.prompts import prev_block, chapter_block
-from agent.trace import record
+from agent.common import prev_block, chapter_block, record
 
 
 # 출력 정책(정적). 책별 집필 지시는 write_brief(Design 생성)가 담당.
@@ -23,7 +22,8 @@ WRITE_OUTPUT_POLICY = """
 - 위의 집필 지시문(write_brief)을 이 책의 최우선 기준으로 따르세요.
 - 챕터의 제목·설명을 빠짐없이 반영하고, 이전 요약이 있으면 자연스럽게 이어가되 반복하지 마세요.
 - 참고 자료가 있으면 그 핵심·용어·수치를 우선 반영하고, 자료에 없는 구체 수치·고유 사실은 단정하지 마세요.
-- 출력은 표준 Markdown. 특정 렌더러/LaTeX 엔진/HTML/Mermaid 의존 문법은 쓰지 마세요.
+- 출력은 어디서 열어도 동일하게 보이는 표준 Markdown만 사용하세요. 특정 Markdown 렌더러·브라우저·확장 프로그램·LaTeX 엔진·HTML 렌더러·Mermaid 플러그인에 의존하는 문법은 사용하지 마세요(특수문자 깨짐·표시 누락의 원인).
+- 수식은 LaTeX 문법(예: $...$, \\frac 등) 대신 일반 텍스트와 기호로, 도식은 Mermaid 대신 글머리표·표·코드블록으로 표현하세요.
 - 챕터 제목(H1, #)은 시스템이 자동으로 붙입니다. 본문은 소제목(##)부터 시작하세요.
 - 설명·잡담 없이 완결된 본문만 출력하세요.
 """

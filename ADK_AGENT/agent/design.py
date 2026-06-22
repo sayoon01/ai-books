@@ -10,7 +10,7 @@ from pathlib import Path
 
 from core.llm import call_parsed
 from core.config import DEFAULT_CHAPTER_COUNT
-from agent.schemas import DesignPlan
+from agent.common import DesignPlan
 
 
 # =========================

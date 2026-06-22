@@ -10,7 +10,7 @@ from google.adk.agents import LlmAgent
 
 from core.llm import make_gemma
 from core.grounding import ground_block
-from agent.prompts import chapter_block, block
+from agent.common import chapter_block, block
 
 
 # =========================
