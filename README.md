@@ -1,6 +1,7 @@
 # AI Generated Books
 
-AI가 생성·검수한 기술 도서 모음. **생성 시스템별로** 나눠 정리했습니다.
+AI가 생성·검수한 기술 도서 모음. **생성 시스템별로** 나누어 정리함.
+https://sayoon01.github.io/ai-books/
 
 ## 🟦 5_AGENT — 기존 generator 파이프라인
 
