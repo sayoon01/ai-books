@@ -85,7 +85,8 @@ def push_pdf(slug: str, pdf_path: Path) -> None:
 
 
 def update_readme(slug: str, toc: dict) -> None:
-    """루트 README.md 책 목록 테이블 갱신 후 커밋+푸시"""
+    """5_AGENT/README.md 책 목록 갱신(REPO_ROOT=ai-books/5_AGENT 하위 스캔).
+    루트 README(2섹션)는 ADK_AGENT 쪽 generator 가 생성한다."""
     readme_path = REPO_ROOT / "README.md"
 
     # 기존 책 목록 파싱

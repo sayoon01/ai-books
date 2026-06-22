@@ -33,7 +33,7 @@ def _git(args: list[str]) -> str:
 def push_chapter(slug: str, chapter_num: int, chapter_title: str, content: str,
                  filename: str | None = None) -> None:
     """챕터 파일을 저장하고 GitHub에 커밋+푸시"""
-    book_dir = REPO_ROOT / slug
+    book_dir = REPO_ROOT / "ADK_AGENT" / slug      # ADK 결과는 ADK_AGENT/ 하위로(시스템 분리)
     book_dir.mkdir(parents=True, exist_ok=True)
 
     if filename is None:
@@ -50,7 +50,7 @@ def push_chapter(slug: str, chapter_num: int, chapter_title: str, content: str,
 
 def update_meta(slug: str, toc: dict, completed: int) -> None:
     """meta.json 갱신 후 커밋+푸시"""
-    book_dir = REPO_ROOT / slug
+    book_dir = REPO_ROOT / "ADK_AGENT" / slug      # ADK 결과는 ADK_AGENT/ 하위로(시스템 분리)
     book_dir.mkdir(parents=True, exist_ok=True)
 
     total = len(toc["chapters"])
@@ -84,43 +84,48 @@ def push_pdf(slug: str, pdf_path: Path) -> None:
         print(f"  [GitHub] PDF 푸시 완료: {slug}/{pdf_path.name}")
 
 
-def update_readme(slug: str, toc: dict) -> None:
-    """루트 README.md 책 목록 테이블 갱신 후 커밋+푸시"""
-    readme_path = REPO_ROOT / "README.md"
+# 루트 README 두 섹션 구성 — (폴더명, 표제). 폴더 하위 <책>/meta.json 을 스캔.
+_README_SYSTEMS = [
+    ("5_AGENT", "🟦 5_AGENT — 기존 generator 파이프라인"),
+    ("ADK_AGENT", "🟩 ADK_AGENT — 신규 Google ADK 기반 파이프라인"),
+]
 
-    # 기존 책 목록 파싱
-    books: dict[str, dict] = {}
-    for meta_file in sorted(REPO_ROOT.glob("*/meta.json")):
-        book_slug = meta_file.parent.name
-        meta = json.loads(meta_file.read_text(encoding="utf-8"))
-        books[book_slug] = meta
 
-    # 테이블 생성
-    rows = ["| 제목 | 언어 | 챕터 | 모델 | 상태 |",
-            "|---|---|---|---|---|"]
-    for s, m in books.items():
+def _readme_section(sysdir: str, heading: str) -> list[str]:
+    metas = sorted((REPO_ROOT / sysdir).glob("*/meta.json"))
+    if not metas:
+        return []
+    out = [f"## {heading}", "",
+           "| 제목 | 언어 | 챕터 | 모델 | 상태 |", "|---|---|---|---|---|"]
+    for mf in metas:
+        book = mf.parent.name
+        m = json.loads(mf.read_text(encoding="utf-8"))
         status = "✅ 완료" if m.get("status") == "done" else "🔄 진행중"
-        # 키 스타일 혼용 대응: total_chapters/completed_chapters(구) · total/completed(신)
-        total = m.get("total_chapters", m.get("total", "?"))
+        total = m.get("total_chapters", m.get("total", "?"))      # 구/신 메타 키 혼용 대응
         done = m.get("completed_chapters", m.get("completed", "?"))
-        rows.append(
-            f"| [{m.get('title', s)}](./{s}) "
-            f"| {m.get('language', 'ko')} "
-            f"| {done}/{total} "
-            f"| {m.get('model', '')} "
-            f"| {status} |"
-        )
+        out.append(f"| [{m.get('title', book)}](./{sysdir}/{book}) "
+                   f"| {m.get('language', 'ko')} | {done}/{total} "
+                   f"| {m.get('model', '')} | {status} |")
+    out.append("")
+    return out
 
-    content = "# AI Generated Books\n\n" + "\n".join(rows) + "\n"
-    readme_path.write_text(content, encoding="utf-8")
+
+def update_readme(slug: str | None = None, toc: dict | None = None) -> None:
+    """루트 README 자동 생성 — 5_AGENT / ADK_AGENT 두 섹션.
+    각 시스템 폴더(ai-books/<sys>/) 하위의 <책>/meta.json 을 스캔해 표를 만든다.
+    (책이 시스템 폴더 안에 있으므로 루트 1단계가 아니라 sys/* 를 본다.)"""
+    readme_path = REPO_ROOT / "README.md"
+    out = ["# AI Generated Books", "",
+           "AI가 생성·검수한 기술 도서 모음. **생성 시스템별로** 나눠 정리했습니다.", ""]
+    for sysdir, heading in _README_SYSTEMS:
+        out += _readme_section(sysdir, heading)
+    readme_path.write_text("\n".join(out).rstrip() + "\n", encoding="utf-8")
 
     if not PUSH_ENABLED:
         return
     _git(["add", "README.md"])
-    # 변경사항 없으면 커밋 스킵
-    import subprocess
     result = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=REPO_ROOT)
     if result.returncode != 0:
-        _git(["commit", "-m", "docs: README 책 목록 업데이트"])
+        _git(["commit", "-m", "docs: README 책 목록 업데이트(2섹션)"])
         _git(["push"])
     print("  [GitHub] README.md 업데이트 완료")
