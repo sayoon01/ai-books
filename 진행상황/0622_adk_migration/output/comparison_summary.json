@@ -1,0 +1,223 @@
+{
+  "model": "gemma4:31b",
+  "toc": "금형 사출 센서 데이터 자동 해석 가이드",
+  "chapter_count": 10,
+  "limit": null,
+  "generated_at": "2026-06-22T19:01:35",
+  "engines": {
+    "graph": {
+      "engine": "graph",
+      "total_elapsed_sec": 1675.6,
+      "avg_sec_per_chapter": 167.6,
+      "chapter_count": 10,
+      "avg_best_score": 87.2,
+      "min_best_score": 82,
+      "flagged_count": 0,
+      "total_write_passes": 10,
+      "total_review_passes": 19,
+      "chapters": [
+        {
+          "number": 1,
+          "best_score": 82,
+          "elapsed_sec": 194.5,
+          "write_count": 1,
+          "pass_count": 2,
+          "flagged": false
+        },
+        {
+          "number": 2,
+          "best_score": 82,
+          "elapsed_sec": 185.5,
+          "write_count": 1,
+          "pass_count": 2,
+          "flagged": false
+        },
+        {
+          "number": 3,
+          "best_score": 95,
+          "elapsed_sec": 78.7,
+          "write_count": 1,
+          "pass_count": 1,
+          "flagged": false
+        },
+        {
+          "number": 4,
+          "best_score": 82,
+          "elapsed_sec": 184.4,
+          "write_count": 1,
+          "pass_count": 2,
+          "flagged": false
+        },
+        {
+          "number": 5,
+          "best_score": 95,
+          "elapsed_sec": 82.8,
+          "write_count": 1,
+          "pass_count": 1,
+          "flagged": false
+        },
+        {
+          "number": 6,
+          "best_score": 82,
+          "elapsed_sec": 178.0,
+          "write_count": 1,
+          "pass_count": 2,
+          "flagged": false
+        },
+        {
+          "number": 7,
+          "best_score": 82,
+          "elapsed_sec": 181.7,
+          "write_count": 1,
+          "pass_count": 2,
+          "flagged": false
+        },
+        {
+          "number": 8,
+          "best_score": 82,
+          "elapsed_sec": 149.6,
+          "write_count": 1,
+          "pass_count": 2,
+          "flagged": false
+        },
+        {
+          "number": 9,
+          "best_score": 95,
+          "elapsed_sec": 358.9,
+          "write_count": 1,
+          "pass_count": 4,
+          "flagged": false
+        },
+        {
+          "number": 10,
+          "best_score": 95,
+          "elapsed_sec": 81.4,
+          "write_count": 1,
+          "pass_count": 1,
+          "flagged": false
+        }
+      ],
+      "gpu": {
+        "gpu0": {
+          "mem_avg_mib": 26045,
+          "mem_max_mib": 26045,
+          "util_avg_pct": 94,
+          "util_max_pct": 97
+        },
+        "gpu1": {
+          "mem_avg_mib": 15,
+          "mem_max_mib": 15,
+          "util_avg_pct": 0,
+          "util_max_pct": 0
+        }
+      }
+    },
+    "agent": {
+      "engine": "agent",
+      "total_elapsed_sec": 1946.2,
+      "avg_sec_per_chapter": 194.6,
+      "chapter_count": 10,
+      "avg_best_score": 85.9,
+      "min_best_score": 82,
+      "flagged_count": 0,
+      "total_write_passes": 10,
+      "total_review_passes": 22,
+      "chapters": [
+        {
+          "number": 1,
+          "best_score": 82,
+          "elapsed_sec": 200.8,
+          "write_count": 1,
+          "pass_count": 2,
+          "flagged": false
+        },
+        {
+          "number": 2,
+          "best_score": 82,
+          "elapsed_sec": 180.1,
+          "write_count": 1,
+          "pass_count": 2,
+          "flagged": false
+        },
+        {
+          "number": 3,
+          "best_score": 95,
+          "elapsed_sec": 346.9,
+          "write_count": 1,
+          "pass_count": 4,
+          "flagged": false
+        },
+        {
+          "number": 4,
+          "best_score": 82,
+          "elapsed_sec": 187.3,
+          "write_count": 1,
+          "pass_count": 2,
+          "flagged": false
+        },
+        {
+          "number": 5,
+          "best_score": 82,
+          "elapsed_sec": 157.2,
+          "write_count": 1,
+          "pass_count": 2,
+          "flagged": false
+        },
+        {
+          "number": 6,
+          "best_score": 95,
+          "elapsed_sec": 182.9,
+          "write_count": 1,
+          "pass_count": 2,
+          "flagged": false
+        },
+        {
+          "number": 7,
+          "best_score": 95,
+          "elapsed_sec": 187.2,
+          "write_count": 1,
+          "pass_count": 2,
+          "flagged": false
+        },
+        {
+          "number": 8,
+          "best_score": 82,
+          "elapsed_sec": 161.4,
+          "write_count": 1,
+          "pass_count": 2,
+          "flagged": false
+        },
+        {
+          "number": 9,
+          "best_score": 82,
+          "elapsed_sec": 182.6,
+          "write_count": 1,
+          "pass_count": 2,
+          "flagged": false
+        },
+        {
+          "number": 10,
+          "best_score": 82,
+          "elapsed_sec": 159.8,
+          "write_count": 1,
+          "pass_count": 2,
+          "flagged": false
+        }
+      ],
+      "gpu": {
+        "gpu0": {
+          "mem_avg_mib": 26045,
+          "mem_max_mib": 26045,
+          "util_avg_pct": 94,
+          "util_max_pct": 99
+        },
+        "gpu1": {
+          "mem_avg_mib": 15,
+          "mem_max_mib": 15,
+          "util_avg_pct": 0,
+          "util_max_pct": 0
+        }
+      }
+    }
+  }
+}

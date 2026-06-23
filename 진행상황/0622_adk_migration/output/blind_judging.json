@@ -1,0 +1,70 @@
+{
+  "judge": "Claude Opus 4.8 (생성기 gemma4:31b와 다른 모델 계열)",
+  "method": "챕터별 블라인드 A/B, A배정 균형(graph5/agent5), 단일심사 1패스",
+  "engine_wins": {
+    "graph": 5,
+    "agent": 5
+  },
+  "per_chapter": [
+    {
+      "chapter": 1,
+      "blind_winner": "B",
+      "winner_engine": "agent",
+      "A_engine": "graph"
+    },
+    {
+      "chapter": 2,
+      "blind_winner": "A",
+      "winner_engine": "agent",
+      "A_engine": "agent"
+    },
+    {
+      "chapter": 3,
+      "blind_winner": "A",
+      "winner_engine": "graph",
+      "A_engine": "graph"
+    },
+    {
+      "chapter": 4,
+      "blind_winner": "A",
+      "winner_engine": "agent",
+      "A_engine": "agent"
+    },
+    {
+      "chapter": 5,
+      "blind_winner": "A",
+      "winner_engine": "graph",
+      "A_engine": "graph"
+    },
+    {
+      "chapter": 6,
+      "blind_winner": "B",
+      "winner_engine": "graph",
+      "A_engine": "agent"
+    },
+    {
+      "chapter": 7,
+      "blind_winner": "B",
+      "winner_engine": "agent",
+      "A_engine": "graph"
+    },
+    {
+      "chapter": 8,
+      "blind_winner": "B",
+      "winner_engine": "graph",
+      "A_engine": "agent"
+    },
+    {
+      "chapter": 9,
+      "blind_winner": "B",
+      "winner_engine": "agent",
+      "A_engine": "graph"
+    },
+    {
+      "chapter": 10,
+      "blind_winner": "B",
+      "winner_engine": "graph",
+      "A_engine": "agent"
+    }
+  ]
+}

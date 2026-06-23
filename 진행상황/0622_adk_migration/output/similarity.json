@@ -1,0 +1,90 @@
+{
+  "a": "graph",
+  "b": "agent",
+  "chapters": 10,
+  "avg_seq_ratio": 0.176,
+  "avg_jaccard": 0.274,
+  "verdict": "유의미하게 다름 — A(블라인드 심사)로 품질 우열 판정 필요",
+  "per_chapter": [
+    {
+      "chapter": 1,
+      "seq_ratio": 0.099,
+      "jaccard": 0.307,
+      "chars_a": 4130,
+      "chars_b": 4928,
+      "len_pct": 84
+    },
+    {
+      "chapter": 2,
+      "seq_ratio": 0.198,
+      "jaccard": 0.268,
+      "chars_a": 3920,
+      "chars_b": 3833,
+      "len_pct": 98
+    },
+    {
+      "chapter": 3,
+      "seq_ratio": 0.358,
+      "jaccard": 0.308,
+      "chars_a": 3481,
+      "chars_b": 3627,
+      "len_pct": 96
+    },
+    {
+      "chapter": 4,
+      "seq_ratio": 0.227,
+      "jaccard": 0.262,
+      "chars_a": 3505,
+      "chars_b": 4117,
+      "len_pct": 85
+    },
+    {
+      "chapter": 5,
+      "seq_ratio": 0.17,
+      "jaccard": 0.307,
+      "chars_a": 3774,
+      "chars_b": 3001,
+      "len_pct": 80
+    },
+    {
+      "chapter": 6,
+      "seq_ratio": 0.137,
+      "jaccard": 0.261,
+      "chars_a": 3559,
+      "chars_b": 3735,
+      "len_pct": 95
+    },
+    {
+      "chapter": 7,
+      "seq_ratio": 0.12,
+      "jaccard": 0.257,
+      "chars_a": 3771,
+      "chars_b": 4083,
+      "len_pct": 92
+    },
+    {
+      "chapter": 8,
+      "seq_ratio": 0.239,
+      "jaccard": 0.266,
+      "chars_a": 3024,
+      "chars_b": 3127,
+      "len_pct": 97
+    },
+    {
+      "chapter": 9,
+      "seq_ratio": 0.056,
+      "jaccard": 0.233,
+      "chars_a": 4355,
+      "chars_b": 3920,
+      "len_pct": 90
+    },
+    {
+      "chapter": 10,
+      "seq_ratio": 0.159,
+      "jaccard": 0.27,
+      "chars_a": 3540,
+      "chars_b": 3178,
+      "len_pct": 90
+    }
+  ]
+}
