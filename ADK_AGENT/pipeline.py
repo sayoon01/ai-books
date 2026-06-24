@@ -109,6 +109,21 @@ async def _run(doc: dict, output_dir: Path, log_dir: Path, title: str, config: d
     for i, ch in enumerate(chapters, 1):
         num = ch.get("number", i)
         ctitle = ch["title"]
+        filename = chapter_filename(num, ctitle)
+
+        # resume: 이미 생성된(충분한 분량의) 챕터는 재생성하지 않고 건너뛴다.
+        # 챕터당 수 분이 걸리므로 크래시 후 재실행이 앞 챕터를 날리지 않게 한다.
+        existing = output_dir / filename
+        if existing.exists() and len(existing.read_text(encoding="utf-8")) >= MIN_CHARS:
+            print(f"--- 챕터 {num}: {ctitle} --- (이미 있음, 건너뜀)")
+            if push:
+                from publish.github_push import push_chapter, update_meta
+                push_chapter(slug, num, ctitle, existing.read_text(encoding="utf-8"), filename=filename)
+                update_meta(slug, doc, completed=num, total=len(chapters))
+            summaries.append(f"{num}. {ctitle}: {ch.get('description', '')}")
+            print()
+            continue
+
         print(f"--- 챕터 {num}: {ctitle} ---")
         t_ch = time.perf_counter()
 
@@ -129,7 +144,6 @@ async def _run(doc: dict, output_dir: Path, log_dir: Path, title: str, config: d
         final_bad = unverified_numbers(final, grounding) if grounding else []
 
         content = f"# {num}. {ctitle}\n\n{normalize_math(strip_title_h1(final))}"
-        filename = chapter_filename(num, ctitle)
         (output_dir / filename).write_text(content, encoding="utf-8")
 
         ch_elapsed = time.perf_counter() - t_ch
@@ -149,7 +163,7 @@ async def _run(doc: dict, output_dir: Path, log_dir: Path, title: str, config: d
         if push:
             from publish.github_push import push_chapter, update_meta
             push_chapter(slug, num, ctitle, content, filename=filename)
-            update_meta(slug, doc, completed=num)
+            update_meta(slug, doc, completed=num, total=len(chapters))
 
         summaries.append(f"{num}. {ctitle}: {ch.get('description', '')}")
         print()

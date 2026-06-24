@@ -30,6 +30,17 @@ def _git(args: list[str]) -> str:
     return result.stdout.strip()
 
 
+def _commit_push(path: Path, message: str) -> bool:
+    """경로를 스테이징하고, 변경이 있을 때만 커밋+푸시. (재실행/resume 시 빈 커밋 방지)
+    커밋했으면 True. 스테이징된 변경이 없으면 no-op 후 False."""
+    _git(["add", str(path)])
+    if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=REPO_ROOT).returncode == 0:
+        return False                                   # 변경 없음 — 이미 푸시된 챕터 등
+    _git(["commit", "-m", message])
+    _git(["push"])
+    return True
+
+
 def push_chapter(slug: str, chapter_num: int, chapter_title: str, content: str,
                  filename: str | None = None) -> None:
     """챕터 파일을 저장하고 GitHub에 커밋+푸시"""
@@ -42,18 +53,22 @@ def push_chapter(slug: str, chapter_num: int, chapter_title: str, content: str,
 
     if not PUSH_ENABLED:
         return
-    _git(["add", str(book_dir / filename)])
-    _git(["commit", "-m", f"feat({slug}): chapter-{chapter_num:02d} {chapter_title}"])
-    _git(["push"])
-    print(f"  [GitHub] 푸시 완료: {slug}/{filename}")
+    if _commit_push(book_dir / filename,
+                    f"feat({slug}): chapter-{chapter_num:02d} {chapter_title}"):
+        print(f"  [GitHub] 푸시 완료: {slug}/{filename}")
+    else:
+        print(f"  [GitHub] 변경 없음(이미 푸시됨): {slug}/{filename}")
 
 
-def update_meta(slug: str, toc: dict, completed: int) -> None:
-    """meta.json 갱신 후 커밋+푸시"""
+def update_meta(slug: str, toc: dict, completed: int, total: int | None = None) -> None:
+    """meta.json 갱신 후 커밋+푸시.
+
+    total 미지정 시 toc["chapters"] 길이를 쓴다. 단, 목차를 Design이 자동 생성한 경우
+    toc 에는 chapters 키가 없으므로(KeyError 방지) 호출부에서 total 을 넘겨준다."""
     book_dir = REPO_ROOT / "ADK_AGENT" / slug      # ADK 결과는 ADK_AGENT/ 하위로(시스템 분리)
     book_dir.mkdir(parents=True, exist_ok=True)
 
-    total = len(toc["chapters"])
+    total = total if total is not None else len(toc.get("chapters", []))
     meta = {
         "title":              toc["title"],
         "language":           toc.get("language", "ko"),
@@ -67,9 +82,7 @@ def update_meta(slug: str, toc: dict, completed: int) -> None:
 
     if not PUSH_ENABLED:
         return
-    _git(["add", str(meta_path)])
-    _git(["commit", "-m", f"chore({slug}): meta.json 업데이트 ({completed}/{total})"])
-    _git(["push"])
+    _commit_push(meta_path, f"chore({slug}): meta.json 업데이트 ({completed}/{total})")
 
 
 def push_pdf(slug: str, pdf_path: Path) -> None:
