@@ -114,6 +114,29 @@
       "label": "🟩 ADK_AGENT — 신규 Google ADK 파이프라인",
       "books": [
         {
+          "slug": "adk-입문부터-중급까지-에이전트-개발-실습-교재",
+          "path": "ADK_AGENT/adk-입문부터-중급까지-에이전트-개발-실습-교재",
+          "title": "ADK 입문부터 중급까지: 에이전트 개발 실습 교재",
+          "language": "ko",
+          "model": "gemma4:31b",
+          "total": 10,
+          "completed": 10,
+          "status": "done",
+          "chapters": [
+            "chapter-01-ai-에이전트와-adk-시작하기.md",
+            "chapter-02-첫-번째-에이전트-만들기-agent의-기본-구조.md",
+            "chapter-03-에이전트의-손과-발-tool도구-연동.md",
+            "chapter-04-대화의-맥락-유지하기-session과-memory.md",
+            "chapter-05-효율적인-데이터-처리-artifact아티팩트.md",
+            "chapter-06-프로토타입을-넘어-프로덕션으로-신뢰성과-디버깅.md",
+            "chapter-07-멀티-에이전트-기초-sequential-및-parallel-구조.md",
+            "chapter-08-지능적-오케스트레이션-coordinator-및-router-구조.md",
+            "chapter-09-그래프-기반-워크플로우-설계와-트레이드오프.md",
+            "chapter-10-실전-프로젝트-엔터프라이즈급-에이전트-시스템-구축.md"
+          ],
+          "pdfs": []
+        },
+        {
           "slug": "금형-사출-센서-데이터-자동-해석-가이드",
           "path": "ADK_AGENT/금형-사출-센서-데이터-자동-해석-가이드",
           "title": "금형 사출 센서 데이터 자동 해석 가이드",
@@ -138,6 +161,29 @@
             "금형-사출-센서-데이터-자동-해석-가이드-v2.pdf",
             "금형-사출-센서-데이터-자동-해석-가이드-v3.pdf"
           ]
+        },
+        {
+          "slug": "전쟁과-평화-21세기-재해석",
+          "path": "ADK_AGENT/전쟁과-평화-21세기-재해석",
+          "title": "전쟁과 평화: 21세기 재해석",
+          "language": "ko",
+          "model": "gemma4:31b",
+          "total": 10,
+          "completed": 10,
+          "status": "done",
+          "chapters": [
+            "chapter-01-화려한-정적의-세계.md",
+            "chapter-02-무대-위의-불꽃.md",
+            "chapter-03-엇갈리는-시선과-갈망.md",
+            "chapter-04-균열의-전조.md",
+            "chapter-05-보이지-않는-전쟁의-서막.md",
+            "chapter-06-무너지는-성벽.md",
+            "chapter-07-상실의-심연.md",
+            "chapter-08-잿더미-위의-성찰.md",
+            "chapter-09-용서라는-이름의-구원.md",
+            "chapter-10-다시-쓰는-평화.md"
+          ],
+          "pdfs": []
         }
       ]
     }
