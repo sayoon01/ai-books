@@ -51,7 +51,7 @@ def _truncate(text: str) -> str:
 
 def _read_file(path: Path) -> str:
     if not path.is_absolute():
-        path = _ROOT / path
+        path = REPO_ROOT / path
     if not path.exists():
         raise FileNotFoundError(f"[source] 파일 없음: {path}")
     suffix = path.suffix.lower()
@@ -103,6 +103,16 @@ def read_source(source: str | None, slug: str, use_cache: bool = True) -> str:
         return cache.read_text(encoding="utf-8")
 
     is_url = source.lower().startswith(("http://", "https://"))
+    if not is_url:
+        # source가 URL도 실제 파일도 아니면 '영감용 설명 텍스트'(예: 소설의 원작 참고)로 본다.
+        # grounding 없이 진행 — 정체성·창작 브리프는 config(description 등)에 이미 있고,
+        # 짧은 설명을 grounding 으로 걸면 수치 검증이 본문 숫자를 전부 미검증으로 오판한다.
+        p = Path(source)
+        if not p.is_absolute():
+            p = REPO_ROOT / p
+        if not p.exists():
+            print(f"  [source] 파일/URL 아님 — grounding 없이 진행: {source[:60]}")
+            return ""
     text = _truncate(_read_url(source) if is_url else _read_file(Path(source)))
     cache.parent.mkdir(parents=True, exist_ok=True)
     cache.write_text(text, encoding="utf-8")
