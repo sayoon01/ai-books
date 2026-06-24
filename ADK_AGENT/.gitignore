@@ -17,4 +17,4 @@ spikes/*.out
 observability/
 
 # 실행 로그
-output_run.log
+output_run*.log
