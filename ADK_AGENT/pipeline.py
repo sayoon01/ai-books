@@ -190,6 +190,14 @@ async def _run(doc: dict, output_dir: Path, log_dir: Path, title: str, config: d
         except Exception as e:
             print(f"  [PDF] 생성 실패(건너뜀): {e}")
 
+    # 사이트 메타(README + docs/books.json) 갱신 — 새 책이 목록·웹 뷰어에 자동 반영.
+    if push:
+        try:
+            from publish.github_push import update_site
+            update_site()
+        except Exception as e:
+            print(f"  [site] README/books.json 갱신 실패(건너뜀): {e}")
+
     total = time.perf_counter() - t_start
     mins, secs = divmod(int(total), 60)
     avg = (sum(chapter_times) / len(chapter_times)) if chapter_times else 0

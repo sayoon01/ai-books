@@ -136,9 +136,20 @@ def update_readme(slug: str | None = None, toc: dict | None = None) -> None:
 
     if not PUSH_ENABLED:
         return
-    _git(["add", "README.md"])
-    result = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=REPO_ROOT)
-    if result.returncode != 0:
-        _git(["commit", "-m", "docs: README 책 목록 업데이트(2섹션)"])
-        _git(["push"])
-    print("  [GitHub] README.md 업데이트 완료")
+    if _commit_push(readme_path, "docs: README 책 목록 업데이트(2섹션)"):
+        print("  [GitHub] README.md 업데이트 완료")
+
+
+def update_site() -> None:
+    """책 생성 완료 후 사이트 메타(README + docs/books.json) 재생성·푸시.
+    README 는 sys/<책>/meta.json 을, books.json 은 docs/make_index.py 가 스캔한다.
+    (PUSH_ENABLED 가 켜져 있을 때만 커밋·푸시; 파일 재생성은 항상 수행.)"""
+    update_readme()
+
+    make_index = REPO_ROOT / "docs" / "make_index.py"
+    if not make_index.exists():
+        return
+    import sys
+    subprocess.run([sys.executable, str(make_index)], cwd=REPO_ROOT, check=False)
+    if PUSH_ENABLED:
+        _commit_push(REPO_ROOT / "docs" / "books.json", "docs: books.json 갱신(새 책 반영)")
