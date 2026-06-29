@@ -14,12 +14,13 @@ from pydantic import BaseModel, Field
 # =========================
 IssueType = Literal[
     # 오류/위반
-    "factual_error",
+    "factual_error",        # 사실/기술적으로 틀림
     "logical_error",
     "missing_content",
     "off_topic",
     "unsupported_claim",
     "source_misalignment",    # 참고 자료를 왜곡/과장하거나 잘못 반영함
+  
 
     # 품질 문제
     "depth_problem",          # 설명이 얕음 / 근거가 부족함

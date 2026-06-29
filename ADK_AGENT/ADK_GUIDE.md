@@ -217,60 +217,24 @@ SequentialAgent(
 
 ---
 
-## 5. LLM이 흐름을 정하는 방식 (LLM 오케스트레이션)
+## 5. 멀티 에이전트 위임 (LLM이 흐름을 정하는 방식)
 
-4번(워크플로 에이전트)은 **코드가 흐름을 결정**한다(deterministic). 반대로 **LLM이 판단해서**
-"다음에 무엇을 할지"를 정하게 하는 방식이 ADK에 **세 갈래** 있다.
-
-### 5.1 sub_agents + transfer — LLM 위임/라우팅
-부모 `LlmAgent`에 `sub_agents`를 달면, 부모가 상황을 보고 **어느 자식에게 넘길지** LLM이 판단해
-위임한다(내부적으로 `transfer_to_agent` 액션). 각 자식의 **`description`이 곧 라우팅 근거**다.
-제어가 자식으로 **넘어간다**(돌아오지 않음).
+위 4번은 **코드가 흐름을 정함**(deterministic). 반대로 **LLM이 판단해서** 다른 에이전트에게
+넘기게 할 수도 있습니다 — `sub_agents`로 묶어두면 부모가 상황에 맞는 자식에게 **transfer**합니다.
 
 ```python
 billing = Agent(name="billing", description="결제·환불 문의 처리", ...)
 tech    = Agent(name="tech",    description="기술 지원 문의 처리", ...)
+
 coordinator = Agent(
-    name="coordinator", model="gemini-2.0-flash",
-    instruction="문의를 보고 적절한 담당에게 넘겨라.",
-    sub_agents=[billing, tech],     # description 보고 LLM이 transfer 결정
+    name="coordinator",
+    model="gemini-2.0-flash",
+    instruction="사용자 문의를 보고 적절한 담당 에이전트에게 넘겨라.",
+    sub_agents=[billing, tech],     # description을 보고 LLM이 알아서 위임
 )
 ```
-
-### 5.2 AgentTool — 에이전트를 도구로
-에이전트를 **도구처럼** 노출해 상위 LLM이 함수처럼 호출한다. transfer와 달리 제어가 상위로
-**돌아온다**(자식 결과를 받아 상위가 이어감). 호출 순서·횟수를 상위 LLM이 스스로 정한다.
-
-```python
-from google.adk.tools.agent_tool import AgentTool
-researcher = Agent(name="researcher", description="주제를 조사", ...)
-writer = Agent(
-    name="writer", model="gemini-2.0-flash",
-    instruction="필요하면 researcher 도구로 자료를 모은 뒤 글을 써라.",
-    tools=[AgentTool(agent=researcher)],     # 에이전트를 도구로 노출
-)
-```
-
-### 5.3 planner — plan-and-execute / ReAct
-`LlmAgent(planner=...)`로 **LLM이 스스로 계획을 세우고 단계적으로 실행**하게 한다.
-ADK 제공(`google.adk.planners`): `BuiltInPlanner`(모델 내장 thinking 사용),
-`PlanReActPlanner`(계획→행동→관찰 루프를 프롬프트로 유도).
-
-```python
-from google.adk.planners import PlanReActPlanner
-agent = Agent(name="solver", model="gemini-2.0-flash",
-              planner=PlanReActPlanner(), tools=[...])   # 스스로 계획·도구 호출
-```
-
-### 코드 vs LLM 오케스트레이션 — 한눈에
-| | 코드 오케스트레이션 (4번) | LLM 오케스트레이션 (5번) |
-| --- | --- | --- |
-| 흐름 결정 | 코드 (Sequential/Loop/Workflow) | LLM (transfer / AgentTool / planner) |
-| 장점 | 결정론·재현·저비용·디버깅 쉬움 | 유연·맥락 적응·창발적 |
-| 단점 | 경직(모든 분기를 코딩) | 비결정·비용↑·디버깅 난이도↑ |
-| 적합 | 흐름이 정해진 파이프라인 | 분기를 모델 판단에 맡길 때 |
-
-→ 실무는 **하이브리드**가 흔하다: 뼈대(루프·게이트)는 코드로 두고, **국소 판단만 LLM**에 맡긴다.
+- **워크플로 에이전트(4번)** = 흐름이 고정적·예측가능해야 할 때
+- **LLM 위임(5번)** = 분기를 모델 판단에 맡기고 싶을 때 (유연하지만 덜 예측가능)
 
 ---
 
@@ -312,10 +276,8 @@ State·이벤트·도구호출을 눈으로 보며 디버깅할 수 있어 처�
 ADK에는 흐름을 짜는 방식이 **두 갈래**가 있습니다. 버전에 따라 가용성이 다릅니다.
 
 ### (A) 클래식 워크플로 에이전트 — 4번에서 설명한 것
-`SequentialAgent / ParallelAgent / LoopAgent`. 직관적이고 문서·예제가 가장 많다.
-**⚠️ 단, google-adk 2.3.0 기준 셋 다 `@deprecated`** 다("will be removed in future versions" —
-소스에서 확인). 개념 학습·기존 코드 이해엔 여전히 유효하지만, **신규 코드는 (B) 그래프 Workflow**로
-가는 게 안전하다. (이 레포가 `LoopAgent` 대신 카운터+그래프를 택한 이유이기도 하다.)
+`SequentialAgent / ParallelAgent / LoopAgent`. 직관적이고 문서·예제가 가장 많음.
+**대부분의 경우 이걸로 충분합니다.**
 
 ### (B) 신 그래프 Workflow API (`google.adk.workflow`)
 `Workflow / FunctionNode / JoinNode / START` 로 **노드와 엣지(분기)를 직접 그리는** 방식.
@@ -372,28 +334,6 @@ graph = Workflow(name="chapter", edges=[
 
 ---
 
-## 10. 확장 방향 — 이 레포를 LLM 오케스트레이션으로
-
-현재 이 레포의 두 엔진(`graph`/`agent`)은 **코드 오케스트레이션**이다 — 흐름과 게이트가 전부
-코드/순수 함수(`length_decision`/`gate_decision`)다. 다음 실험은 §5의 메커니즘을 이 파이프라인에
-적용해 **흐름 일부를 LLM에 위임**하는 것:
-
-* **LLM 게이트:** 결정론 `gate_decision` 대신(또는 병행) **LLM judge**가 "재수정/수용"을 판단.
-  품질 기준이 애매한 영역에서 더 유연. (가장 작게 시작할 수 있는 후보)
-* **Coordinator 라우팅(5.1):** 검수 결과 유형에 따라 LLM이 다음 단계를 선택 — 예: 사실오류
-  위주면 fact-checker로, 문체 문제면 stylist로 `transfer`.
-* **AgentTool화(5.2):** write/review/revise를 도구로 노출하고, 상위 `LlmAgent`가 **호출 순서·반복
-  횟수를 스스로** 결정(고정 `LoopAgent`/그래프 루프 대신).
-* **동적 플래너(5.3):** Design을 정적 생성이 아니라 `PlanReActPlanner`로 챕터별 전략을 동적
-  수립 + grounding 조회 도구 호출.
-* **멀티 검수자 토론:** reviewer 여러 명이 서로 비평·합의해 품질 판정(LLM 간 상호작용).
-
-**로드맵:** 코드 오케스트레이션(현재) → **국소 LLM 판단 도입(하이브리드)** → 필요 시 전면 LLM
-오케스트레이션. 하이브리드(뼈대는 코드 + 게이트/라우팅만 LLM)가 **비용·재현성 ↔ 유연성**의
-균형점이라 현실적 1순위다. (진행 메모: 하이브리드는 현재 보류·기록만)
-
----
-
 ## 부록. 이 레포(`ADK_AGENT/`)의 실제 사례
 
 이 프로젝트는 **책 자동 생성기**로, 위 개념을 실제로 씁니다:
@@ -411,17 +351,3 @@ graph = Workflow(name="chapter", edges=[
 > `write_count`/`pass_count` 카운터 + 조건 분기로 대체했습니다 (8-B가 더 세밀한 제어를 주기 때문).
 
 참고 코드: `agent/graph.py`(그래프 조립), `agent/write.py`(LlmAgent 노드 + 가드), `core/llm.py`(모델 연결).
-
-### 관측(트레이싱) 켜는 법
-ADK는 LLM 호출·그래프 노드·도구 호출을 **OpenTelemetry span으로 자동 방출**합니다. 이 레포는 그걸
-**Phoenix / Langfuse** 대시보드로 보내 챕터별 단계 타임라인·프롬프트/응답·토큰을 볼 수 있게 했습니다.
-기본 자동 — env 에 설정된 백엔드로 알아서 전송(둘 다 설정 시 동시 전송). 끄려면 `--no-trace`.
-```bash
-docker-compose -f observability/docker-compose.yml up -d         # Phoenix (http://localhost:6006)
-cp observability/.env.example observability/.env                 # 백엔드 엔드포인트/키 (자동 로드됨)
-.venv/bin/python main.py --toc toc/mold-dx-auto.json --no-push   # 트레이싱 자동
-```
-구현: `core/tracing.py`(env 보고 TracerProvider+익스포터 fan-out 설치), `pipeline.py`(runner에
-`AutoTracingPlugin` 부착 + 챕터 span + 종료 flush). 자세한 건 `observability/README.md`.
-</content>
-</invoke>

@@ -1,10 +1,10 @@
 """
-책/문서 생성기 (장르 무관).
+책/문서 생성기
 
 흐름: (목차 자동생성) → 챕터마다 [초안 → 검수 → 수정] → 저장 + GitHub 푸시
 - chapters가 있으면 그대로, 없으면 grounding(없으면 description)으로 목차 자동 생성.
 - 검수/목차는 Pydantic 구조화 출력(call_structured)으로 형식 보장 + 재시도.
-- 모델은 gemma4:31b 고정 (별도 llm.py 없이 이 파일에 내장).
+- 모델은 gemma4:31b 고정 
 """
 import json
 import re
