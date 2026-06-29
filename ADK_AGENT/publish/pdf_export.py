@@ -112,11 +112,13 @@ p  {{ margin:.55em 0; orphans:2; widows:2; }}
 strong {{ color:#0f2540; }}
 a {{ color:#1a5276; }}
 
-/* 표 */
-table {{ border-collapse:collapse; width:100%; margin:1em 0; font-size:9.5pt;
-         break-inside: avoid; }}
-thead {{ background:#0f2540; color:#fff; }}
+/* 표 — 긴 표는 페이지 넘김 허용(header 반복), 행은 쪼개지지 않게.
+   (table 전체에 break-inside:avoid 를 걸면 긴 표가 통째로 다음 장으로 점프해
+    캡션만 남고 빈 페이지가 생기는 '표 깨짐'이 발생한다.) */
+table {{ border-collapse:collapse; width:100%; margin:1em 0; font-size:9.5pt; }}
+thead {{ background:#0f2540; color:#fff; display: table-header-group; }}
 th,td {{ border:1px solid #d0d0d0; padding:6px 9px; text-align:left; }}
+tr {{ break-inside: avoid; }}
 tbody tr:nth-child(even) {{ background:#f6f8fa; }}
 
 /* 인용 / 노트 */
@@ -132,8 +134,9 @@ pre {{ font-family:{mono}; font-size:8.5pt; line-height:1.5; background:#f6f8fa;
 pre code {{ background:none; padding:0; }}
 
 img {{ max-width:100%; }}
-figure {{ text-align:center; margin:1.2em 0; }}
-figcaption {{ font:9pt {sans}; color:#777; margin-top:.4em; }}
+figure {{ text-align:center; margin:1.4em 0; break-inside: avoid; }}
+figure img {{ width:100%; max-width:165mm; }}
+figcaption {{ font:9pt {sans}; color:#777; margin-top:.5em; }}
 """
 
 
@@ -155,6 +158,23 @@ def _next_version(book_dir: Path, slug: str) -> int:
     nums = [int(m.group(1)) for p in book_dir.glob(f"{slug}-v*.pdf")
             if (m := re.match(rf"{re.escape(slug)}-v(\d+)\.pdf$", p.name))]
     return (max(nums) + 1) if nums else 1
+
+
+def _normalize_md(text: str) -> str:
+    """마크다운 표가 안정적으로 렌더되도록 정규화.
+
+    python-markdown 의 표 확장은 표 블록 '앞에 빈 줄'이 있어야 표로 인식한다.
+    LLM 이 캡션 바로 다음 줄에 표를 붙여 쓰면(빈 줄 없이) 표 전체가 일반 텍스트로
+    출력되는 '표 깨짐'이 발생한다. → 비어있지 않은 비-표 줄 바로 뒤에 표 행(|...)이
+    시작되면 그 사이에 빈 줄을 끼워 넣는다.
+    """
+    out: list[str] = []
+    for ln in text.split("\n"):
+        is_row = ln.lstrip().startswith("|")
+        if is_row and out and out[-1].strip() != "" and not out[-1].lstrip().startswith("|"):
+            out.append("")
+        out.append(ln)
+    return "\n".join(out)
 
 
 def _chapter_files(book_dir: Path) -> list[Path]:
@@ -181,7 +201,7 @@ def build_pdf(book_dir: Path, slug: str, title: str, *,
     date_str = date_str or _dt.date.today().isoformat()
     L, (serif, sans, mono), is_cjk = _lang_assets(language)
     lang_attr = (language or "ko").lower()
-    raw_md = "\n\n".join(c.read_text(encoding="utf-8") for c in chapters)
+    raw_md = _normalize_md("\n\n".join(c.read_text(encoding="utf-8") for c in chapters))
 
     # 한 번에 변환해야 헤딩 id·TOC가 일관됨
     md = markdown.Markdown(extensions=[
