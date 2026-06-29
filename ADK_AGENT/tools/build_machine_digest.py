@@ -316,6 +316,49 @@ def render(agg: dict) -> str:
         w(f"| {k} | {fmt(v)} | {pct(v, grand_total)}% |")
     w("")
 
+    # 그룹 집계 헬퍼: 사출기 목록 → 합산 dist/대수/사이클
+    def group_agg(items):
+        cnt = len(items)
+        d = Counter()
+        tot = 0
+        molds = set()
+        for _, m in items:
+            d.update(m["dist"])
+            tot += m["total"]
+            molds.update(m["molds"].keys())
+        return cnt, d, tot, len(molds)
+
+    # ── 1-1. 제조계열별 집계 ───────────────────────────────────────────
+    w("### 1-1. 제조계열별 집계 (toprun / woosung)")
+    w("")
+    w("| 제조계열 | 사출기수 | 가동금형수 | 총사이클 | NORMAL | NORMAL% | NO_SIGNAL% | 센서에러율 |")
+    w("|---|---|---|---|---|---|---|---|")
+    by_maker = defaultdict(list)
+    for name, m in machines.items():
+        by_maker[m["maker"] or "(미상)"].append((name, m))
+    for mk, items in sorted(by_maker.items(), key=lambda kv: -sum(x[1]["total"] for x in kv[1])):
+        cnt, d, tot, nm = group_agg(items)
+        nrm = d.get("NORMAL", 0)
+        se = d.get("NO_SIGNAL", 0) + d.get("SENSOR_ERROR", 0)
+        w(f"| {mk} | {cnt} | {nm} | {fmt(tot)} | {fmt(nrm)} | {pct(nrm, tot)}% | "
+          f"{pct(d.get('NO_SIGNAL', 0), tot)}% | {pct(se, tot)}% |")
+    w("")
+
+    # ── 1-2. 도입연도별 집계 ───────────────────────────────────────────
+    w("### 1-2. 도입연도별 집계")
+    w("")
+    w("| 도입연도 | 사출기수 | 총사이클 | NORMAL | NORMAL% | NO_SIGNAL% |")
+    w("|---|---|---|---|---|---|")
+    by_year = defaultdict(list)
+    for name, m in machines.items():
+        by_year[m["year"] or "(미상)"].append((name, m))
+    for yr, items in sorted(by_year.items()):
+        cnt, d, tot, nm = group_agg(items)
+        nrm = d.get("NORMAL", 0)
+        w(f"| {yr} | {cnt} | {fmt(tot)} | {fmt(nrm)} | {pct(nrm, tot)}% | "
+          f"{pct(d.get('NO_SIGNAL', 0), tot)}% |")
+    w("")
+
     rows = sorted(machines.items(), key=lambda kv: -kv[1]["total"])
 
     # ── 2. 사출기 15대 총괄표 ─────────────────────────────────────────
