@@ -1,0 +1,2305 @@
+{
+  "machines": {
+    "toprun_A3": {
+      "controller": "P-M02-2022-A142",
+      "maker": "toprun",
+      "year": "2022",
+      "product_model": "[LGD]LUCID34",
+      "molds": {
+        "4977-0187A": {
+          "dist": {
+            "NO_SIGNAL": 1800
+          },
+          "total": 1800,
+          "model": "[LGD]LUCID34",
+          "part": "GUIDE HOLDER"
+        },
+        "IMBN65285701": {
+          "dist": {
+            "NO_SIGNAL": 1356
+          },
+          "total": 1356,
+          "model": "[GM]RSI",
+          "part": "CASE FRONT"
+        },
+        "IMBN66466901": {
+          "dist": {
+            "NO_SIGNAL": 9308
+          },
+          "total": 9308,
+          "model": "[BMW]CHUD",
+          "part": "RAY TUBE DOWN"
+        },
+        "IMBN665225001": {
+          "dist": {
+            "NO_SIGNAL": 1270
+          },
+          "total": 1270,
+          "model": "[HONDA]19BMC",
+          "part": "Case Front LHD"
+        },
+        "IMGC66361501": {
+          "dist": {
+            "NO_SIGNAL": 4111
+          },
+          "total": 4111,
+          "model": "[RENAULT]ULC4.5_HJD",
+          "part": "PANER FRONT"
+        },
+        "MAZ64563301": {
+          "dist": {
+            "NO_SIGNAL": 5717
+          },
+          "total": 5717,
+          "model": "[GM]GAMMA",
+          "part": "MONITOR BRACKET"
+        },
+        "MAZ67612701": {
+          "dist": {
+            "NO_SIGNAL": 4154
+          },
+          "total": 4154,
+          "model": "[PORSCHE]992PA",
+          "part": "BRACKET BOTTOM"
+        },
+        "MBN63343301": {
+          "dist": {
+            "NO_SIGNAL": 19794
+          },
+          "total": 19794,
+          "model": "[GM]K2XX",
+          "part": "CASE FRONT"
+        },
+        "MBN64923101": {
+          "dist": {
+            "NO_SIGNAL": 12877
+          },
+          "total": 12877,
+          "model": "INFO3.5L",
+          "part": "CASE FRONT"
+        },
+        "MBN65302502": {
+          "dist": {
+            "NO_SIGNAL": 9931
+          },
+          "total": 9931,
+          "model": "[RENAULT]RBC",
+          "part": "CASE FRONT"
+        },
+        "MBN65562801": {
+          "dist": {
+            "NO_SIGNAL": 16479
+          },
+          "total": 16479,
+          "model": "[VW]OCU4",
+          "part": "CASE BOTTOM"
+        },
+        "MCK 71390801": {
+          "dist": {
+            "NO_SIGNAL": 8222
+          },
+          "total": 8222,
+          "model": "[RENAULT]ULC4.5_X52",
+          "part": "COVER REAR"
+        },
+        "MCK71605601": {
+          "dist": {
+            "NO_SIGNAL": 51169
+          },
+          "total": 51169,
+          "model": "[HONDA]TSU",
+          "part": "COVER TOP"
+        },
+        "MCK71605701": {
+          "dist": {
+            "NO_SIGNAL": 255761
+          },
+          "total": 255761,
+          "model": "[HONDA]TSU",
+          "part": "COVER BOTTOM"
+        },
+        "MCK71758701": {
+          "dist": {
+            "SENSOR_ERROR": 24,
+            "WARMUP": 251,
+            "NORMAL": 55232,
+            "IDLE": 214,
+            "NO_SIGNAL": 73756
+          },
+          "total": 129477,
+          "model": "[VW]FPK",
+          "part": "COVER REAR"
+        },
+        "MCK71924401": {
+          "dist": {
+            "SENSOR_ERROR": 4,
+            "WARMUP": 14,
+            "IDLE": 128,
+            "NORMAL": 6844,
+            "NO_SIGNAL": 3039
+          },
+          "total": 10029,
+          "model": "[MB]BR206M",
+          "part": "COVER REAR"
+        },
+        "MCR67507901": {
+          "dist": {
+            "NO_SIGNAL": 1378
+          },
+          "total": 1378,
+          "model": "[MB]MRA2-ICD",
+          "part": "DECO REAR"
+        },
+        "MDQ66692301": {
+          "dist": {
+            "NO_SIGNAL": 3283
+          },
+          "total": 3283,
+          "model": "[BMW]AZV",
+          "part": "PANEL GUIDE  FRONT DFE RHD"
+        },
+        "MEG66460101": {
+          "dist": {
+            "NO_SIGNAL": 4051
+          },
+          "total": 4051,
+          "model": "[VW]ARHUD-RHD",
+          "part": "HOLDER LCD BOTTOM RHD"
+        },
+        "MGC 66391701": {
+          "dist": {
+            "NO_SIGNAL": 8216
+          },
+          "total": 8216,
+          "model": "[PORSCHE]E3PA_CID",
+          "part": "PANEL FRONT"
+        },
+        "MGC66100101": {
+          "dist": {
+            "NO_SIGNAL": 10907
+          },
+          "total": 10907,
+          "model": "[RENAULT]ULC4.5_PY1B",
+          "part": "PANEL FRONT"
+        },
+        "MGC66391401": {
+          "dist": {
+            "NO_SIGNAL": 8043
+          },
+          "total": 8043,
+          "model": "[PORSCHE]G3_CID",
+          "part": "PANEL FRONT G3 CID"
+        },
+        "MGC66391801": {
+          "dist": {
+            "NO_SIGNAL": 5046
+          },
+          "total": 5046,
+          "model": "[PORSCHE]E3PA_DID",
+          "part": "PANEL FRONT DID LHD"
+        },
+        "MGC66425401": {
+          "dist": {
+            "NO_SIGNAL": 8872
+          },
+          "total": 8872,
+          "model": "[PORSCHE]992PA",
+          "part": "PANEL FRONT RHD"
+        },
+        "MGC66451901": {
+          "dist": {
+            "SENSOR_ERROR": 8,
+            "IDLE": 199,
+            "NORMAL": 8213,
+            "WARMUP": 2,
+            "NO_SIGNAL": 27
+          },
+          "total": 8449,
+          "model": "[RENAULT]XJI",
+          "part": "PANEL REAR"
+        }
+      },
+      "mold_count": 25,
+      "dist": {
+        "NO_SIGNAL": 528567,
+        "SENSOR_ERROR": 36,
+        "WARMUP": 267,
+        "NORMAL": 70289,
+        "IDLE": 541
+      },
+      "total": 599700
+    },
+    "toprun_D8": {
+      "controller": "P-M02-2023-A164",
+      "maker": "toprun",
+      "year": "2023",
+      "product_model": "[GM]BUICK",
+      "molds": {
+        "6944L_0023A": {
+          "dist": {
+            "NO_SIGNAL": 641
+          },
+          "total": 641,
+          "model": "[GM]BUICK",
+          "part": "DECO_TRIM"
+        },
+        "IMGC66385001": {
+          "dist": {
+            "NO_SIGNAL": 17604
+          },
+          "total": 17604,
+          "model": "[PORSCHE]E3PA",
+          "part": "PANEL REAR"
+        },
+        "MCK67461001": {
+          "dist": {
+            "NO_SIGNAL": 50420
+          },
+          "total": 50420,
+          "model": "[SYMC]Y450",
+          "part": "COVER LENS"
+        },
+        "MCK71758701": {
+          "dist": {
+            "SENSOR_ERROR": 6132,
+            "WARMUP": 552,
+            "NORMAL": 204425,
+            "IDLE": 3286,
+            "NO_SIGNAL": 4270
+          },
+          "total": 218665,
+          "model": "[VW]FPK",
+          "part": "COVER REAR"
+        },
+        "MEG65818802": {
+          "dist": {
+            "NO_SIGNAL": 4540
+          },
+          "total": 4540,
+          "model": "VW-AR-HUD-LHD",
+          "part": "Holder LCD Top Lhd"
+        },
+        "MGC30036501": {
+          "dist": {
+            "SENSOR_ERROR": 2,
+            "IDLE": 37,
+            "NORMAL": 272,
+            "WARMUP": 3
+          },
+          "total": 314,
+          "model": "BBB_LATAM",
+          "part": "Panel Front"
+        },
+        "MGC30036601": {
+          "dist": {
+            "SENSOR_ERROR": 5,
+            "NORMAL": 722,
+            "IDLE": 68,
+            "WARMUP": 21
+          },
+          "total": 816,
+          "model": "BBB_LATAM",
+          "part": "Panel Rear"
+        },
+        "MGC66478801": {
+          "dist": {
+            "NO_SIGNAL": 1402
+          },
+          "total": 1402,
+          "model": "RENAULTX1320",
+          "part": "Panel Rear"
+        },
+        "MKC66600401": {
+          "dist": {
+            "NO_SIGNAL": 23146
+          },
+          "total": 23146,
+          "model": "[SYMC]C300_CLUSTER",
+          "part": "WINDOW FRONT"
+        }
+      },
+      "mold_count": 9,
+      "dist": {
+        "NO_SIGNAL": 102023,
+        "SENSOR_ERROR": 6139,
+        "WARMUP": 576,
+        "NORMAL": 205419,
+        "IDLE": 3391
+      },
+      "total": 317548
+    },
+    "toprun_A2": {
+      "controller": "P-M02-2024-A172",
+      "maker": "toprun",
+      "year": "2024",
+      "product_model": "[LGD]LUCID34",
+      "molds": {
+        "4977L-0187A": {
+          "dist": {
+            "NO_SIGNAL": 10310
+          },
+          "total": 10310,
+          "model": "[LGD]LUCID34",
+          "part": "GUIDE HOLDER"
+        },
+        "MBN63343301": {
+          "dist": {
+            "NO_SIGNAL": 73683
+          },
+          "total": 73683,
+          "model": "[GM]K2XX",
+          "part": "CASE FRONT"
+        },
+        "MBN65302501": {
+          "dist": {
+            "NO_SIGNAL": 104637
+          },
+          "total": 104637,
+          "model": "[RENAUT]RBC",
+          "part": "CASE FRONT"
+        },
+        "MBN66466201": {
+          "dist": {
+            "NO_SIGNAL": 30711
+          },
+          "total": 30711,
+          "model": "[BMW]CHUD",
+          "part": "CASE BOTTOM"
+        },
+        "MBN66466901": {
+          "dist": {
+            "NO_SIGNAL": 66793
+          },
+          "total": 66793,
+          "model": "[BMW]CHUD",
+          "part": "RAYTUBE DOWN"
+        },
+        "MBN66587901": {
+          "dist": {
+            "NO_SIGNAL": 4842
+          },
+          "total": 4842,
+          "model": "[JLR]VCM",
+          "part": "CASE BOTTOM"
+        },
+        "MCK71165201": {
+          "dist": {
+            "NO_SIGNAL": 3704
+          },
+          "total": 3704,
+          "model": "[MB]MRA2_ICD",
+          "part": "COVER REAR H"
+        },
+        "MCK71390801": {
+          "dist": {
+            "NO_SIGNAL": 2939
+          },
+          "total": 2939,
+          "model": "[RENAULT]ULC4.5_X52",
+          "part": "COVER REAR"
+        },
+        "MCK71565201": {
+          "dist": {
+            "NO_SIGNAL": 31741
+          },
+          "total": 31741,
+          "model": "[MB]BR214",
+          "part": "REAR FRAME 2D"
+        },
+        "MCK71605601": {
+          "dist": {
+            "NO_SIGNAL": 20422
+          },
+          "total": 20422,
+          "model": "[HONDA]TSU",
+          "part": "COVER TOP"
+        },
+        "MCK71924401": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "WARMUP": 2,
+            "NORMAL": 186,
+            "IDLE": 1
+          },
+          "total": 190,
+          "model": "[MB]BR206M",
+          "part": "COVER REAR"
+        },
+        "MEG65879401": {
+          "dist": {
+            "NO_SIGNAL": 5115
+          },
+          "total": 5115,
+          "model": "[VW]ARHUD_LHD",
+          "part": "HOLDER LCD BOTTOM LHD"
+        },
+        "MGC66100101": {
+          "dist": {
+            "NO_SIGNAL": 2547
+          },
+          "total": 2547,
+          "model": "[RENAULT]ULC4.5_PY1B",
+          "part": "PANEL FRONT"
+        },
+        "MGC66391701": {
+          "dist": {
+            "NO_SIGNAL": 25542
+          },
+          "total": 25542,
+          "model": "[PORSCHE]E3PA_CID",
+          "part": "PANEL FRONT"
+        },
+        "MGC66414801": {
+          "dist": {
+            "NO_SIGNAL": 30727
+          },
+          "total": 30727,
+          "model": "[RENAULT]CCS3",
+          "part": "PANEL FRONT"
+        },
+        "MGC66425301": {
+          "dist": {
+            "NO_SIGNAL": 10961
+          },
+          "total": 10961,
+          "model": "[PORSCHE]992PA",
+          "part": "PANEL FRONT LHD"
+        },
+        "MGC66451901": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "IDLE": 15,
+            "NORMAL": 158,
+            "WARMUP": 2
+          },
+          "total": 176,
+          "model": "[RENAULT]XJI",
+          "part": "PANEL REAR"
+        },
+        "MGC66467201": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "IDLE": 8,
+            "NORMAL": 39
+          },
+          "total": 48,
+          "model": "[RENAULT]X1312",
+          "part": "PANER REAR"
+        },
+        "MGC66467301": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "WARMUP": 5,
+            "IDLE": 17,
+            "NORMAL": 190
+          },
+          "total": 213,
+          "model": "[RENAULT]X1312",
+          "part": "PANEL FRONT"
+        }
+      },
+      "mold_count": 19,
+      "dist": {
+        "NO_SIGNAL": 424674,
+        "SENSOR_ERROR": 4,
+        "WARMUP": 9,
+        "NORMAL": 573,
+        "IDLE": 41
+      },
+      "total": 425301
+    },
+    "toprun_C11": {
+      "controller": "P-M02-2024-A174",
+      "maker": "toprun",
+      "year": "2024",
+      "product_model": "GMBUICK",
+      "molds": {
+        "6944L-0023A": {
+          "dist": {
+            "NO_SIGNAL": 1816
+          },
+          "total": 1816,
+          "model": "GMBUICK",
+          "part": "DECO TRIM"
+        },
+        "ABQ76602101": {
+          "dist": {
+            "NO_SIGNAL": 2
+          },
+          "total": 2,
+          "model": "[JLR]TCU4",
+          "part": "TOP CASE"
+        },
+        "ABQ77542801": {
+          "dist": {
+            "NO_SIGNAL": 197579
+          },
+          "total": 197579,
+          "model": "[RENAUL]NISSAN-WCBS",
+          "part": "TOP CASE"
+        },
+        "ACQ30306401": {
+          "dist": {
+            "NO_SIGNAL": 2
+          },
+          "total": 2,
+          "model": "[SYMC]Y450",
+          "part": "COVER REAR"
+        },
+        "H24VVA0033A": {
+          "dist": {
+            "SENSOR_ERROR": 8,
+            "WARMUP": 18,
+            "IDLE": 42,
+            "NORMAL": 716,
+            "NO_SIGNAL": 31
+          },
+          "total": 815,
+          "model": "[JLR]EMA-RCCD",
+          "part": "CASE TOP"
+        },
+        "IMBN66466901": {
+          "dist": {
+            "NO_SIGNAL": 131952
+          },
+          "total": 131952,
+          "model": "[BMW]CHUD",
+          "part": "RAYTUBE DOWN"
+        },
+        "IMBNG63343301": {
+          "dist": {
+            "NO_SIGNAL": 26317
+          },
+          "total": 26317,
+          "model": "[GM]K2XX",
+          "part": "case front"
+        },
+        "IMDQ65436301": {
+          "dist": {
+            "NO_SIGNAL": 3869
+          },
+          "total": 3869,
+          "model": "[PORSCHE]MACAN-LZV",
+          "part": "FRAME FRONT"
+        },
+        "IMGC65639401": {
+          "dist": {
+            "NO_SIGNAL": 1785
+          },
+          "total": 1785,
+          "model": "[BMW]RR2X",
+          "part": "PANEL FRONT"
+        },
+        "IMGC66183001": {
+          "dist": {
+            "NO_SIGNAL": 5011
+          },
+          "total": 5011,
+          "model": "[BENTLEY]BENTLEY-AIT",
+          "part": "PANEL FRONT AIT"
+        },
+        "IMGC66361501": {
+          "dist": {
+            "NO_SIGNAL": 3
+          },
+          "total": 3,
+          "model": "[RENAULT]ULC4.5-HJD",
+          "part": "PANEL FRONT"
+        },
+        "IMGC66385001": {
+          "dist": {
+            "NO_SIGNAL": 329
+          },
+          "total": 329,
+          "model": "[PORSCHE]E3PA-CLUSTER",
+          "part": "PANEL REAR"
+        },
+        "MBN63803301": {
+          "dist": {
+            "NO_SIGNAL": 618
+          },
+          "total": 618,
+          "model": "[JLR]EVAC_VCM",
+          "part": "CASE BOTTOM"
+        },
+        "MBN64610201": {
+          "dist": {
+            "NO_SIGNAL": 39
+          },
+          "total": 39,
+          "model": "[JLR]TCU3",
+          "part": "CASE TOP"
+        },
+        "MBN65302502": {
+          "dist": {
+            "NO_SIGNAL": 27104
+          },
+          "total": 27104,
+          "model": "[RENAULT]RBC",
+          "part": "CASE FRONT"
+        },
+        "MBN65583401": {
+          "dist": {
+            "NO_SIGNAL": 5
+          },
+          "total": 5,
+          "model": "[VW]OCU3-MQB37W",
+          "part": "CASE TOP-37W"
+        },
+        "MBN65604901": {
+          "dist": {
+            "NO_SIGNAL": 28117
+          },
+          "total": 28117,
+          "model": "[VW]OCU3-MQB37W",
+          "part": "CASE BOTTOM 37W"
+        },
+        "MBN66596001": {
+          "dist": {
+            "SENSOR_ERROR": 5,
+            "IDLE": 67,
+            "NORMAL": 491,
+            "WARMUP": 36,
+            "NO_SIGNAL": 881
+          },
+          "total": 1480,
+          "model": "[JLR]RCCD",
+          "part": "CASE BOTTOM"
+        },
+        "MCK71427001": {
+          "dist": {
+            "NO_SIGNAL": 3
+          },
+          "total": 3,
+          "model": "[RENAULT]ULC4.5-HJD",
+          "part": "COVER REAR"
+        },
+        "MCK71605601": {
+          "dist": {
+            "NO_SIGNAL": 10284
+          },
+          "total": 10284,
+          "model": "[HONDA]TSU",
+          "part": "COVER TOP"
+        },
+        "MCK71605701": {
+          "dist": {
+            "NO_SIGNAL": 3
+          },
+          "total": 3,
+          "model": "[HONDA]TSU",
+          "part": "COVER BOTTOM"
+        },
+        "MCK71924401": {
+          "dist": {
+            "SENSOR_ERROR": 7,
+            "WARMUP": 49,
+            "NORMAL": 1376,
+            "IDLE": 78,
+            "NO_SIGNAL": 1178
+          },
+          "total": 2688,
+          "model": "[MERCEDES]BR206M",
+          "part": "COVER REAR"
+        },
+        "MDQ66692301": {
+          "dist": {
+            "NO_SIGNAL": 1123
+          },
+          "total": 1123,
+          "model": "[BMW]AZV",
+          "part": "PANEL GUIDE FRONT DFE RHD"
+        },
+        "MDQ66754601": {
+          "dist": {
+            "NO_SIGNAL": 4
+          },
+          "total": 4,
+          "model": "[BMW]AZV",
+          "part": "PANEL GUIDE FRONT CID 4M LHD"
+        },
+        "MDQ66754701": {
+          "dist": {
+            "NO_SIGNAL": 2005
+          },
+          "total": 2005,
+          "model": "[BMW]AZV",
+          "part": "PANEL GUIDE FRONT CID 4M RHD"
+        },
+        "MEG65879401": {
+          "dist": {
+            "NO_SIGNAL": 20201
+          },
+          "total": 20201,
+          "model": "[VW]AR-HUD-LHD",
+          "part": "HOLDER LCD BOTTOM LHD"
+        },
+        "MGC66100101": {
+          "dist": {
+            "NO_SIGNAL": 3886
+          },
+          "total": 3886,
+          "model": "[RENAULT]PY1B",
+          "part": "PAEL FRONT"
+        },
+        "MGC66160901": {
+          "dist": {
+            "NO_SIGNAL": 1569
+          },
+          "total": 1569,
+          "model": "[RENAULT]HBC",
+          "part": "PANEL  FRONT"
+        },
+        "MGC66391701": {
+          "dist": {
+            "NO_SIGNAL": 4908
+          },
+          "total": 4908,
+          "model": "[PORSCHE]E3PA-CID",
+          "part": "PANEL FRONT E3PA CID"
+        },
+        "MGC66425401": {
+          "dist": {
+            "NO_SIGNAL": 7030
+          },
+          "total": 7030,
+          "model": "[PORSCHE]992PA",
+          "part": "992PA RHD PANEL FRONT"
+        },
+        "MGC66451901": {
+          "dist": {
+            "SENSOR_ERROR": 2,
+            "IDLE": 104,
+            "NORMAL": 17975,
+            "WARMUP": 51,
+            "NO_SIGNAL": 2697
+          },
+          "total": 20829,
+          "model": "[RENAULT]XJI",
+          "part": "PANEL REAR"
+        }
+      },
+      "mold_count": 31,
+      "dist": {
+        "NO_SIGNAL": 480351,
+        "SENSOR_ERROR": 22,
+        "WARMUP": 154,
+        "IDLE": 291,
+        "NORMAL": 20558
+      },
+      "total": 501376
+    },
+    "toprun_A5": {
+      "controller": "P-M02-2024-A177",
+      "maker": "toprun",
+      "year": "2024",
+      "product_model": "[GM]K2XX",
+      "molds": {
+        "IMBN63343301": {
+          "dist": {
+            "NO_SIGNAL": 39664
+          },
+          "total": 39664,
+          "model": "[GM]K2XX",
+          "part": "CASE FRONT"
+        },
+        "MAZ67113101+MAZ67113201": {
+          "dist": {
+            "NO_SIGNAL": 2
+          },
+          "total": 2,
+          "model": "[MB]EVA2_E2H_RHD",
+          "part": "TRIM BRACKET DRIVER RHD"
+        },
+        "MBN66102701": {
+          "dist": {
+            "SENSOR_ERROR": 13,
+            "WARMUP": 53,
+            "IDLE": 133,
+            "NORMAL": 1225,
+            "NO_SIGNAL": 7283
+          },
+          "total": 8707,
+          "model": "[NISSAN]WCBS",
+          "part": "CASE TOP"
+        },
+        "MBN66595901": {
+          "dist": {
+            "NO_SIGNAL": 2
+          },
+          "total": 2,
+          "model": "[JLR]RCCD",
+          "part": "CASE TOP"
+        },
+        "MBN66596001": {
+          "dist": {
+            "NO_SIGNAL": 7
+          },
+          "total": 7,
+          "model": "[JLR]RCCD",
+          "part": "CASE BOTTOM"
+        },
+        "MCK 71605801": {
+          "dist": {
+            "NO_SIGNAL": 26185
+          },
+          "total": 26185,
+          "model": "[HONDA]TSU",
+          "part": "COVER BUB"
+        },
+        "MCK69168901": {
+          "dist": {
+            "NO_SIGNAL": 27762
+          },
+          "total": 27762,
+          "model": "[JLR]TCU3",
+          "part": "COVER BUB"
+        },
+        "MCK71924401": {
+          "dist": {
+            "NO_SIGNAL": 751
+          },
+          "total": 751,
+          "model": "BR206M",
+          "part": "COVER REAR"
+        },
+        "MCR67228501": {
+          "dist": {
+            "NO_SIGNAL": 17101
+          },
+          "total": 17101,
+          "model": "[GM]SI",
+          "part": "DECO FRONT"
+        },
+        "MGC66100101": {
+          "dist": {
+            "NO_SIGNAL": 6088
+          },
+          "total": 6088,
+          "model": "[RENAULT]ULC4.5_PY1B",
+          "part": "PANEL FRONT"
+        },
+        "MGC66414801": {
+          "dist": {
+            "NO_SIGNAL": 54421
+          },
+          "total": 54421,
+          "model": "[RENAULT]CCS3",
+          "part": "PANEL FRONT AIO"
+        },
+        "MGC66451901": {
+          "dist": {
+            "SENSOR_ERROR": 3,
+            "IDLE": 41,
+            "NORMAL": 13147,
+            "WARMUP": 898,
+            "NO_SIGNAL": 4
+          },
+          "total": 14093,
+          "model": "[RENAULT]XJI",
+          "part": "PANEL REAR"
+        },
+        "MGC66467201": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "IDLE": 8,
+            "NORMAL": 39
+          },
+          "total": 48,
+          "model": "[RENAULT]X1312",
+          "part": "PANER REAR"
+        },
+        "MGC66467301": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "WARMUP": 5,
+            "IDLE": 17,
+            "NORMAL": 190
+          },
+          "total": 213,
+          "model": "[RENAULT]X1312",
+          "part": "PANEL FRONT"
+        }
+      },
+      "mold_count": 14,
+      "dist": {
+        "NO_SIGNAL": 179270,
+        "SENSOR_ERROR": 18,
+        "WARMUP": 956,
+        "IDLE": 199,
+        "NORMAL": 14601
+      },
+      "total": 195044
+    },
+    "toprun_C5": {
+      "controller": "P-M02-2024-A180",
+      "maker": "toprun",
+      "year": "2024",
+      "product_model": "[BMW]CHUD",
+      "molds": {
+        "IMBN66466802": {
+          "dist": {
+            "NO_SIGNAL": 113428
+          },
+          "total": 113428,
+          "model": "[BMW]CHUD",
+          "part": "RAYTUBE UP 4M"
+        },
+        "IMBN66466901": {
+          "dist": {
+            "NO_SIGNAL": 7430
+          },
+          "total": 7430,
+          "model": "[BMW]CHUD",
+          "part": "RAY TUBE DOWN"
+        },
+        "IMGC66160701": {
+          "dist": {
+            "NO_SIGNAL": 12835
+          },
+          "total": 12835,
+          "model": "[RENAULT]ULC4.5_X52",
+          "part": "PANEL FRONT"
+        },
+        "IMGC66361501": {
+          "dist": {
+            "NO_SIGNAL": 3234
+          },
+          "total": 3234,
+          "model": "[RENAULT]ULC4.5_HJD",
+          "part": "PANEL FRONT"
+        },
+        "IMGC66480701": {
+          "dist": {
+            "NO_SIGNAL": 899
+          },
+          "total": 899,
+          "model": "RENAULTCCS3X1324",
+          "part": "PANEL FRONT"
+        },
+        "MBN6334301": {
+          "dist": {
+            "NO_SIGNAL": 14323
+          },
+          "total": 14323,
+          "model": "[GM]K2XX",
+          "part": "CASE FRONT"
+        },
+        "MBN64683201": {
+          "dist": {
+            "NO_SIGNAL": 82270
+          },
+          "total": 82270,
+          "model": "[GM]GEN11",
+          "part": "CASE MAIN"
+        },
+        "MBN65302502": {
+          "dist": {
+            "NO_SIGNAL": 1605
+          },
+          "total": 1605,
+          "model": "[RENAULT]RBC",
+          "part": "CASE FRONT"
+        },
+        "MBN65503301": {
+          "dist": {
+            "NO_SIGNAL": 27704
+          },
+          "total": 27704,
+          "model": "[JLR]TCU4",
+          "part": "TOP CASE"
+        },
+        "MBN66102701": {
+          "dist": {
+            "NO_SIGNAL": 20902
+          },
+          "total": 20902,
+          "model": "[NISSAN]WCBS",
+          "part": "CASE TOP"
+        },
+        "MBN66466501": {
+          "dist": {
+            "NO_SIGNAL": 65853
+          },
+          "total": 65853,
+          "model": "[BMW]CHUD",
+          "part": "CASE TOP MAIN"
+        },
+        "MCK67498901": {
+          "dist": {
+            "NO_SIGNAL": 13888
+          },
+          "total": 13888,
+          "model": "[GM]GEN10",
+          "part": "COVER TOP WITHOUT FEET"
+        },
+        "MCK70170801": {
+          "dist": {
+            "NO_SIGNAL": 1099
+          },
+          "total": 1099,
+          "model": "[SYMC]C300_CLUSTER",
+          "part": "COVER REAR"
+        },
+        "MCK71427001": {
+          "dist": {
+            "NO_SIGNAL": 1868
+          },
+          "total": 1868,
+          "model": "[REANULT]ULC4.5_HJD",
+          "part": "COVER REAR"
+        },
+        "MCK71565201": {
+          "dist": {
+            "NO_SIGNAL": 32504
+          },
+          "total": 32504,
+          "model": "[MB]BR214",
+          "part": "REAR FRAME 2D"
+        },
+        "MCK71605701": {
+          "dist": {
+            "NO_SIGNAL": 2880
+          },
+          "total": 2880,
+          "model": "[HONDA]TSU",
+          "part": "COVER BOTTOM"
+        },
+        "MCK71924401": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "WARMUP": 2,
+            "NORMAL": 186,
+            "IDLE": 1
+          },
+          "total": 190,
+          "model": "[MB]BR206M",
+          "part": "COVER REAR"
+        },
+        "MEG65879401": {
+          "dist": {
+            "NO_SIGNAL": 1607
+          },
+          "total": 1607,
+          "model": "[VW]ARHUD_LHD",
+          "part": "HOLDER LCD BOTTOM LHD"
+        },
+        "MGC30036501": {
+          "dist": {
+            "SENSOR_ERROR": 4,
+            "IDLE": 26,
+            "NORMAL": 698,
+            "NO_SIGNAL": 5973,
+            "WARMUP": 15
+          },
+          "total": 6716,
+          "model": "BBB_LATAM",
+          "part": "Panel Front"
+        },
+        "MGC66451901": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "IDLE": 20,
+            "NORMAL": 153,
+            "WARMUP": 2,
+            "NO_SIGNAL": 5
+          },
+          "total": 181,
+          "model": "[RENAULT]XJI",
+          "part": "PANEL REAR"
+        },
+        "MGC66467201": {
+          "dist": {
+            "SENSOR_ERROR": 3,
+            "IDLE": 90,
+            "NORMAL": 1177,
+            "NO_SIGNAL": 912
+          },
+          "total": 2182,
+          "model": "[RENAULT]X1312",
+          "part": "PANER REAR"
+        },
+        "MGC66467301": {
+          "dist": {
+            "SENSOR_ERROR": 248,
+            "WARMUP": 83,
+            "IDLE": 163,
+            "NORMAL": 11321,
+            "NO_SIGNAL": 11379
+          },
+          "total": 23194,
+          "model": "X1312",
+          "part": "Panel Front"
+        },
+        "MGC66480701": {
+          "dist": {
+            "NO_SIGNAL": 2300,
+            "SENSOR_ERROR": 1,
+            "NORMAL": 2035,
+            "IDLE": 7,
+            "WARMUP": 14
+          },
+          "total": 4357,
+          "model": "[RENAULT]X1324",
+          "part": "PANEL FRONT"
+        },
+        "MGE65818802": {
+          "dist": {
+            "NO_SIGNAL": 2205
+          },
+          "total": 2205,
+          "model": "[VW]ARHUD_LHD",
+          "part": "HOLDER LCD TOP LHD"
+        }
+      },
+      "mold_count": 24,
+      "dist": {
+        "NO_SIGNAL": 427103,
+        "SENSOR_ERROR": 258,
+        "WARMUP": 116,
+        "NORMAL": 15570,
+        "IDLE": 307
+      },
+      "total": 443354
+    },
+    "toprun_C7": {
+      "controller": "P-M02-2024-A181",
+      "maker": "toprun",
+      "year": "2024",
+      "product_model": "GMBUICK",
+      "molds": {
+        "6944L-0023A": {
+          "dist": {
+            "NO_SIGNAL": 2304
+          },
+          "total": 2304,
+          "model": "GMBUICK",
+          "part": "DECO TRIM"
+        },
+        "IMB66466801": {
+          "dist": {
+            "NO_SIGNAL": 4
+          },
+          "total": 4,
+          "model": "[BMW]CHUD",
+          "part": "RAYTUBE UP 4M"
+        },
+        "IMBN65385201": {
+          "dist": {
+            "NO_SIGNAL": 9201
+          },
+          "total": 9201,
+          "model": "[SYMC]C300_CLUSTER",
+          "part": "CASE FRONT"
+        },
+        "IMBN66466802": {
+          "dist": {
+            "NO_SIGNAL": 102327
+          },
+          "total": 102327,
+          "model": "[BMW]CHUD",
+          "part": "RAYTUBE UP 4M"
+        },
+        "IMBN66466901": {
+          "dist": {
+            "NO_SIGNAL": 503
+          },
+          "total": 503,
+          "model": "[BMW]CHUD",
+          "part": "RAY TUBE DOW"
+        },
+        "IMCK71158301": {
+          "dist": {
+            "NO_SIGNAL": 955
+          },
+          "total": 955,
+          "model": "[BMW]GO1_LCI",
+          "part": "COVER REAR GO1 LCI LHD"
+        },
+        "IMGC66385001": {
+          "dist": {
+            "NO_SIGNAL": 112612
+          },
+          "total": 112612,
+          "model": "[PORSCHE]E3PA_CLUSTER",
+          "part": "PANEL REAR"
+        },
+        "MBN63343301": {
+          "dist": {
+            "NO_SIGNAL": 11990
+          },
+          "total": 11990,
+          "model": "[GM]K2XX",
+          "part": "CASE FRONT"
+        },
+        "MBN6483201": {
+          "dist": {
+            "NO_SIGNAL": 5958
+          },
+          "total": 5958,
+          "model": "[GM]GEN11",
+          "part": "CASE MAIN"
+        },
+        "MBN65503301": {
+          "dist": {
+            "NO_SIGNAL": 27044
+          },
+          "total": 27044,
+          "model": "[JLR]TCU4",
+          "part": "TOP CASE"
+        },
+        "MBN65583401": {
+          "dist": {
+            "NO_SIGNAL": 37575
+          },
+          "total": 37575,
+          "model": "[VW]OCU3_MQB37W",
+          "part": "CASE TOP"
+        },
+        "MBN65604901": {
+          "dist": {
+            "NO_SIGNAL": 16498
+          },
+          "total": 16498,
+          "model": "[VW]OCU3_MQB37W",
+          "part": "CASE BOTTOM 37W"
+        },
+        "MCK71129501": {
+          "dist": {
+            "NO_SIGNAL": 5591
+          },
+          "total": 5591,
+          "model": "[RENAULT]UCL4.5_PY1B",
+          "part": "COVER REAR"
+        },
+        "MCK71387901": {
+          "dist": {
+            "NO_SIGNAL": 49279
+          },
+          "total": 49279,
+          "model": "[SYMC]Y450",
+          "part": "PANEL FRONT"
+        },
+        "MCK71427001": {
+          "dist": {
+            "NO_SIGNAL": 5350
+          },
+          "total": 5350,
+          "model": "[RENAULT]HJD",
+          "part": "COVER REAR"
+        },
+        "MCK71605601": {
+          "dist": {
+            "NO_SIGNAL": 3072
+          },
+          "total": 3072,
+          "model": "[HONDA]TSU",
+          "part": "COVER TOP"
+        },
+        "MCK71924401": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "WARMUP": 2,
+            "NORMAL": 186,
+            "IDLE": 1
+          },
+          "total": 190,
+          "model": "[MB]BR206M",
+          "part": "COVER REAR"
+        },
+        "MDQ68476901": {
+          "dist": {
+            "NO_SIGNAL": 4958
+          },
+          "total": 4958,
+          "model": "[PORSCHE]J1DUAL_PPR",
+          "part": "FRONT FRAME PID"
+        },
+        "MEG65879401": {
+          "dist": {
+            "NO_SIGNAL": 12465
+          },
+          "total": 12465,
+          "model": "[VW]ARHUD",
+          "part": "HOLDER LCD TOP  LHD"
+        },
+        "MGC30036501": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "IDLE": 6,
+            "NORMAL": 61,
+            "NO_SIGNAL": 1
+          },
+          "total": 69,
+          "model": "BBB_LATAM",
+          "part": "Panel Front"
+        },
+        "MGC66160901": {
+          "dist": {
+            "NO_SIGNAL": 3
+          },
+          "total": 3,
+          "model": "[RENAULT]HBC",
+          "part": "PANEL FRONT"
+        },
+        "MGC66414801": {
+          "dist": {
+            "NO_SIGNAL": 16316
+          },
+          "total": 16316,
+          "model": "[RENARULT]CCS3",
+          "part": "PANEL FRONT AIO"
+        },
+        "MGC66451901": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "IDLE": 15,
+            "NORMAL": 158,
+            "WARMUP": 2
+          },
+          "total": 176,
+          "model": "[RENAULT]XJI",
+          "part": "PANEL REAR"
+        },
+        "MGC66467201": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "IDLE": 10,
+            "NORMAL": 37,
+            "NO_SIGNAL": 68
+          },
+          "total": 116,
+          "model": "[RENAULT]X1312",
+          "part": "PANER REAR"
+        },
+        "MGC66467301": {
+          "dist": {
+            "SENSOR_ERROR": 14,
+            "WARMUP": 37,
+            "IDLE": 266,
+            "NORMAL": 1758,
+            "NO_SIGNAL": 9963
+          },
+          "total": 12038,
+          "model": "X1312",
+          "part": "Panel Front"
+        },
+        "MGC66480701": {
+          "dist": {
+            "NO_SIGNAL": 173
+          },
+          "total": 173,
+          "model": "[RENAULT]X1324",
+          "part": "PANEL FRONT"
+        },
+        "MGC66480801": {
+          "dist": {
+            "NO_SIGNAL": 485
+          },
+          "total": 485,
+          "model": "RENAULT_CCS_X1324",
+          "part": "PANEL REAR"
+        },
+        "MNB66466501": {
+          "dist": {
+            "NO_SIGNAL": 16569
+          },
+          "total": 16569,
+          "model": "[BMW]CHUD",
+          "part": "CASE TOP MAIN"
+        }
+      },
+      "mold_count": 28,
+      "dist": {
+        "NO_SIGNAL": 451264,
+        "SENSOR_ERROR": 18,
+        "WARMUP": 41,
+        "NORMAL": 2200,
+        "IDLE": 298
+      },
+      "total": 453821
+    },
+    "woosung_40": {
+      "controller": "P-M02-2024-A184",
+      "maker": "woosung",
+      "year": "2024",
+      "product_model": "[MB]BR223MOPF2D",
+      "molds": {
+        "ACQ30767301": {
+          "dist": {
+            "SENSOR_ERROR": 7,
+            "WARMUP": 34,
+            "IDLE": 87,
+            "NORMAL": 747,
+            "NO_SIGNAL": 41
+          },
+          "total": 916,
+          "model": "[MB]BR223MOPF2D",
+          "part": "COVER REAR"
+        },
+        "EAV28001010": {
+          "dist": {
+            "SENSOR_ERROR": 31,
+            "NORMAL": 4888,
+            "WARMUP": 129,
+            "IDLE": 109,
+            "NO_SIGNAL": 266
+          },
+          "total": 5423,
+          "model": "V28A",
+          "part": "CASE TOP"
+        },
+        "MBN66622301": {
+          "dist": {
+            "SENSOR_ERROR": 11,
+            "IDLE": 1140,
+            "NORMAL": 647,
+            "NO_SIGNAL": 90101
+          },
+          "total": 91899,
+          "model": "ICON25SF",
+          "part": "CASE TOP"
+        },
+        "MCK17925601": {
+          "dist": {
+            "NO_SIGNAL": 119
+          },
+          "total": 119,
+          "model": "[HKMC]QV",
+          "part": "COVER REAR (RHD)"
+        },
+        "MCK71869301": {
+          "dist": {
+            "SENSOR_ERROR": 68,
+            "IDLE": 241,
+            "NORMAL": 1711,
+            "WARMUP": 8,
+            "NO_SIGNAL": 194
+          },
+          "total": 2222,
+          "model": "BR223_3D",
+          "part": "Rear Cover"
+        },
+        "MCK71904101": {
+          "dist": {
+            "SENSOR_ERROR": 55,
+            "IDLE": 53,
+            "NORMAL": 1174,
+            "WARMUP": 9,
+            "NO_SIGNAL": 2069
+          },
+          "total": 3360,
+          "model": "[JLR]EMAFDD",
+          "part": "COVER FRONT"
+        },
+        "MCK71922201": {
+          "dist": {
+            "SENSOR_ERROR": 14,
+            "WARMUP": 18,
+            "IDLE": 6,
+            "NORMAL": 203,
+            "NO_SIGNAL": 1271
+          },
+          "total": 1512,
+          "model": "[HKMC]SP3",
+          "part": "COVER REAR (LHD)"
+        },
+        "MCK71925501": {
+          "dist": {
+            "NO_SIGNAL": 1862,
+            "SENSOR_ERROR": 8,
+            "IDLE": 64,
+            "NORMAL": 1605,
+            "WARMUP": 52
+          },
+          "total": 3591,
+          "model": "[HKMC]QV",
+          "part": "COVER REAR(LHD)"
+        },
+        "MCK71986401": {
+          "dist": {
+            "SENSOR_ERROR": 577,
+            "WARMUP": 21,
+            "IDLE": 83,
+            "NORMAL": 177,
+            "NO_SIGNAL": 258
+          },
+          "total": 1116,
+          "model": "AUDI-FF",
+          "part": "COVER REAR"
+        },
+        "MGC66367901": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "IDLE": 19,
+            "NORMAL": 116,
+            "NO_SIGNAL": 20298
+          },
+          "total": 20434,
+          "model": "SP3_LHD",
+          "part": "Panel Front"
+        },
+        "MGJ66282101": {
+          "dist": {
+            "NO_SIGNAL": 1
+          },
+          "total": 1,
+          "model": "ARHUD",
+          "part": "MIRROR SUPORT"
+        },
+        "TEST": {
+          "dist": {
+            "SENSOR_ERROR": 3,
+            "WARMUP": 35,
+            "IDLE": 18,
+            "NORMAL": 153,
+            "NO_SIGNAL": 12
+          },
+          "total": 221,
+          "model": "HKMC-QV(RHD)",
+          "part": "Cover Rear"
+        },
+        "m0000000000": {
+          "dist": {
+            "NO_SIGNAL": 13
+          },
+          "total": 13,
+          "model": "TEST",
+          "part": "dumy"
+        }
+      },
+      "mold_count": 13,
+      "dist": {
+        "SENSOR_ERROR": 775,
+        "WARMUP": 306,
+        "IDLE": 1820,
+        "NORMAL": 11421,
+        "NO_SIGNAL": 116505
+      },
+      "total": 130827
+    },
+    "woosung_37": {
+      "controller": "P-M02-2024-A185",
+      "maker": "woosung",
+      "year": "2024",
+      "product_model": "BMW",
+      "molds": {
+        "MBN664989": {
+          "dist": {
+            "NO_SIGNAL": 5
+          },
+          "total": 5,
+          "model": "BMW",
+          "part": "case bottom"
+        },
+        "MBN665989": {
+          "dist": {
+            "NO_SIGNAL": 58
+          },
+          "total": 58,
+          "model": "BMW",
+          "part": "BOTTOM"
+        },
+        "MCK71869301": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "WARMUP": 3,
+            "IDLE": 22,
+            "NORMAL": 112
+          },
+          "total": 138,
+          "model": "BR223_3D",
+          "part": "Rear Cover"
+        }
+      },
+      "mold_count": 3,
+      "dist": {
+        "NO_SIGNAL": 63,
+        "SENSOR_ERROR": 1,
+        "WARMUP": 3,
+        "IDLE": 22,
+        "NORMAL": 112
+      },
+      "total": 201
+    },
+    "woosung_42": {
+      "controller": "P-M02-2024-A186",
+      "maker": "woosung",
+      "year": "2024",
+      "product_model": "QY2",
+      "molds": {
+        "MCK30110501": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "IDLE": 13,
+            "NORMAL": 68,
+            "NO_SIGNAL": 2
+          },
+          "total": 84,
+          "model": "QY2",
+          "part": "COVER REAR"
+        },
+        "MCK30113301": {
+          "dist": {
+            "SENSOR_ERROR": 6,
+            "WARMUP": 51,
+            "NORMAL": 735,
+            "IDLE": 36
+          },
+          "total": 828,
+          "model": "CN8,NX5",
+          "part": "COVER REAR"
+        },
+        "MCK71839301": {
+          "dist": {
+            "SENSOR_ERROR": 7,
+            "WARMUP": 34,
+            "IDLE": 85,
+            "NORMAL": 813,
+            "NO_SIGNAL": 136
+          },
+          "total": 1075,
+          "model": "BR223_2D",
+          "part": "Cover Rear"
+        },
+        "MCK71922201": {
+          "dist": {
+            "SENSOR_ERROR": 8,
+            "WARMUP": 38,
+            "IDLE": 47,
+            "NORMAL": 740,
+            "NO_SIGNAL": 328
+          },
+          "total": 1161,
+          "model": "SP3_LHD",
+          "part": "Cover Rear"
+        },
+        "MCK71922301": {
+          "dist": {
+            "SENSOR_ERROR": 5,
+            "WARMUP": 19,
+            "IDLE": 165,
+            "NO_SIGNAL": 1,
+            "NORMAL": 2372
+          },
+          "total": 2562,
+          "model": "[HKMC]SP3",
+          "part": "COVER REAR(RHD)"
+        },
+        "MCK71925501": {
+          "dist": {
+            "NO_SIGNAL": 3612,
+            "SENSOR_ERROR": 25,
+            "IDLE": 121,
+            "NORMAL": 1550,
+            "WARMUP": 154
+          },
+          "total": 5462,
+          "model": "QV_LHD",
+          "part": "Cover Rear"
+        },
+        "MCK71925601": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "WARMUP": 5,
+            "IDLE": 12,
+            "NORMAL": 82,
+            "NO_SIGNAL": 220
+          },
+          "total": 320,
+          "model": "QV_RHD",
+          "part": "Cover Rear"
+        },
+        "MCK71986401": {
+          "dist": {
+            "SENSOR_ERROR": 914,
+            "WARMUP": 196,
+            "IDLE": 709,
+            "NORMAL": 7950,
+            "NO_SIGNAL": 563
+          },
+          "total": 10332,
+          "model": "CR2_AUDI",
+          "part": "COVER REAR"
+        },
+        "MGC30048001": {
+          "dist": {
+            "SENSOR_ERROR": 15,
+            "WARMUP": 115,
+            "NORMAL": 3032,
+            "IDLE": 215,
+            "NO_SIGNAL": 6
+          },
+          "total": 3383,
+          "model": "NX5",
+          "part": "PANEL PRONT"
+        },
+        "MGC66367901": {
+          "dist": {
+            "SENSOR_ERROR": 7,
+            "WARMUP": 51,
+            "IDLE": 495,
+            "NORMAL": 2819,
+            "NO_SIGNAL": 390
+          },
+          "total": 3762,
+          "model": "SP3_LHD",
+          "part": "Panel Front"
+        },
+        "TEST": {
+          "dist": {
+            "SENSOR_ERROR": 6,
+            "IDLE": 1088,
+            "WARMUP": 39,
+            "NO_SIGNAL": 9952,
+            "NORMAL": 5424
+          },
+          "total": 16509,
+          "model": "CR2_copied",
+          "part": "COVER REAR"
+        },
+        "ㅅ쇼": {
+          "dist": {
+            "NO_SIGNAL": 641
+          },
+          "total": 641,
+          "model": "ㄱㄹㄹ",
+          "part": "ㅅㅅㅅ"
+        }
+      },
+      "mold_count": 12,
+      "dist": {
+        "SENSOR_ERROR": 995,
+        "IDLE": 2986,
+        "NORMAL": 25585,
+        "NO_SIGNAL": 15851,
+        "WARMUP": 702
+      },
+      "total": 46119
+    },
+    "toprun_C650-4": {
+      "controller": "P-M02-2025-A213",
+      "maker": "toprun",
+      "year": "2025",
+      "product_model": "[GM]GEN11",
+      "molds": {
+        "MBN64683201": {
+          "dist": {
+            "NO_SIGNAL": 95029
+          },
+          "total": 95029,
+          "model": "[GM]GEN11",
+          "part": "Case Main"
+        },
+        "MBN66102701": {
+          "dist": {
+            "NO_SIGNAL": 8002
+          },
+          "total": 8002,
+          "model": "[NISSAN]WCBS",
+          "part": "CASE TOP"
+        },
+        "MCK30007201": {
+          "dist": {
+            "SENSOR_ERROR": 2,
+            "IDLE": 8,
+            "NORMAL": 324,
+            "WARMUP": 6
+          },
+          "total": 340,
+          "model": "[HYUNDAI]OVK_R",
+          "part": "COVER REAR"
+        },
+        "MCK71929101": {
+          "dist": {
+            "NO_SIGNAL": 2
+          },
+          "total": 2,
+          "model": "[HYUNDAI]TK_L",
+          "part": "COVER REAR LHD"
+        },
+        "MCK71950601": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "IDLE": 30,
+            "NORMAL": 240,
+            "WARMUP": 7
+          },
+          "total": 278,
+          "model": "[HYUNDAI]TK_R",
+          "part": "COVER REAR RHD"
+        },
+        "MGC30028001": {
+          "dist": {
+            "SENSOR_ERROR": 2,
+            "WARMUP": 5,
+            "NORMAL": 232,
+            "IDLE": 15,
+            "NO_SIGNAL": 27
+          },
+          "total": 281,
+          "model": "[HYUNDAI]OVK_R",
+          "part": "PANEL FRONT"
+        }
+      },
+      "mold_count": 6,
+      "dist": {
+        "NO_SIGNAL": 103060,
+        "SENSOR_ERROR": 5,
+        "IDLE": 53,
+        "NORMAL": 796,
+        "WARMUP": 18
+      },
+      "total": 103932
+    },
+    "toprun_C650-5": {
+      "controller": "P-M02-2025-A216",
+      "maker": "toprun",
+      "year": "2025",
+      "product_model": "[GM]GEN11",
+      "molds": {
+        "ABQ76540401": {
+          "dist": {
+            "NO_SIGNAL": 55451
+          },
+          "total": 55451,
+          "model": "[GM]GEN11",
+          "part": "CASE MAIN"
+        },
+        "MBN66102701": {
+          "dist": {
+            "NO_SIGNAL": 1134
+          },
+          "total": 1134,
+          "model": "[NISSAN]WCBS",
+          "part": "CASE TOP"
+        },
+        "MCK30007201": {
+          "dist": {
+            "SENSOR_ERROR": 2,
+            "IDLE": 8,
+            "NORMAL": 324,
+            "WARMUP": 6
+          },
+          "total": 340,
+          "model": "[HYUNDAI]OVK_R",
+          "part": "COVER REAR"
+        },
+        "MCK71929101": {
+          "dist": {
+            "NO_SIGNAL": 3099
+          },
+          "total": 3099,
+          "model": "[HYUNDAI]TK_L",
+          "part": "COVER REAR LHD"
+        },
+        "MCK71950601": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "IDLE": 30,
+            "NORMAL": 240,
+            "WARMUP": 7,
+            "NO_SIGNAL": 2
+          },
+          "total": 280,
+          "model": "[HYUNDAI]TK_R",
+          "part": "COVER REAR RHD"
+        },
+        "MGC30028001": {
+          "dist": {
+            "SENSOR_ERROR": 2,
+            "WARMUP": 5,
+            "NORMAL": 232,
+            "IDLE": 15
+          },
+          "total": 254,
+          "model": "[HYUNDAI]OVK_R",
+          "part": "PANEL FRONT"
+        },
+        "MGC66469001": {
+          "dist": {
+            "NO_SIGNAL": 8503
+          },
+          "total": 8503,
+          "model": "[HYUNDAI]TK",
+          "part": "PANEL FRONT"
+        }
+      },
+      "mold_count": 7,
+      "dist": {
+        "NO_SIGNAL": 68189,
+        "SENSOR_ERROR": 5,
+        "IDLE": 53,
+        "NORMAL": 796,
+        "WARMUP": 18
+      },
+      "total": 69061
+    },
+    "woosung_48": {
+      "controller": "P-M02-2025-A220",
+      "maker": "woosung",
+      "year": "2025",
+      "product_model": "QY2",
+      "molds": {
+        "MCK30110501": {
+          "dist": {
+            "SENSOR_ERROR": 2,
+            "WARMUP": 9,
+            "NORMAL": 56,
+            "IDLE": 8
+          },
+          "total": 75,
+          "model": "QY2",
+          "part": "COVER REAR"
+        },
+        "MCK30113301": {
+          "dist": {
+            "SENSOR_ERROR": 4,
+            "WARMUP": 31,
+            "NORMAL": 595,
+            "IDLE": 46,
+            "NO_SIGNAL": 97
+          },
+          "total": 773,
+          "model": "NX5,CN8",
+          "part": "COVER  RERA"
+        },
+        "MGC30048001": {
+          "dist": {
+            "SENSOR_ERROR": 18,
+            "WARMUP": 55,
+            "NORMAL": 2634,
+            "IDLE": 120,
+            "NO_SIGNAL": 34
+          },
+          "total": 2861,
+          "model": "NX5",
+          "part": "PANEL PRONT"
+        }
+      },
+      "mold_count": 3,
+      "dist": {
+        "SENSOR_ERROR": 24,
+        "WARMUP": 95,
+        "NORMAL": 3285,
+        "IDLE": 174,
+        "NO_SIGNAL": 131
+      },
+      "total": 3709
+    },
+    "woosung_45": {
+      "controller": "P-M02-2025-A222",
+      "maker": "woosung",
+      "year": "2025",
+      "product_model": "QVLHDREAR",
+      "molds": {
+        "MCK30110501": {
+          "dist": {
+            "NO_SIGNAL": 834,
+            "SENSOR_ERROR": 2,
+            "NORMAL": 3814,
+            "IDLE": 24,
+            "WARMUP": 6
+          },
+          "total": 4680,
+          "model": "QVLHDREAR",
+          "part": "COVER REAR"
+        },
+        "MGC30048001": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "IDLE": 14,
+            "NORMAL": 216,
+            "WARMUP": 4
+          },
+          "total": 235,
+          "model": "NX5",
+          "part": "PANEL PRONT"
+        }
+      },
+      "mold_count": 2,
+      "dist": {
+        "NO_SIGNAL": 834,
+        "SENSOR_ERROR": 3,
+        "NORMAL": 4030,
+        "IDLE": 38,
+        "WARMUP": 10
+      },
+      "total": 4915
+    },
+    "woosung_54": {
+      "controller": "P-M02-2025-A224",
+      "maker": "woosung",
+      "year": "2025",
+      "product_model": "65INCH",
+      "molds": {
+        "MCK00000000": {
+          "dist": {
+            "NORMAL": 3932,
+            "IDLE": 222,
+            "SENSOR_ERROR": 2450,
+            "WARMUP": 52,
+            "NO_SIGNAL": 2
+          },
+          "total": 6658,
+          "model": "65INCH",
+          "part": "Cover Rear"
+        },
+        "MCK30113301": {
+          "dist": {
+            "SENSOR_ERROR": 1,
+            "WARMUP": 6,
+            "IDLE": 6,
+            "NORMAL": 189
+          },
+          "total": 202,
+          "model": "NX5,CN8",
+          "part": "COVER  RERA"
+        },
+        "MCK71961001": {
+          "dist": {
+            "SENSOR_ERROR": 6570,
+            "IDLE": 485,
+            "NORMAL": 8094,
+            "WARMUP": 49,
+            "NO_SIGNAL": 3062
+          },
+          "total": 18260,
+          "model": "65UA75",
+          "part": "Cover Rear"
+        },
+        "MGC30048001": {
+          "dist": {
+            "SENSOR_ERROR": 2,
+            "IDLE": 104,
+            "NORMAL": 448
+          },
+          "total": 554,
+          "model": "CN8",
+          "part": "PANEL PRONT"
+        }
+      },
+      "mold_count": 4,
+      "dist": {
+        "NORMAL": 12663,
+        "IDLE": 817,
+        "SENSOR_ERROR": 9023,
+        "WARMUP": 107,
+        "NO_SIGNAL": 3064
+      },
+      "total": 25674
+    }
+  },
+  "shared_molds": {
+    "IMBN66466901": [
+      "toprun_A3",
+      "toprun_C11",
+      "toprun_C5",
+      "toprun_C7"
+    ],
+    "IMGC66361501": [
+      "toprun_A3",
+      "toprun_C11",
+      "toprun_C5"
+    ],
+    "MBN63343301": [
+      "toprun_A2",
+      "toprun_A3",
+      "toprun_C7"
+    ],
+    "MBN65302502": [
+      "toprun_A3",
+      "toprun_C11",
+      "toprun_C5"
+    ],
+    "MCK71605601": [
+      "toprun_A2",
+      "toprun_A3",
+      "toprun_C11",
+      "toprun_C7"
+    ],
+    "MCK71605701": [
+      "toprun_A3",
+      "toprun_C11",
+      "toprun_C5"
+    ],
+    "MCK71758701": [
+      "toprun_A3",
+      "toprun_D8"
+    ],
+    "MCK71924401": [
+      "toprun_A2",
+      "toprun_A3",
+      "toprun_A5",
+      "toprun_C11",
+      "toprun_C5",
+      "toprun_C7"
+    ],
+    "MDQ66692301": [
+      "toprun_A3",
+      "toprun_C11"
+    ],
+    "MGC66100101": [
+      "toprun_A2",
+      "toprun_A3",
+      "toprun_A5",
+      "toprun_C11"
+    ],
+    "MGC66425401": [
+      "toprun_A3",
+      "toprun_C11"
+    ],
+    "MGC66451901": [
+      "toprun_A2",
+      "toprun_A3",
+      "toprun_A5",
+      "toprun_C11",
+      "toprun_C5",
+      "toprun_C7"
+    ],
+    "IMGC66385001": [
+      "toprun_C11",
+      "toprun_C7",
+      "toprun_D8"
+    ],
+    "MGC30036501": [
+      "toprun_C5",
+      "toprun_C7",
+      "toprun_D8"
+    ],
+    "MCK71565201": [
+      "toprun_A2",
+      "toprun_C5"
+    ],
+    "MEG65879401": [
+      "toprun_A2",
+      "toprun_C11",
+      "toprun_C5",
+      "toprun_C7"
+    ],
+    "MGC66391701": [
+      "toprun_A2",
+      "toprun_C11"
+    ],
+    "MGC66414801": [
+      "toprun_A2",
+      "toprun_A5",
+      "toprun_C7"
+    ],
+    "MGC66467201": [
+      "toprun_A2",
+      "toprun_A5",
+      "toprun_C5",
+      "toprun_C7"
+    ],
+    "MGC66467301": [
+      "toprun_A2",
+      "toprun_A5",
+      "toprun_C5",
+      "toprun_C7"
+    ],
+    "6944L-0023A": [
+      "toprun_C11",
+      "toprun_C7"
+    ],
+    "MBN65583401": [
+      "toprun_C11",
+      "toprun_C7"
+    ],
+    "MBN65604901": [
+      "toprun_C11",
+      "toprun_C7"
+    ],
+    "MBN66596001": [
+      "toprun_A5",
+      "toprun_C11"
+    ],
+    "MCK71427001": [
+      "toprun_C11",
+      "toprun_C5",
+      "toprun_C7"
+    ],
+    "MGC66160901": [
+      "toprun_C11",
+      "toprun_C7"
+    ],
+    "MBN66102701": [
+      "toprun_A5",
+      "toprun_C5",
+      "toprun_C650-4",
+      "toprun_C650-5"
+    ],
+    "IMBN66466802": [
+      "toprun_C5",
+      "toprun_C7"
+    ],
+    "MBN64683201": [
+      "toprun_C5",
+      "toprun_C650-4"
+    ],
+    "MBN65503301": [
+      "toprun_C5",
+      "toprun_C7"
+    ],
+    "MGC66480701": [
+      "toprun_C5",
+      "toprun_C7"
+    ],
+    "MCK71869301": [
+      "woosung_37",
+      "woosung_40"
+    ],
+    "MCK71922201": [
+      "woosung_40",
+      "woosung_42"
+    ],
+    "MCK71925501": [
+      "woosung_40",
+      "woosung_42"
+    ],
+    "MCK71986401": [
+      "woosung_40",
+      "woosung_42"
+    ],
+    "MGC66367901": [
+      "woosung_40",
+      "woosung_42"
+    ],
+    "TEST": [
+      "woosung_40",
+      "woosung_42"
+    ],
+    "MCK30110501": [
+      "woosung_42",
+      "woosung_45",
+      "woosung_48"
+    ],
+    "MCK30113301": [
+      "woosung_42",
+      "woosung_48",
+      "woosung_54"
+    ],
+    "MGC30048001": [
+      "woosung_42",
+      "woosung_45",
+      "woosung_48",
+      "woosung_54"
+    ],
+    "MCK30007201": [
+      "toprun_C650-4",
+      "toprun_C650-5"
+    ],
+    "MCK71929101": [
+      "toprun_C650-4",
+      "toprun_C650-5"
+    ],
+    "MCK71950601": [
+      "toprun_C650-4",
+      "toprun_C650-5"
+    ],
+    "MGC30028001": [
+      "toprun_C650-4",
+      "toprun_C650-5"
+    ]
+  }
+}

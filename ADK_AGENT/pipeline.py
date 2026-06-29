@@ -47,7 +47,7 @@ def _chapter_span(on: bool, num: int, title: str):
 
 async def generate(doc: dict, output_dir: Path, slug: str, *,
                    force_redesign: bool = False, push: bool = True, do_pdf: bool = True,
-                   trace: bool = True, engine: str = "graph") -> None:
+                   trace: bool = True, engine: str = "graph", design_only: bool = False) -> None:
     _validate(doc)
     title = doc["title"]
     config = _config(doc)
@@ -61,7 +61,7 @@ async def generate(doc: dict, output_dir: Path, slug: str, *,
     try:
         await _run(doc, output_dir, log_dir, title, config, slug,
                    force_redesign=force_redesign, push=push, do_pdf=do_pdf,
-                   tracing_on=tracing_on, engine=engine)
+                   tracing_on=tracing_on, engine=engine, design_only=design_only)
     finally:
         if tracing_on:
             flush_tracing()
@@ -77,13 +77,20 @@ def _build_chapter_runtime(engine: str):
 
 async def _run(doc: dict, output_dir: Path, log_dir: Path, title: str, config: dict, slug: str, *,
                force_redesign: bool, push: bool, do_pdf: bool, tracing_on: bool,
-               engine: str = "graph") -> None:
+               engine: str = "graph", design_only: bool = False) -> None:
 
     # --- Design (책당 1회): design.json 있으면 로드, 없으면 생성 ---
     source_text = read_source(doc.get("source"), slug)
     design_config = {**config, **({"chapters": doc["chapters"]} if doc.get("chapters") else {})}
     auto_outline = not doc.get("chapters")
     design = run_or_load_design(design_config, source_text, output_dir, force=force_redesign)
+
+    # --design-only: design.json 만 만들고 종료. digest grounding 패치를 챕터 생성 전에
+    # 끼워 넣기 위한 정지점. (resume 가 기존 챕터를 건너뛰므로 패치는 챕터 생성 전이어야 함.)
+    if design_only:
+        print(f"[design-only] design.json 생성 완료 ({len(design['chapters'])}챕터). "
+              f"챕터 생성 없이 종료.")
+        return
 
     chapters = design["chapters"]
     write_brief = design["write_brief"]

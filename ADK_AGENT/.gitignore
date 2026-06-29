@@ -18,3 +18,9 @@ observability/
 
 # 실행 로그
 output_run*.log
+
+# 비밀/접속정보 (MinIO 등 — 커밋 금지)
+.env
+.env.*
+*.secrets.json
+data/raw/

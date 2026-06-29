@@ -31,6 +31,9 @@ def main():
     parser.add_argument("--no-push", action="store_true", help="GitHub 자동 푸시 끄고 로컬 생성만")
     parser.add_argument("--no-pdf", action="store_true", help="PDF 생성 끄기")
     parser.add_argument("--redesign", action="store_true", help="design.json 무시하고 재생성")
+    parser.add_argument("--design-only", action="store_true",
+                        help="design.json 만 생성(또는 로드)하고 챕터 생성 전에 종료. "
+                             "digest 의 grounding 패치를 챕터 생성 전에 끼워 넣을 때 쓴다.")
     parser.add_argument("--out", default=None, help="출력 폴더(기본 ./output/<slug>)")
     parser.add_argument("--no-trace", action="store_true",
                         help="트레이싱 끄기. 기본은 자동 — env(PHOENIX/LANGFUSE) 설정된 백엔드로 자동 전송")
@@ -49,7 +52,8 @@ def main():
 
     asyncio.run(generate(doc, output_dir, slug,
                          force_redesign=args.redesign, push=not args.no_push,
-                         do_pdf=not args.no_pdf, trace=not args.no_trace, engine=args.engine))
+                         do_pdf=not args.no_pdf, trace=not args.no_trace, engine=args.engine,
+                         design_only=args.design_only))
 
 
 if __name__ == "__main__":
