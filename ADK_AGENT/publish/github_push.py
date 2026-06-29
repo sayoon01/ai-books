@@ -86,15 +86,27 @@ def update_meta(slug: str, toc: dict, completed: int, total: int | None = None) 
 
 
 def push_pdf(slug: str, pdf_path: Path) -> None:
-    """생성된 PDF를 커밋+푸시"""
+    """생성된 PDF를 게시 폴더(ADK_AGENT/<책>/)로 복사한 뒤 커밋+푸시.
+
+    PDF는 output/<책>/ 에 생성되는데 그 경로는 .gitignore(output/) 대상이라 직접 add 하면
+    무시된다. 챕터(.md)처럼 추적되는 게시 폴더로 복사한 뒤 그 사본을 커밋해야 한다.
+    (push_chapter 와 동일한 'output 생성 → ADK_AGENT/<책> 게시' 흐름)"""
+    book_dir = REPO_ROOT / "ADK_AGENT" / slug      # 추적되는 게시 폴더(=push_chapter 와 동일)
+    book_dir.mkdir(parents=True, exist_ok=True)
+    published = book_dir / pdf_path.name
+    if pdf_path.resolve() != published.resolve():
+        published.write_bytes(pdf_path.read_bytes())
+
     if not PUSH_ENABLED:
         return
-    _git(["add", str(pdf_path)])
+    _git(["add", str(published)])
     result = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=REPO_ROOT)
     if result.returncode != 0:
-        _git(["commit", "-m", f"feat({slug}): {pdf_path.name} 생성"])
+        _git(["commit", "-m", f"feat({slug}): {published.name} 생성"])
         _git(["push"])
-        print(f"  [GitHub] PDF 푸시 완료: {slug}/{pdf_path.name}")
+        print(f"  [GitHub] PDF 푸시 완료: {slug}/{published.name}")
+    else:
+        print(f"  [GitHub] PDF 변경 없음(이미 푸시됨): {slug}/{published.name}")
 
 
 # 루트 README 두 섹션 구성 — (폴더명, 표제). 폴더 하위 <책>/meta.json 을 스캔.

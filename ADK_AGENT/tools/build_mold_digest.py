@@ -27,8 +27,11 @@ from pathlib import Path
 import httpx
 
 BASE = "http://keti-ev1.iptime.org:33001"
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent      # ai-books/
+ADK_ROOT = Path(__file__).resolve().parent.parent              # ADK_AGENT/
+REPO_ROOT = ADK_ROOT.parent                                    # ai-books/
 DEFAULT_OUT = REPO_ROOT / "data" / "mold-stats-digest.md"
+# 대표 보고 문서의 design.json (main.py 가 toc 제목으로 만든 슬러그)
+DEFAULT_DESIGN = ADK_ROOT / "output" / "금형-사출-생산-데이터-분석-대표-보고" / "design.json"
 
 # 사이클 분류: 무엇이 '센서/데이터 품질 에러'인가.
 SENSOR_ERR_TYPES = ("SENSOR_NO_SIGNAL", "SENSOR_ERROR")
@@ -266,9 +269,35 @@ def build() -> str:
     return "\n".join(L)
 
 
+def patch_design(design_path: Path, digest: str) -> None:
+    """design.json 의 grounding_digest 를 전체 digest 로 덮어쓴다.
+
+    왜: Design(LLM)이 소스를 요약하며 digest 를 과압축해 수치를 대부분 버린다.
+    이 보고서는 digest 의 숫자가 grounding 에 그대로 있어야 본문에 인용·검증이 된다.
+    그래서 design.json 생성 후 이 단계로 grounding_digest 를 원본 digest 로 교체한다.
+    (design.json 은 '웹 UI 편집 가능' 설계라, 외부에서 고쳐도 generator 가 재검증해 받아들인다.)
+    """
+    import json
+    if not design_path.exists():
+        print(f"[패치 건너뜀] design.json 없음: {design_path}\n"
+              f"  → main.py 를 한 번 먼저 실행해 design.json 을 만든 뒤 다시 --patch-design 하세요.",
+              file=sys.stderr)
+        return
+    d = json.loads(design_path.read_text(encoding="utf-8"))
+    old = len(d.get("grounding_digest", ""))
+    d["grounding_digest"] = digest
+    design_path.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"[패치] grounding_digest {old} → {len(digest)}자 교체: {design_path}")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="금형 통계 digest 빌더")
     ap.add_argument("--out", default=str(DEFAULT_OUT), help="출력 경로(.md)")
+    ap.add_argument("--patch-design", nargs="?", const=str(DEFAULT_DESIGN), default=None,
+                    metavar="DESIGN_JSON",
+                    help="digest 생성 후 design.json 의 grounding_digest 를 전체 digest 로 "
+                         "교체한다. 경로 생략 시 대표보고 design.json 사용. "
+                         "(Design 의 과압축으로 숫자가 소실되는 문제를 자동 해결)")
     args = ap.parse_args()
 
     try:
@@ -286,6 +315,9 @@ def main() -> int:
     if n > 12000:
         print(f"[경고] {n:,}자 > MAX_FILE_CHARS(12,000). read_source 가 절단한다 → 압축 필요.",
               file=sys.stderr)
+
+    if args.patch_design is not None:
+        patch_design(Path(args.patch_design), text)
     return 0
 
 
