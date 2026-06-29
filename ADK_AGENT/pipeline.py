@@ -22,7 +22,7 @@ from core.config import QUALITY_GATE, TARGET_SCORE, MIN_CHARS
 from core.tracing import setup_tracing, flush_tracing
 
 _REQUIRED = ("title", "language", "description", "target_reader", "writing_guidelines")
-_SKIP_KEYS = {"chapters", "source"}                       # config(정체성)에서 제외
+_SKIP_KEYS = {"chapters", "source", "visuals"}            # config(정체성)에서 제외
 _GO = types.Content(role="user", parts=[types.Part(text="go")])
 
 
@@ -34,6 +34,12 @@ def _validate(doc: dict) -> None:
 
 def _config(doc: dict) -> dict:
     return {k: v for k, v in doc.items() if k not in _SKIP_KEYS}
+
+
+def _has_tables(text: str) -> bool:
+    """grounding 에 마크다운 표(헤더 + 구분행)가 있는가. 차트 자동화 트리거."""
+    import re
+    return bool(text) and bool(re.search(r"\n\s*\|.*\|.*\n\s*\|\s*:?-{2,}", text))
 
 
 def _chapter_span(on: bool, num: int, title: str):
@@ -96,8 +102,41 @@ async def _run(doc: dict, output_dir: Path, log_dir: Path, title: str, config: d
     write_brief = design["write_brief"]
     grounding = design["grounding_digest"]
 
+    # --- 차트 자동화(하이브리드): digest에 표가 있고 visuals!=off 면 차트 스펙 제안 ---
+    # 숫자는 LLM이 만들지 않는다 — 렌더러가 digest 표 셀에서 추출(환각 0). 표 없으면 skip(소설 등).
+    visuals_on = doc.get("visuals", "auto") != "off" and _has_tables(grounding)
+    figures = design.get("figures") or []
+    if visuals_on and not figures:
+        from agent.charts import propose_figures
+        figures = propose_figures(config, chapters, grounding)
+        if figures:                                       # design.json에 저장(편집 가능)
+            design["figures"] = figures
+            (output_dir / "design.json").write_text(
+                json.dumps(design, ensure_ascii=False, indent=2), encoding="utf-8")
+    # 챕터별 그림 묶음 + 책 전체 연속 그림번호 시작값(결정적)
+    from collections import defaultdict
+    figs_by_ch: dict[int, list] = defaultdict(list)
+    for f in figures:
+        figs_by_ch[f["chapter"]].append(f)
+    _fig_start: dict[int, int] = {}
+    _run_no = 1
+    for _c in sorted(figs_by_ch):
+        _fig_start[_c] = _run_no
+        _run_no += len(figs_by_ch[_c])
+
+    def _inject_figs(filename: str, num: int) -> str:
+        """이 챕터 대상 차트를 렌더·삽입(멱등)하고 갱신된 본문을 반환."""
+        path = output_dir / filename
+        if num in figs_by_ch:
+            from publish.charts import render_spec, inject_chapter
+            rendered = [(render_spec(f, grounding), f.get("caption") or f.get("title", ""))
+                        for f in figs_by_ch[num]]
+            inject_chapter(path, rendered, start_num=_fig_start[num])
+        return path.read_text(encoding="utf-8")
+
     print(f"\n생성 시작: {title}  (챕터 {len(chapters)}개, engine={engine}, "
-          f"source={'있음' if source_text else '없음'})\n")
+          f"source={'있음' if source_text else '없음'}, "
+          f"차트={sum(len(v) for v in figs_by_ch.values()) if figures else 0}개)\n")
 
     root = _build_chapter_runtime(engine)
     # 트레이싱 on 이면 우리 노드 함수(write/guard/review/gate/revise)까지 span 으로 자동 계측.
@@ -123,9 +162,10 @@ async def _run(doc: dict, output_dir: Path, log_dir: Path, title: str, config: d
         existing = output_dir / filename
         if existing.exists() and len(existing.read_text(encoding="utf-8")) >= MIN_CHARS:
             print(f"--- 챕터 {num}: {ctitle} --- (이미 있음, 건너뜀)")
+            existing_content = _inject_figs(filename, num)    # 차트 보강(멱등)
             if push:
                 from publish.github_push import push_chapter, update_meta
-                push_chapter(slug, num, ctitle, existing.read_text(encoding="utf-8"), filename=filename)
+                push_chapter(slug, num, ctitle, existing_content, filename=filename)
                 update_meta(slug, doc, completed=num, total=len(chapters))
             summaries.append(f"{num}. {ctitle}: {ch.get('description', '')}")
             print()
@@ -164,8 +204,11 @@ async def _run(doc: dict, output_dir: Path, log_dir: Path, title: str, config: d
             # 전 과정: write(초안) → review(매 패스) → gate(판정) 순서대로 누적
             "history": st.get("history", []),
         }, ensure_ascii=False, indent=2), encoding="utf-8")
+        content = _inject_figs(filename, num)             # 차트 렌더·삽입(있으면)
         flag = "  ⚠flagged" if flagged else ""
-        print(f"  저장: {filename}  (소요 {ch_elapsed:.0f}s){flag}")
+        nfig = len(figs_by_ch.get(num, []))
+        print(f"  저장: {filename}  (소요 {ch_elapsed:.0f}s){flag}"
+              + (f"  +차트 {nfig}" if nfig else ""))
 
         if push:
             from publish.github_push import push_chapter, update_meta

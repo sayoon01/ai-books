@@ -81,6 +81,30 @@ class ChapterSpec(BaseModel):
     description: str = Field(default="", description="이 챕터가 다루는 내용 한두 문장")
 
 
+# --- CHARTS: grounding_digest의 표에서 그릴 차트 스펙 (숫자는 LLM이 만들지 않음) ---
+ChartType = Literal["donut", "bar", "grouped_bar", "barh", "stacked100", "line", "scatter"]
+
+
+class FigureSpec(BaseModel):
+    """차트 1개의 '구조'. 숫자는 담지 않는다 — 렌더러가 digest 표에서 추출한다.
+    웹/사람이 design.json에서 편집 가능."""
+    chapter: int = Field(description="이 차트를 넣을 챕터 번호")
+    type: ChartType = Field(description="차트 종류")
+    title: str = Field(default="", description="차트 제목")
+    caption: str = Field(default="", description="그림 캡션(아래 설명 한 문장)")
+    table: str = Field(default="", description="digest에서 표를 찾을 키워드(표 제목/직전 문맥의 일부)")
+    label_col: str = Field(description="범주(라벨) 열 이름 — 표 헤더와 일치/부분일치")
+    value_cols: list[str] = Field(min_length=1, max_length=6,
+        description="수치 시리즈 열 이름들(표 헤더와 일치/부분일치). scatter는 [x열, y열].")
+    top_n: int = Field(default=0, description="0이면 전체, 양수면 상위 N개만(막대류)")
+    sort: bool = Field(default=True, description="값 큰 순 정렬(막대류)")
+
+
+class FigurePlan(BaseModel):
+    """차트 디자이너 산출물. max_length 로 디코딩 폭주 방지."""
+    figures: list[FigureSpec] = Field(default_factory=list, max_length=24)
+
+
 class DesignPlan(BaseModel):
     """Design 산출물. output/<slug>/design.json 으로 저장되어 웹에서 편집 가능."""
     # max_length 필수: 상한이 없으면 ollama 제약 디코딩이 배열을 못 닫고 무한히 늘어진다.
@@ -92,6 +116,8 @@ class DesignPlan(BaseModel):
     grounding_digest: str = Field(default="",
         description="source_text에서 집필에 필요한 핵심만 추린 텍스트. "
                     "write/review에 참고자료로 주입. source 없으면 빈 값.")
+    figures: list[FigureSpec] = Field(default_factory=list, max_length=24,
+        description="grounding_digest 표에서 그릴 차트 스펙(자동 제안·편집 가능). 없으면 빈 배열.")
 
 
 # =====================================================================
