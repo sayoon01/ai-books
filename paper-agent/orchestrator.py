@@ -129,7 +129,7 @@ def run_paper(spec: dict, *, force: bool = False, limit: int = 0) -> dict:
         state = {
             "plan": plan, "section": section, "draft": draft, "grounding": data_digest,
             "quality_gate": rubric["quality_gate"], "target_score": rubric["target_score"],
-            "applicable_axes": applicable, "rubric": rubric,
+            "applicable_axes": applicable, "rubric": rubric, "has_artifacts": bool(sec_arts),
             "best_score": -1, "best_draft": draft, "best_review": None,
             "pass_count": 0, "last_score": -1,
         }

@@ -8,26 +8,75 @@
       "id": "abstract",
       "title": "초록",
       "score": 78,
-      "chars": 550,
+      "chars": 622,
+      "issues": 5
+    },
+    {
+      "id": "intro",
+      "title": "서론",
+      "score": 82,
+      "chars": 2021,
+      "issues": 4
+    },
+    {
+      "id": "related_work",
+      "title": "관련 연구",
+      "score": 82,
+      "chars": 2301,
+      "issues": 4
+    },
+    {
+      "id": "method",
+      "title": "제안 방법",
+      "score": 78,
+      "chars": 2436,
+      "issues": 6
+    },
+    {
+      "id": "experiment",
+      "title": "실험 설정",
+      "score": 78,
+      "chars": 2324,
+      "issues": 6
+    },
+    {
+      "id": "results",
+      "title": "결과 및 분석",
+      "score": 78,
+      "chars": 1907,
+      "issues": 6
+    },
+    {
+      "id": "discussion",
+      "title": "고찰",
+      "score": 82,
+      "chars": 1979,
+      "issues": 6
+    },
+    {
+      "id": "conclusion",
+      "title": "결론",
+      "score": 82,
+      "chars": 1560,
       "issues": 5
     }
   ],
   "tokens": {
-    "prompt": 17533,
-    "completion": 11326,
-    "total": 28859,
-    "calls": 8
+    "prompt": 192523,
+    "completion": 112680,
+    "total": 305203,
+    "calls": 64
   },
   "tokens_by_model": {
     "gemma4:31b": {
-      "prompt": 9023,
-      "completion": 5882,
-      "calls": 4
+      "prompt": 96291,
+      "completion": 66357,
+      "calls": 32
     },
     "qwen3-coder:30b": {
-      "prompt": 8510,
-      "completion": 5444,
-      "calls": 4
+      "prompt": 96232,
+      "completion": 46323,
+      "calls": 32
     }
   }
 }

@@ -55,16 +55,32 @@ REVIEW_SYS = """
 """
 
 
-def _scaling_block(axes: list[str], rubric: dict, target: int) -> str:
-    """섹션 평가 축 + 등급 루브릭을 시스템 프롬프트에 덧붙이는 동적 블록."""
+# 표/그림이 없는 섹션에서는 의미 없는 위반 타입(게이트에서도 무시됨).
+_NO_ARTIFACT_NA = {"unreferenced_artifact", "missing_baseline"}
+# 요약·논증 성격 섹션: 다른 섹션에서 입증할 내용을 '근거 부족'으로 오인하지 않게.
+_SUMMARY_SECTIONS = {"abstract", "intro", "introduction", "conclusion", "discussion", "related_work"}
+
+
+def _scaling_block(axes: list[str], rubric: dict, target: int,
+                   has_artifacts: bool, section_id: str) -> str:
+    """섹션 평가 축 + 등급 루브릭 + 섹션 성격 주의를 시스템 프롬프트에 덧붙인다."""
     others = [a for a in AXIS_KEYS if a not in axes]
+    notes = []
+    if not has_artifacts:
+        notes.append("이 섹션에는 표/그림이 없습니다 → unreferenced_artifact / missing_baseline 은 "
+                     "지적하지 마세요(해당 없음).")
+    if (section_id or "").strip().lower() in _SUMMARY_SECTIONS:
+        notes.append("이 섹션은 요약·동기·논증 성격입니다 → 다른 섹션(방법/실험/결과)에서 입증·상술할 "
+                     "내용을 이 섹션 안에 근거가 없다는 이유로 claim_evidence_mismatch / missing_baseline 으로 "
+                     "지적하지 마세요. 단, 제공된 자료와 충돌하거나 자료에 없는 수치를 단정하면 그건 지적하세요.")
+    note_block = ("\n[섹션 성격 주의]\n- " + "\n- ".join(notes) + "\n") if notes else ""
     return f"""
 
 [심사 기준 — 등급 수준]
 {rubric.get('standard','')}
 이 기준에 못 미치면 needs_revision=true, 충분하면 false. 종합 score 목표선: 약 {target}점.
 (기준이 높을수록 더 엄격하게, 낮을수록 사소한 트집은 피하세요.)
-
+{note_block}
 [이번 섹션 평가 축]
 - 평가할 축: {', '.join(axes)}
 - 무관(100 고정, issue 금지): {', '.join(others) if others else '없음'}
@@ -103,7 +119,9 @@ def do_review(state: dict) -> tuple[dict, str | None]:
     """
     axes = state.get("applicable_axes") or axes_for(state["section"])
     rubric = state.get("rubric") or get_rubric(None)
-    system = REVIEW_SYS + _scaling_block(axes, rubric, state.get("target_score", 88))
+    system = REVIEW_SYS + _scaling_block(
+        axes, rubric, state.get("target_score", 88),
+        bool(state.get("has_artifacts")), state["section"].get("id", ""))
     try:
         review = call_structured(
             system,
@@ -135,7 +153,9 @@ def gate_decision(state: dict) -> tuple[bool, dict, dict]:
         updates["review"] = review.model_dump()
 
     applicable = state.get("applicable_axes") or axes_for(state["section"])
-    violations = [i for i in review.issues if i.type in VIOLATION_TYPES]
+    na_types = set() if state.get("has_artifacts") else _NO_ARTIFACT_NA
+    violations = [i for i in review.issues
+                  if i.type in VIOLATION_TYPES and i.type not in na_types]
     weak = {k: v for k, v in review.quality.model_dump().items()
             if k in applicable and v < state["quality_gate"]}
     must_fix = bool(violations or bad)
