@@ -56,6 +56,7 @@ def fmt(n) -> str:
 
 
 def build() -> str:
+    
     summary = fetch("/api/summary")
     shift = fetch("/api/shift-stats")
     proc = fetch("/api/proc-stats")

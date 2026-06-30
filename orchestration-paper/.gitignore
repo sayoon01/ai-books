@@ -1,0 +1,26 @@
+# LaTeX 빌드 산출물
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.bbl
+paper/*.blg
+paper/*.spl
+paper/*.toc
+paper/sections/*.aux
+paper/pg-*.png
+paper/page-*.png
+
+# 실험 산출물 (원시 결과는 커밋, 임시 로그/캐시는 제외)
+results/_smoke*.log
+results/_pilot.log
+results/**/cache/
+__pycache__/
+*.pyc
+
+# testbed 실행 캐시/출력
+testbed/output/
+testbed/**/__pycache__/
+testbed/cache/
+
+# 로컬 venv
+.venv/

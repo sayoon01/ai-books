@@ -1,0 +1,24 @@
+# ADK_AGENT — Google ADK 기반 책 생성기 (generator/ 와 독립)
+# 신 그래프 Workflow API 사용 → google-adk>=2.3.0 필수.
+google-adk>=2.3.0
+litellm>=1.89
+ollama>=0.6
+python-dotenv   # core/config.py 가 .env 자동 로드 (없어도 동작 — graceful fallback)
+
+# 소스 reader 의존성 (실제 사용 시점에만 import; 쓰는 포맷만 설치하면 됨)
+openpyxl        # .xlsx
+pypdf           # .pdf
+python-docx     # .docx
+httpx           # url
+trafilatura     # url 본문 추출
+
+# PDF 출력 (pdf_export 사용 시) — 시스템에 pango/cairo 필요
+weasyprint
+markdown
+pygments
+
+# 관측(트레이싱) — 기본 자동(env 에 백엔드 설정 시 전송). 끄려면 main.py --no-trace.
+# ADK 가 내장 OTel span 을 방출하고, 아래 익스포터가 Phoenix/Langfuse 로 전송한다.
+# opentelemetry-sdk 는 google-adk 의존성으로 이미 설치됨.
+opentelemetry-exporter-otlp-proto-grpc    # Phoenix (gRPC 4317)
+opentelemetry-exporter-otlp-proto-http    # Langfuse (HTTP)

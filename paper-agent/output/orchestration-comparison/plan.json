@@ -1,0 +1,156 @@
+{
+  "title": "LLM 기반 멀티 에이전트 문서 생성 시스템의 오케스트레이션 구조에 따른 성능 비교 분석",
+  "venue": "한국정보과학회 (KIISE) 학술대회",
+  "abstract_brief": "본 논문은 LLM 기반 멀티 에이전트 시스템에서 워크플로우를 제어하는 오케스트레이션 구조(Code, LLM, Hybrid)가 문서 생성 성능에 미치는 영향을 정량적으로 분석한다. 동일한 에이전트 구성과 LLM을 사용하되 제어 주체만 변경하여 토큰 사용량, 소요 시간, 산출물 품질, 재시도 횟수를 측정한다. 이를 통해 작업 특성에 따른 최적의 오케스트레이션 설계 가이드라인을 제시한다.",
+  "contributions": [
+    "Code, LLM, Hybrid 세 가지 오케스트레이션 구조의 제어 메커니즘을 정의하고 구현함",
+    "구조별 자원 효율성(토큰, 시간)과 생성 품질(LLM-as-Judge) 간의 Trade-off 관계를 정량적으로 입증함",
+    "정형 보고서 및 창의적 글쓰기 등 작업 성격에 따른 최적의 오케스트레이션 선택 기준을 제안함"
+  ],
+  "research_design": "독립변인은 오케스트레이션 구조(Code: 고정 그래프, LLM: 동적 라우팅, Hybrid: 계층적 제어)이며, 종속변인은 효율성(토큰 수, 실행 시간)과 효과성(품질 점수, 재시도 횟수)이다. 에이전트의 역할(설계, 집필, 검수, 수정)과 사용 LLM, 프롬프트 로직을 통제변인으로 설정하여 구조적 차이만 검증한다.",
+  "experiment_plan": "산업 현장의 정형 데이터 보고서(금형-사출 분석 보고서 등) 및 창의적 텍스트 생성 작업을 입력 데이터로 사용한다. 각 구조별로 동일 작업을 반복 수행하며, 실측 자료의 구조(elapsed_sec, tokens, best_score, retry_count)에 따라 지표를 수집한다. 평가는 LLM-as-Judge 방식을 통해 품질 점수를 산출하며, 구조별 평균 및 표준편차를 비교 분석한다.",
+  "sections": [
+    {
+      "id": "abstract",
+      "title": "초록",
+      "role": "연구 전체 요약",
+      "key_points": [
+        "연구 배경 및 목적",
+        "비교 대상인 세 가지 구조 정의",
+        "핵심 결과 및 결론 요약"
+      ],
+      "write_brief": "전체 논문의 핵심 내용을 1페이지 내외로 압축하여 서술할 것.",
+      "artifact_ids": []
+    },
+    {
+      "id": "intro",
+      "title": "서론",
+      "role": "연구의 필요성 및 목적 제시",
+      "key_points": [
+        "멀티 에이전트 시스템의 부상과 오케스트레이션의 중요성",
+        "기존 제어 방식의 한계(경직성 vs 예측 불가능성)",
+        "본 연구의 목적 및 기여도"
+      ],
+      "write_brief": "왜 오케스트레이션 구조를 비교해야 하는지 논리적으로 전개하고, 연구의 범위를 명확히 정의할 것.",
+      "artifact_ids": []
+    },
+    {
+      "id": "related_work",
+      "title": "관련 연구",
+      "role": "기존 기술과의 차별성 강조",
+      "key_points": [
+        "LLM 기반 에이전트 워크플로우 설계 기법",
+        "AutoGPT, BabyAGI 등 자율적 에이전트 구조",
+        "정형 문서 생성 자동화 연구 동향"
+      ],
+      "write_brief": "최신 LLM 오케스트레이션 트렌드를 언급하며, 본 연구가 다루는 세 가지 구조의 학술적 위치를 설명할 것.",
+      "artifact_ids": []
+    },
+    {
+      "id": "method",
+      "title": "제안 방법",
+      "role": "시스템 설계 및 구현 상세 기술",
+      "key_points": [
+        "멀티 에이전트 구성(설계-집필-검수-수정) 및 역할 정의",
+        "Code 구조: 결정론적 상태 전이 그래프 설계",
+        "LLM 구조: Router LLM 기반의 동적 경로 결정 로직",
+        "Hybrid 구조: Macro-flow(Code)와 Micro-flow(LLM)의 결합 방식"
+      ],
+      "write_brief": "다른 연구자가 재현 가능하도록 각 구조의 흐름 제어 로직을 상세히 기술할 것.",
+      "artifact_ids": [
+        "fig:arch_compare"
+      ]
+    },
+    {
+      "id": "experiment",
+      "title": "실험 설정",
+      "role": "검증 환경 및 방법론 기술",
+      "key_points": [
+        "실험 대상 작업(금형-사출 분석 보고서 등) 및 데이터셋 설명",
+        "평가 지표 정의(토큰, 시간, 품질 점수, 재시도 횟수)",
+        "LLM-as-Judge의 평가 기준 및 프롬프트 구성"
+      ],
+      "write_brief": "실험의 객관성을 확보하기 위해 통제 변수와 측정 방법을 구체적으로 명시할 것.",
+      "artifact_ids": []
+    },
+    {
+      "id": "results",
+      "title": "결과 및 분석",
+      "role": "수치 기반의 성능 분석",
+      "key_points": [
+        "구조별 자원 소모량(토큰, 시간) 비교 분석",
+        "산출물 품질 점수 및 재시도 횟수 간의 상관관계",
+        "작업 유형별(정형 vs 창의) 최적 구조 분석"
+      ],
+      "write_brief": "수치 데이터를 객관적으로 제시하고, 가설(Code=효율적, LLM=유연함)이 실제 데이터로 어떻게 나타나는지 해석할 것.",
+      "artifact_ids": [
+        "tab:perf_main",
+        "fig:tradeoff"
+      ]
+    },
+    {
+      "id": "discussion",
+      "title": "고찰",
+      "role": "결과의 의미 해석 및 가이드라인 제시",
+      "key_points": [
+        "오케스트레이션 구조 선택을 위한 의사결정 매트릭스",
+        "비용-품질 간의 최적 지점(Sweet Spot) 논의",
+        "본 연구의 한계점 및 향후 발전 방향"
+      ],
+      "write_brief": "단순 결과 나열을 넘어, 실무적인 설계 가이드라인을 제안하는 데 집중할 것.",
+      "artifact_ids": [
+        "tab:guideline"
+      ]
+    },
+    {
+      "id": "conclusion",
+      "title": "결론",
+      "role": "연구 요약 및 마무리",
+      "key_points": [
+        "연구 요약",
+        "핵심 발견 사항 재강조",
+        "최종 결론"
+      ],
+      "write_brief": "서론에서 제기한 문제에 대한 답을 명확히 하며 간결하게 마무리할 것.",
+      "artifact_ids": []
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "fig:arch_compare",
+      "kind": "figure",
+      "title": "Comparison of Orchestration Architectures",
+      "purpose": "세 가지 구조(Code, LLM, Hybrid)의 흐름 제어 방식 차이를 시각적으로 대조",
+      "data_source": "System Design",
+      "method": "Architecture Diagram (Flowchart)",
+      "section_id": "method"
+    },
+    {
+      "id": "tab:perf_main",
+      "kind": "table",
+      "title": "Performance Metrics by Orchestrator",
+      "purpose": "구조별 토큰, 시간, 점수, 재시도 횟수의 정량적 차이 제시",
+      "data_source": "실측 자료 (by_orchestrator)",
+      "method": "Mean/Std Table",
+      "section_id": "results"
+    },
+    {
+      "id": "fig:tradeoff",
+      "kind": "figure",
+      "title": "Efficiency vs. Quality Trade-off",
+      "purpose": "자원 소모량(X축)과 품질 점수(Y축)의 상관관계를 통해 구조별 위치 확인",
+      "data_source": "실측 자료 (tokens/elapsed_sec vs best_score)",
+      "method": "Scatter Plot",
+      "section_id": "results"
+    },
+    {
+      "id": "tab:guideline",
+      "kind": "table",
+      "title": "Orchestration Selection Guideline",
+      "purpose": "작업 특성(정형성, 복잡도)에 따른 추천 구조 제시",
+      "data_source": "Experimental Results Analysis",
+      "method": "Decision Matrix",
+      "section_id": "discussion"
+    }
+  ]
+}

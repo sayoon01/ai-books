@@ -1,10 +1,15 @@
 # 설계 메모
 
-## 왜 ADK_AGENT를 복제하지 않는가
+## 왜 ADK_AGENT를 testbed/로 복사(vendoring)하는가
 
 세 오케스트레이션을 공정하게 비교하려면 에이전트·LLM·판단 로직이
-**한 소스**여야 한다. 코드를 복제하면 두 코드베이스가 갈라져 "동일 환경
-비교"라는 전제가 깨진다. 따라서 `../ADK_AGENT`를 import해서 쓴다.
+**한 소스**여야 한다. 외부의 `../ADK_AGENT`를 직접 import하면 원본이
+바뀔 때 실험 결과가 흔들려 재현성이 깨진다. 그래서 엔진 코드를
+`testbed/`에 **고정된 스냅샷으로 복사**해 두고, 그 스냅샷만 사용한다.
+
+복사한 코드는 `from agent...`, `from core...` (최상위) 형태로 import하므로,
+`orchestrators/_bootstrap.py`가 `testbed/`를 `sys.path`에 추가하면 코드
+수정 없이 그대로 동작한다(검증 완료).
 
 ## 오케스트레이터 인터페이스 (구현 예정)
 
@@ -19,7 +24,7 @@ class Orchestrator(Protocol):
         """draft + metrics(time, tokens, retries, score) 반환"""
 ```
 
-- `code_orch.py`  — `../ADK_AGENT/agent/graph.py` (Workflow) 래핑.
+- `code_orch.py`  — `testbed/agent/graph.py` (Workflow) 래핑. **(구현 완료)**
 - `llm_orch.py`   — 판단 함수들을 **tool로 LLM에 노출**, LLM이 다음
   노드를 고르게 한다. (write/review/revise/finish 중 선택)
 - `hybrid_orch.py`— 큰 흐름(write→review→finish)은 코드 고정, 게이트
@@ -27,13 +32,13 @@ class Orchestrator(Protocol):
 
 ## 기존 자산 재사용 지도
 
-| 필요 | 위치 |
+| 필요 | 위치 (복사된 testbed 기준) |
 |------|------|
-| 코드 오케스트레이션 | `../ADK_AGENT/agent/graph.py`, `agents.py` |
-| 판단 순수 함수 | `../ADK_AGENT/agent/write.py`, `review.py` |
-| LLM 호출/설정 | `../ADK_AGENT/core/llm.py`, `core/config.py` |
-| 비교 하니스 템플릿 | `../ADK_AGENT/spikes/compare_engines.py` |
-| 챕터 로그(지표) | `../ADK_AGENT/output/<slug>/logs/chapter-NN.json` |
+| 코드 오케스트레이션 | `testbed/agent/graph.py`, `agents.py` |
+| 판단 순수 함수 | `testbed/agent/write.py`, `review.py` |
+| LLM 호출/설정 | `testbed/core/llm.py`, `core/config.py` |
+| 비교 하니스 템플릿 | `testbed/spikes/compare_engines.py` |
+| 챕터 실행 패턴 | `testbed/pipeline.py` (InMemoryRunner 사용부) |
 
 ## 메모리 연계
 
