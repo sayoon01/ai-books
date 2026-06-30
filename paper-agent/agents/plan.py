@@ -57,22 +57,35 @@ PLAN_SYS = """
 """
 
 
-def plan_user(topic: str, source_text: str = "", venue: str = "") -> str:
+# 등급별 설계 지침(섹션 구성·엄밀도). review_axes/target_chars 는 비워도 코드가 기본값을 채운다.
+_TIER_HINT = {
+    "draft": "내부 초안 수준. 핵심 섹션만 간결히.",
+    "workshop": "워크숍/포스터 수준. 기여·방법 중심으로 간결히.",
+    "conference": "학술대회 수준. 서론·관련연구·방법·실험·결과·논의·결론을 갖춰 균형있게.",
+    "journal": "학술지 수준. 관련연구를 폭넓게, 방법·실험을 상세히, 한계·위협요인 논의 포함.",
+    "sci": ("SCI(E) Q1 수준. 서론/관련연구/예비지식/방법/실험설정/결과/논의/한계/결론을 충실히 두고, "
+            "각 섹션 review_axes 를 역할에 맞게 지정하고, 방법·실험 섹션은 target_chars 를 크게(2500+) 잡으세요."),
+}
+
+
+def plan_user(topic: str, source_text: str = "", venue: str = "", tier: str = "conference") -> str:
     has_src = bool(source_text)
     src_note = (f"\n실측 자료(이 구조·값에 맞춰 실험계획과 artifacts 를 설계):\n{source_text}\n"
                 if has_src
                 else "\n(실측 자료 없음 → experiment_plan 은 계획 수준으로, artifacts 는 만들 목록만)\n")
-    venue_note = f"대상 학회/저널: {venue} (이 기준으로 문체·분량·섹션 구성)\n" if venue else ""
+    venue_note = f"대상 학회/저널: {venue}\n" if venue else ""
+    tier_note = f"논문 등급: {tier} — {_TIER_HINT.get(tier, _TIER_HINT['conference'])}\n"
     return f"""
 연구 주제/내용:
 {topic}
-{venue_note}{src_note}
+{venue_note}{tier_note}{src_note}
 위 내용에 맞춰 논문 설계(PaperPlan)를 JSON 으로 출력하세요.
+각 섹션에는 가능하면 review_axes(평가 축)와 target_chars(목표 분량)도 등급에 맞게 채우세요.
 """
 
 
 def run_or_load_plan(topic: str, source_text: str, output_dir: Path, *,
-                     venue: str = "", force: bool = False) -> dict:
+                     venue: str = "", tier: str = "conference", force: bool = False) -> dict:
     """plan.json 있으면 로드(재검증), 없으면 생성·저장. dict(PaperPlan dump) 반환."""
     output_dir.mkdir(parents=True, exist_ok=True)
     plan_path = output_dir / "plan.json"
@@ -85,8 +98,8 @@ def run_or_load_plan(topic: str, source_text: str, output_dir: Path, *,
         return plan.model_dump()
 
     src = "실측 자료" if source_text else "주제 설명"
-    print(f"  [plan] {src} 기반 논문 설계 생성 중...")
-    plan = call_parsed(PLAN_SYS, plan_user(topic, source_text, venue), PaperPlan, T_PLAN)
+    print(f"  [plan] {src} 기반 논문 설계 생성 중... (등급 {tier})")
+    plan = call_parsed(PLAN_SYS, plan_user(topic, source_text, venue, tier), PaperPlan, T_PLAN)
     plan_path.write_text(
         json.dumps(plan.model_dump(), ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"  [plan] 생성 완료 → plan.json "

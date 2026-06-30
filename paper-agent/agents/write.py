@@ -39,8 +39,20 @@ ABSTRACT_EXTRA = """
 """
 
 
+def _length_block(section: dict, length_hint: str, target_chars: int) -> str:
+    """등급/섹션별 분량 지시. 장문·SCI 일수록 길게."""
+    parts = []
+    if length_hint:
+        parts.append(length_hint)
+    tc = section.get("target_chars") or target_chars
+    if tc:
+        parts.append(f"목표 분량은 본문 약 {tc}자 내외입니다(너무 짧지 않게).")
+    return block("분량 지침", " ".join(parts)) if parts else ""
+
+
 def write_user(plan: dict, section: dict, grounding: str,
-               prev_summaries: list[str], sec_artifacts: list[dict]) -> str:
+               prev_summaries: list[str], sec_artifacts: list[dict],
+               length_hint: str = "", target_chars: int = 0) -> str:
     is_abstract = section.get("id") == "abstract"
     paper_ctx = block("논문 개요", (
         f"제목: {plan.get('title','')}\n"
@@ -55,15 +67,18 @@ def write_user(plan: dict, section: dict, grounding: str,
         artifacts_block(sec_artifacts) if not is_abstract else "",
         ground_block(grounding),
         prev_block(prev_summaries),
+        "" if is_abstract else _length_block(section, length_hint, target_chars),
         ABSTRACT_EXTRA if is_abstract else "",
     ]))
 
 
 def write_section(plan: dict, section: dict, grounding: str,
-                  prev_summaries: list[str], sec_artifacts: list[dict]) -> str:
+                  prev_summaries: list[str], sec_artifacts: list[dict],
+                  length_hint: str = "", target_chars: int = 0) -> str:
     """섹션 LaTeX 본문 생성(자유 텍스트). 코드펜스가 끼면 벗긴다."""
     sys = WRITE_SYS + (ABSTRACT_EXTRA if section.get("id") == "abstract" else "")
-    raw = call_text(sys, write_user(plan, section, grounding, prev_summaries, sec_artifacts),
+    raw = call_text(sys, write_user(plan, section, grounding, prev_summaries, sec_artifacts,
+                                    length_hint, target_chars),
                     temperature=T_WRITE)
     return strip_code_fence(raw).strip()
 

@@ -9,7 +9,7 @@
 from core.llm import call_structured, ConvergenceError
 from core.config import REVIEW_MODEL, PASS_MAX, T_REVIEW
 from core.grounding import unverified_numbers, ground_block
-from agents.common import ReviewResult
+from agents.common import ReviewResult, AXIS_KEYS, axes_for, get_rubric
 
 
 REVIEW_SYS = """
@@ -40,9 +40,10 @@ REVIEW_SYS = """
 - severity: 오류/위반은 최소 medium(사실/근거 오류는 high). 품질·표면은 보통 medium/low.
 
 [품질 점수 — quality (6축, 0~100)]
-- novelty / soundness / clarity / significance / reproducibility / related_work
-- 섹션 성격상 해당 약한 축(예: method 의 novelty)은 맥락이 적절하면 감점하지 말고 높게.
-- 점수와 issue 는 일치해야 합니다: 어떤 축이 80 미만이면 그 축의 issue 를 반드시 남기세요.
+- 축: novelty / soundness / clarity / significance / reproducibility / related_work
+- ★ 아래 '이번 섹션 평가 축'에 적힌 축만 실제로 평가하세요. 나머지 축은 이 섹션과 무관하므로
+  반드시 100 으로 두고, 그 축에 대한 issue 도 만들지 마세요(엉뚱한 감점·무한 재수정 방지).
+- 점수와 issue 는 일치해야 합니다: '평가 축' 중 80 미만인 축은 그 축의 issue 를 반드시 남기세요.
 
 [실측 자료가 있는 경우]
 - 본문 수치 중 자료에서 확인되지 않는 값은 unverified_numbers 에 나열(없으면 빈 배열).
@@ -54,15 +55,32 @@ REVIEW_SYS = """
 """
 
 
+def _scaling_block(axes: list[str], rubric: dict, target: int) -> str:
+    """섹션 평가 축 + 등급 루브릭을 시스템 프롬프트에 덧붙이는 동적 블록."""
+    others = [a for a in AXIS_KEYS if a not in axes]
+    return f"""
+
+[심사 기준 — 등급 수준]
+{rubric.get('standard','')}
+이 기준에 못 미치면 needs_revision=true, 충분하면 false. 종합 score 목표선: 약 {target}점.
+(기준이 높을수록 더 엄격하게, 낮을수록 사소한 트집은 피하세요.)
+
+[이번 섹션 평가 축]
+- 평가할 축: {', '.join(axes)}
+- 무관(100 고정, issue 금지): {', '.join(others) if others else '없음'}
+"""
+
+
 def review_user(plan: dict, section: dict, draft: str, grounding: str = "") -> str:
     import json
+    sec = {k: section.get(k) for k in ("id", "title", "role", "key_points", "artifact_ids")}
     return f"""
 논문 개요:
 제목: {plan.get('title','')}
 기여: {'; '.join(plan.get('contributions', []))}
 
 이 섹션의 계획:
-{json.dumps(section, ensure_ascii=False, indent=2)}
+{json.dumps(sec, ensure_ascii=False, indent=2)}
 {ground_block(grounding)}
 심사할 원고(LaTeX 본문):
 {draft}
@@ -83,9 +101,12 @@ def do_review(state: dict) -> tuple[dict, str | None]:
 
     keep-best: revise 가 초안을 망가뜨려도 최고 점수 버전을 보존한다.
     """
+    axes = state.get("applicable_axes") or axes_for(state["section"])
+    rubric = state.get("rubric") or get_rubric(None)
+    system = REVIEW_SYS + _scaling_block(axes, rubric, state.get("target_score", 88))
     try:
         review = call_structured(
-            REVIEW_SYS,
+            system,
             review_user(state["plan"], state["section"], state["draft"], state.get("grounding", "")),
             ReviewResult, temperature=T_REVIEW, model=REVIEW_MODEL)
     except ConvergenceError as e:
@@ -113,8 +134,10 @@ def gate_decision(state: dict) -> tuple[bool, dict, dict]:
         review.unverified_numbers = sorted(set(review.unverified_numbers) | set(bad))
         updates["review"] = review.model_dump()
 
+    applicable = state.get("applicable_axes") or axes_for(state["section"])
     violations = [i for i in review.issues if i.type in VIOLATION_TYPES]
-    weak = {k: v for k, v in review.quality.model_dump().items() if v < state["quality_gate"]}
+    weak = {k: v for k, v in review.quality.model_dump().items()
+            if k in applicable and v < state["quality_gate"]}
     must_fix = bool(violations or bad)
     want_lift = bool(weak) or review.score < state["target_score"] or review.needs_revision
 

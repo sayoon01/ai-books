@@ -38,7 +38,8 @@ def main():
     if args.plan_only:
         src = read_source(spec.get("source"), spec["slug"])
         plan = run_or_load_plan(spec["topic"], src, out,
-                                venue=spec.get("venue", ""), force=args.force)
+                                venue=spec.get("venue", ""),
+                                tier=spec.get("tier", "conference"), force=args.force)
         print(f"\nplan.json → {out/'plan.json'}")
         print("제목:", plan["title"])
         print("섹션:", [s["id"] for s in plan["sections"]])

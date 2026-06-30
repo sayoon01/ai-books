@@ -1,5 +1,6 @@
 {
   "slug": "orchestration-comparison",
+  "tier": "conference",
   "venue": "한국정보과학회 (KIISE) 학술대회",
   "topic": "LLM 기반 멀티 에이전트 문서 생성 시스템에서 오케스트레이션 구조(Code / LLM / Hybrid)가 성능에 미치는 영향을 비교한다. 세 구조는 동일한 에이전트(설계·집필·검수·수정)·동일 LLM·동일 판단 로직을 공유하고, 흐름 제어 주체만 다르게 하여 변인을 통제한다. Code 구조는 고정된 코드 그래프(if/edge)가 흐름을 정하고, LLM 구조는 라우터 LLM이 다음 동작을 매번 결정하며, Hybrid는 큰 흐름은 코드가 세부는 LLM이 정한다. 평가지표는 토큰 사용량, 소요 시간, 산출물 품질 점수(LLM-as-Judge), 재시도 횟수다. 가설: Code 구조가 토큰·시간 효율은 높지만 유연성이 낮고, LLM 구조는 그 반대이며, Hybrid가 절충점을 제공한다. 동일 작업(정형 데이터 보고서 / 창의적 글쓰기 / 혼합)에서 구조별 trade-off를 측정하고 설계 가이드라인을 제안한다.",
   "source": "orchestration-paper/results/금형-사출-사출기-단위-가동품질-통계-분석-보고서/summary.json"

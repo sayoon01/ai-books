@@ -43,6 +43,11 @@ class SectionSpec(BaseModel):
         description="이 섹션 전용 집필 지시문(톤·길이·구성). Writer 에게 그대로 전달된다.")
     artifact_ids: list[str] = Field(default_factory=list,
         description="이 섹션에서 참조(\\ref)할 ArtifactSpec.id 들")
+    review_axes: list[str] = Field(default_factory=list,
+        description="이 섹션에서 평가할 품질 축(비우면 역할 기반 기본값 사용). "
+                    "예: method=['soundness','clarity','reproducibility']")
+    target_chars: int = Field(default=0,
+        description="이 섹션 목표 분량(글자). 0이면 등급(tier) 기본값. 장문일수록 크게.")
 
 
 class PaperPlan(BaseModel):
@@ -148,3 +153,85 @@ def artifacts_block(artifacts: list[dict]) -> str:
     for a in artifacts:
         lines.append(f"- {a['id']} ({a['kind']}): {a['title']} — {a.get('purpose','')}")
     return "\n".join(lines) + "\n"
+
+
+# =====================================================================
+# 4) 검수 스케일링 — (a) 섹션 역할별 적용 축, (b) 논문 등급(tier) 루브릭.
+#    축은 "이 섹션에서 의미 있는 품질 축만" 채점하게 해 엉뚱한 감점/무한 재수정을 막는다.
+#    루브릭은 같은 코드로 draft → conference → SCI 까지 기준을 끌어올린다.
+# =====================================================================
+
+AXIS_KEYS = ["novelty", "soundness", "clarity", "significance",
+             "reproducibility", "related_work"]
+
+# 섹션 id(별칭 포함) → 그 섹션에서 의미 있는 축. 없는 id 는 ALL.
+_DEFAULT_SECTION_AXES = {
+    "abstract": ["clarity", "significance"],
+    "intro": ["clarity", "significance", "related_work"],
+    "introduction": ["clarity", "significance", "related_work"],
+    "related_work": ["related_work", "novelty", "clarity"],
+    "background": ["clarity", "related_work"],
+    "preliminaries": ["clarity", "soundness"],
+    "method": ["soundness", "clarity", "reproducibility", "novelty"],
+    "methods": ["soundness", "clarity", "reproducibility", "novelty"],
+    "approach": ["soundness", "clarity", "reproducibility", "novelty"],
+    "system": ["soundness", "clarity", "reproducibility"],
+    "experiment": ["soundness", "reproducibility", "clarity"],
+    "experiments": ["soundness", "reproducibility", "clarity"],
+    "setup": ["reproducibility", "clarity"],
+    "results": ["soundness", "clarity", "significance"],
+    "evaluation": ["soundness", "clarity", "significance"],
+    "discussion": ["significance", "soundness", "clarity"],
+    "limitations": ["soundness", "significance"],
+    "conclusion": ["clarity", "significance"],
+    "future_work": ["significance", "novelty"],
+}
+
+
+def axes_for(section: dict) -> list[str]:
+    """이 섹션에서 평가할 품질 축. 명시(review_axes) > id 기본맵 > 전체."""
+    explicit = [a for a in (section.get("review_axes") or []) if a in AXIS_KEYS]
+    if explicit:
+        return explicit
+    sid = (section.get("id") or "").strip().lower()
+    return _DEFAULT_SECTION_AXES.get(sid, list(AXIS_KEYS))
+
+
+# 논문 등급별 기준. 위로 갈수록 기준선·분량·엄격도↑.
+RUBRICS: dict[str, dict] = {
+    "draft": {
+        "quality_gate": 70, "target_score": 80, "min_chars": 700, "abstract_chars": 300,
+        "standard": "내부 초안 수준. 사실/논리 오류와 큰 누락만 잡고, 사소한 표현 트집은 피한다.",
+        "length_hint": "각 섹션을 한두 문단으로 핵심만 간결하게.",
+    },
+    "workshop": {
+        "quality_gate": 76, "target_score": 84, "min_chars": 1000, "abstract_chars": 350,
+        "standard": "워크숍/포스터 수준. 기여가 분명하고 방법이 이해 가능해야 한다.",
+        "length_hint": "각 섹션을 두세 문단으로, 핵심 근거를 포함해.",
+    },
+    "conference": {
+        "quality_gate": 80, "target_score": 88, "min_chars": 1400, "abstract_chars": 400,
+        "standard": ("국내/국제 학술대회(KIISE·IEEE conf.) 수준. 기여가 명확하고, 방법이 재현 가능하며, "
+                     "관련연구가 적절히 다뤄지고, 주장이 결과로 뒷받침되어야 한다."),
+        "length_hint": "각 섹션을 충분한 문단으로, 필요하면 \\subsection 으로 나눠 깊이 있게.",
+    },
+    "journal": {
+        "quality_gate": 84, "target_score": 90, "min_chars": 2000, "abstract_chars": 450,
+        "standard": ("학술지 수준. 신규성과 이론적 근거가 탄탄하고, 실험이 체계적이며, "
+                     "관련연구가 폭넓고, 한계와 위협요인이 정직하게 논의되어야 한다."),
+        "length_hint": "각 섹션을 여러 문단·\\subsection 으로 길고 깊게. 근거·예시·반례를 충실히.",
+    },
+    "sci": {
+        "quality_gate": 88, "target_score": 93, "min_chars": 2600, "abstract_chars": 500,
+        "standard": ("SCI(E) 저널 Q1 수준. 신규성·이론적 엄밀성·통계적 유의성(유의수준·효과크기)을 요구하고, "
+                     "광범위한 최신 관련연구 비교, 완전한 재현 정보(설정·하이퍼파라미터·데이터), "
+                     "타당성 위협(internal/external validity)에 대한 방어를 요구한다. 사소한 결함도 지적한다."),
+        "length_hint": ("각 섹션을 학술지 분량으로 길고 정밀하게(\\subsection 적극 활용). "
+                        "정의·표기·증명/논증·정량 근거를 빠짐없이."),
+    },
+}
+
+
+def get_rubric(tier: str | None) -> dict:
+    """tier 문자열 → 루브릭 dict. 모르는 값이면 conference 로 폴백."""
+    return RUBRICS.get((tier or "conference").strip().lower(), RUBRICS["conference"])

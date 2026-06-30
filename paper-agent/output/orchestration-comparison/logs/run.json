@@ -1,0 +1,33 @@
+{
+  "slug": "orchestration-comparison",
+  "model": "gemma4:31b",
+  "review_model": "qwen3-coder:30b",
+  "tier": "conference",
+  "sections": [
+    {
+      "id": "abstract",
+      "title": "초록",
+      "score": 78,
+      "chars": 550,
+      "issues": 5
+    }
+  ],
+  "tokens": {
+    "prompt": 17533,
+    "completion": 11326,
+    "total": 28859,
+    "calls": 8
+  },
+  "tokens_by_model": {
+    "gemma4:31b": {
+      "prompt": 9023,
+      "completion": 5882,
+      "calls": 4
+    },
+    "qwen3-coder:30b": {
+      "prompt": 8510,
+      "completion": 5444,
+      "calls": 4
+    }
+  }
+}

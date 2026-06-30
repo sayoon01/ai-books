@@ -1,0 +1,21 @@
+\documentclass[10pt,twocolumn]{article}
+\usepackage{kotex}
+\usepackage[margin=2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{cite}
+\graphicspath{{figures/}}
+
+\title{LLM 기반 멀티 에이전트 문서 생성 시스템의 오케스트레이션 구조에 따른 성능 비교 분석}
+\author{paper-agent (자동 생성 초안)}
+\date{}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+대규모 언어 모델(LLM) 기반의 멀티 에이전트 시스템은 복잡한 문서 생성 작업의 자동화를 위한 유망한 방법론으로 주목받고 있으나, 에이전트 간의 협업을 제어하는 오케스트레이션 구조가 실제 성능과 자원 효율성에 미치는 영향에 대한 정량적 분석은 여전히 부족한 실정이다. 본 연구에서는 제어 메커니즘의 특성에 따라 고정 그래프 방식의 Code 구조, 동적 라우팅 방식의 LLM 구조, 그리고 계층적 제어 방식의 Hybrid 구조를 정의하고 이를 구현하였다. 산업 현장의 정형 보고서 작성 및 창의적 글쓰기 작업을 대상으로 LLM-as-Judge 기반의 품질 점수와 토큰 소모량, 실행 시간 등의 지표를 측정하여 각 구조의 성능을 비교 분석하였다. 실험 결과, 오케스트레이션 구조에 따라 자원 효율성과 생성 품질 간에 뚜렷한 트레이드오프(Trade-off) 관계가 존재함을 정량적으로 입증하였다. 본 연구는 작업의 성격과 요구되는 품질 수준에 따라 최적의 오케스트레이션 구조를 선택할 수 있는 기준을 제안함으로써, 효율적인 멀티 에이전트 시스템 설계를 위한 실무적 가이드라인을 제공한다.
+\end{abstract}
+
+\end{document}
