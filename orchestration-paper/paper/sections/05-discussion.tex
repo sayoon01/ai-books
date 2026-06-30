@@ -1,0 +1,56 @@
+\section{Discussion: 설계 가이드라인}
+
+단순히 ``Code가 빠르다''는 관찰만으로는 실무에 도움이 되지 않는다. 본
+절에서는 실험에서 관찰된 각 구조의 특성을 작업 특성과 연결하여, 환경별로
+적합한 오케스트레이션을 선택하기 위한 설계 가이드라인을 제안한다. 이
+가이드라인이 본 논문의 핵심 기여이다.
+
+표~\ref{tab:guideline}은 작업 특성에 따른 권장 구조와 그 근거를
+정리한 것이다. 핵심 원리는 \emph{흐름의 불확실성}이다. 흐름이 예측
+가능할수록 코드로 고정하는 것이 유리하고(속도·비용·안정성), 흐름이
+상황에 따라 달라질수록 LLM에 위임하는 것이 유리하다(적응성).
+
+\begin{table}[t]
+\centering
+\caption{작업 특성에 따른 오케스트레이션 선택 가이드라인}
+\label{tab:guideline}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{p{2.4cm}cp{3.0cm}}
+\toprule
+\textbf{작업 특성} & \textbf{추천} & \textbf{이유} \\
+\midrule
+정형·반복 업무   & Code   & 고정 워크플로우로 빠르고 안정적 \\
+창의·불확실 업무 & LLM    & 상황에 따라 에이전트를 유연하게 선택 \\
+정형·비정형 혼합 & Hybrid & 안정성과 적응성을 동시에 확보 \\
+실시간 처리      & Code   & 지연 시간이 가장 짧음 \\
+비용 제약 환경   & Code   & 토큰 사용량 최소 \\
+복잡한 의사결정  & LLM    & 동적 워크플로우 구성 가능 \\
+대규모 운영      & Hybrid & 성능과 비용의 균형 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+이 선택 기준을 의사결정 흐름으로 요약하면 그림~\ref{fig:tree}와 같다.
+작업의 특성을 먼저 분석하고, 정형 반복성이 높으면 Code, 창의성·불확실성이
+높으면 LLM, 두 성격이 섞여 있으면 Hybrid를 선택한다.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=8mm and 4mm]
+  \node[node] (task) {Task 특성 분석};
+  \node[node] (a) [below left=of task]  {정형\\반복};
+  \node[node] (b) [below=14mm of task]  {창의\\불확실};
+  \node[node] (c) [below right=of task] {혼합형};
+  \node[code] (code)   [below=6mm of a] {Code};
+  \node[llm]  (llm)    [below=6mm of b] {LLM};
+  \node[node] (hyb)    [below=6mm of c] {Hybrid};
+  \draw[flow] (task) -- (a);
+  \draw[flow] (task) -- (b);
+  \draw[flow] (task) -- (c);
+  \draw[flow] (a) -- (code);
+  \draw[flow] (b) -- (llm);
+  \draw[flow] (c) -- (hyb);
+\end{tikzpicture}
+\caption{작업 특성 기반 오케스트레이션 선택 의사결정도.}
+\label{fig:tree}
+\end{figure}

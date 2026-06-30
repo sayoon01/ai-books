@@ -1,0 +1,55 @@
+\section{실험 결과}
+
+% =============================================================
+%  ※ 아래 표의 수치와 그림은 실험 수행 후 채울 자리이다.
+%     해석 문장은 템플릿이며, 실제 결과에 맞게 수정할 것.
+%     (현 단계에서 수치를 임의로 채우지 말 것 — 연구윤리)
+% =============================================================
+
+표~\ref{tab:result}은 세 오케스트레이션 구조의 종합 비교 결과이다.
+그림~\ref{fig:bar}는 실행 시간, 품질, 토큰 사용량을 시각화한 것이다.
+
+\begin{table}[t]
+\centering
+\caption{오케스트레이션 구조별 종합 비교 결과 (작업 평균)}
+\label{tab:result}
+\begin{tabular}{lccc}
+\toprule
+\textbf{항목} & \textbf{Code} & \textbf{LLM} & \textbf{Hybrid} \\
+\midrule
+Execution Time (s) & --- & --- & --- \\
+Quality (0--100)   & --- & --- & --- \\
+Token Usage        & --- & --- & --- \\
+Consistency (std)  & --- & --- & --- \\
+Retry Count        & --- & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+% 실험 후 figures/result_bar.pdf 로 교체
+\framebox[0.9\columnwidth]{\rule{0pt}{32mm}\;\;[그림 자리: 구조별 실행시간·품질·토큰 막대그래프]\;\;}
+\caption{구조별 실행 시간, 품질, 토큰 사용량 비교.}
+\label{fig:bar}
+\end{figure}
+
+\subsection{결과 해석 (템플릿)}
+
+\noindent\emph{※ 다음은 결과 입력 후 다듬을 해석 문장 템플릿이다.}
+
+\textbf{실행 시간.} Code 구조는 흐름 제어에 추가 LLM 호출이 없어 평균
+실행 시간이 가장 \underline{[짧/길]}었으며, LLM 구조 대비 약
+\underline{[N]}\% \underline{[빠름/느림]}을 보였다. 이는 동적 분기를
+위한 추가 추론 비용에 기인한다.
+
+\textbf{품질.} LLM-as-Judge 기준 품질 점수는 \underline{[구조]}에서 가장
+높게 나타났다. \underline{[정형/창의]} 작업에서는 구조 간 차이가
+\underline{[유의미/미미]}하였다.
+
+\textbf{토큰 사용량.} LLM 구조는 흐름 결정에 토큰을 추가 소비하여 Code
+대비 약 \underline{[N]}배의 토큰을 사용하였다.
+
+\textbf{일관성.} 동일 입력 반복 시 Code 구조의 표준편차가 가장
+\underline{[작/크]}게 나타나, 결정론적 흐름이 결과 안정성에 기여함을
+확인하였다. 반대로 LLM 구조는 작업에 따라 편차가 \underline{[증가]}하였다.

@@ -1,0 +1,80 @@
+% =============================================================
+%  LLM 기반 멀티 에이전트 시스템에서 오케스트레이션 구조에 따른
+%  성능 비교 및 설계 가이드라인
+%
+%  학회 제출용 초안 (IEIE 2~4페이지 분량)
+%  ※ 실험 결과 수치/그래프는 자리만 비워둠 — 실험 후 채울 것
+%
+%  빌드:  pdflatex main && bibtex main && pdflatex main && pdflatex main
+%  필요:  TeX Live + kotex(한글) + tikz
+% =============================================================
+\documentclass[conference]{IEEEtran}
+
+\usepackage{kotex}                 % 한글 조판
+\usepackage{graphicx}
+\usepackage{booktabs}              % 표 가로줄
+\usepackage{array}
+\usepackage{amsmath,amssymb}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc}
+\usepackage[hidelinks]{hyperref}
+\usepackage{caption}
+
+% --- TikZ 공통 스타일 (오케스트레이션 흐름도) ---
+\tikzset{
+  node/.style    = {rectangle, rounded corners, draw=black, thick,
+                    minimum width=20mm, minimum height=8mm, align=center,
+                    font=\footnotesize},
+  llm/.style     = {rectangle, draw=black, thick, dashed,
+                    minimum width=20mm, minimum height=8mm, align=center,
+                    font=\footnotesize\itshape},
+  code/.style    = {rectangle, draw=black, thick, fill=black!8,
+                    minimum width=20mm, minimum height=8mm, align=center,
+                    font=\footnotesize},
+  flow/.style    = {-{Stealth[length=2mm]}, thick},
+}
+
+\begin{document}
+
+% ----------------------------- 제목 -----------------------------
+\title{LLM 기반 멀티 에이전트 시스템에서\\
+오케스트레이션 구조에 따른 성능 비교 및 설계 가이드라인\\
+\large Performance Comparison and Design Guidelines for\\
+Orchestration Strategies in LLM-based Multi-Agent Systems}
+
+\author{\IEEEauthorblockN{저자명}
+\IEEEauthorblockA{소속 / 기관\\
+이메일 주소}}
+
+\maketitle
+
+% ----------------------------- 초록 -----------------------------
+\begin{abstract}
+최근 대규모 언어 모델(LLM) 기반 멀티 에이전트 시스템은 다양한 AI 서비스에
+활용되고 있으며, 에이전트 간 실행 흐름을 제어하는 오케스트레이션 구조가
+시스템 성능에 큰 영향을 미친다. 대표적인 방식으로는 코드 기반(Code
+Orchestration)과 LLM 기반(LLM Orchestration)이 있으나, 두 구조의 특성과
+적용 환경을 비교한 연구는 부족하다. 본 논문에서는 동일한 멀티 에이전트
+환경에서 Code, LLM, Hybrid Orchestration을 구현하고 실행 시간, 품질,
+토큰 사용량, 일관성 등을 비교하였다. 또한 작업 특성(정형 반복, 창의,
+혼합)에 따른 실험을 수행하여 각 오케스트레이션 구조의 장단점을 분석하고,
+환경별 적합한 오케스트레이션 선택을 위한 설계 가이드라인을 제안한다.
+\end{abstract}
+
+\begin{IEEEkeywords}
+LLM, 멀티 에이전트, 오케스트레이션, 워크플로우, 에이전트 설계
+\end{IEEEkeywords}
+
+% ----------------------------- 본문 -----------------------------
+\input{sections/01-introduction}
+\input{sections/02-orchestration}
+\input{sections/03-experiment}
+\input{sections/04-results}
+\input{sections/05-discussion}
+\input{sections/06-conclusion}
+
+% ----------------------------- 참고문헌 -----------------------------
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+
+\end{document}

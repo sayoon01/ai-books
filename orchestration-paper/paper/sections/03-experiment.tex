@@ -1,0 +1,53 @@
+\section{실험 환경 및 평가 방법}
+
+\subsection{실험 환경}
+
+세 오케스트레이션 구조는 동일한 멀티 에이전트 시스템 위에 구현되었으며,
+에이전트 정의·LLM 설정·판단 로직을 공유한다. 실험 환경은
+표~\ref{tab:env}와 같다.
+
+\begin{table}[t]
+\centering
+\caption{실험 환경}
+\label{tab:env}
+\begin{tabular}{ll}
+\toprule
+\textbf{항목} & \textbf{내용} \\
+\midrule
+LLM        & Gemma (gemma4:31b, 로컬 Ollama) \\
+Framework  & Google ADK 기반 자체 시스템 \\
+Task       & 문서(챕터) 생성 \\
+Agent      & Planner, Writer, Reviewer, Reviser \\
+반복 횟수  & 작업·구조별 20회 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+작업 특성에 따른 차이를 관찰하기 위해 세 가지 유형의 입력 작업을 사용한다:
+(1) \textbf{정형 반복형}(예: 정형화된 기술 보고서), (2) \textbf{창의형}
+(예: 자유로운 서술), (3) \textbf{혼합형}(정형 구조 + 비정형 서술). 각
+작업 $\times$ 각 구조 조합을 20회 반복하여 일관성 지표를 산출한다.
+
+\subsection{비교 항목}
+
+평가 지표는 표~\ref{tab:metric}과 같다. 품질은 동일한 평가 프롬프트를
+사용하는 LLM-as-Judge~\cite{zheng2023judge} 방식으로 0$\sim$100점으로
+채점한다. 일관성은 동일 입력 반복 실행 시 점수 및 산출물 길이의 표준편차로
+측정한다.
+
+\begin{table}[t]
+\centering
+\caption{비교 지표}
+\label{tab:metric}
+\begin{tabular}{ll}
+\toprule
+\textbf{Metric} & \textbf{설명} \\
+\midrule
+Execution Time & 생성 소요 시간 (초) \\
+Token Usage    & 입력+출력 토큰 합계 \\
+Quality        & LLM-as-Judge 점수 (0--100) \\
+Consistency    & 반복 결과의 표준편차 \\
+Retry Count    & 재작성/재검토 호출 횟수 \\
+\bottomrule
+\end{tabular}
+\end{table}

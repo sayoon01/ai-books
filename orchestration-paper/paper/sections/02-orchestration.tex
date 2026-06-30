@@ -1,0 +1,94 @@
+\section{오케스트레이션 구조}
+
+본 절에서는 비교 대상인 세 가지 오케스트레이션 구조를 정의한다. 세 구조는
+모두 동일한 에이전트 집합(Planner/Design, Writer, Reviewer, Reviser)과
+동일한 판단 로직(길이 게이트, 품질 게이트)을 공유하며, 오직 \emph{흐름
+제어의 주체}만 다르다. 이를 통해 오케스트레이션 구조 외의 변인을 통제한다.
+
+% -------------------------------------------------------------
+\subsection{Code Orchestration}
+
+코드 기반 구조에서는 에이전트의 실행 순서가 코드에 고정되어 있으며,
+다음 단계로의 전이 여부를 \texttt{if}문 등 명시적 조건으로 판단한다.
+그림~\ref{fig:code}와 같이 Planner $\rightarrow$ Writer $\rightarrow$
+Reviewer $\rightarrow$ Reviser의 흐름이 정적으로 정의되고, 품질 게이트가
+통과되면 종료(Finish)된다. 흐름이 결정론적이므로 안정성과 재현성이 높고
+디버깅이 용이하다.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=6mm]
+  \node[code] (plan)   {Planner};
+  \node[code] (write)  [below=of plan]  {Writer};
+  \node[code] (review) [below=of write] {Reviewer};
+  \node[code] (revise) [below=of review]{Reviser};
+  \node[code] (fin)    [below=of revise]{Finish};
+  \draw[flow] (plan) -- (write);
+  \draw[flow] (write) -- (review);
+  \draw[flow] (review) -- (revise);
+  \draw[flow] (revise) -- (fin);
+  % 게이트(코드 판단) 되먹임
+  \draw[flow] (revise.east) -- ++(10mm,0) |- node[pos=0.25,right,font=\scriptsize]{재검토} (review.east);
+\end{tikzpicture}
+\caption{Code Orchestration: 코드가 흐름을 고정·판단한다(음영 = 코드 결정).}
+\label{fig:code}
+\end{figure}
+
+% -------------------------------------------------------------
+\subsection{LLM Orchestration}
+
+LLM 기반 구조에서는 각 단계 이후 LLM이 다음에 호출할 에이전트, 재호출
+여부, grounding 수행 여부 등을 스스로 결정한다(그림~\ref{fig:llm}). 흐름이
+고정되어 있지 않으므로 상황에 따라 유연하게 적응할 수 있는 반면, 결정
+과정에 추가적인 LLM 호출이 필요해 비용과 지연이 증가하고 결과의 편차가
+커질 수 있다.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=5mm]
+  \node[node] (plan)   {Planner};
+  \node[llm]  (l1)     [below=of plan]  {LLM 결정};
+  \node[node] (write)  [below=of l1]    {Writer};
+  \node[llm]  (l2)     [below=of write] {LLM 결정};
+  \node[node] (review) [below=of l2]    {Reviewer};
+  \node[llm]  (l3)     [below=of review]{LLM 결정};
+  \draw[flow] (plan) -- (l1);
+  \draw[flow] (l1) -- (write);
+  \draw[flow] (write) -- (l2);
+  \draw[flow] (l2) -- (review);
+  \draw[flow] (review) -- (l3);
+  \draw[flow] (l3.east) -- ++(9mm,0) |- node[pos=0.25,right,font=\scriptsize]{동적 분기} (write.east);
+\end{tikzpicture}
+\caption{LLM Orchestration: LLM이 다음 동작을 동적으로 결정한다(점선 = LLM 결정).}
+\label{fig:llm}
+\end{figure}
+
+% -------------------------------------------------------------
+\subsection{Hybrid Orchestration}
+
+혼합 구조는 큰 흐름은 코드로 고정하되, 세부 판단(예: 재작성 필요 여부,
+grounding 깊이)은 LLM에 위임한다(그림~\ref{fig:hybrid}). 코드의 안정성과
+LLM의 적응성을 동시에 확보하는 것을 목표로 한다.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=5mm]
+  \node[code] (c1)     {Code: 흐름};
+  \node[node] (plan)   [below=of c1]    {Planner};
+  \node[llm]  (l1)     [below=of plan]  {LLM: 세부 판단};
+  \node[node] (write)  [below=of l1]    {Writer};
+  \node[code] (c2)     [below=of write] {Code: 게이트};
+  \node[node] (review) [below=of c2]    {Reviewer};
+  \node[llm]  (l2)     [below=of review]{LLM: 세부 판단};
+  \node[code] (fin)    [below=of l2]    {Finish};
+  \draw[flow] (c1) -- (plan);
+  \draw[flow] (plan) -- (l1);
+  \draw[flow] (l1) -- (write);
+  \draw[flow] (write) -- (c2);
+  \draw[flow] (c2) -- (review);
+  \draw[flow] (review) -- (l2);
+  \draw[flow] (l2) -- (fin);
+\end{tikzpicture}
+\caption{Hybrid Orchestration: 큰 흐름은 코드, 세부 판단은 LLM이 담당한다.}
+\label{fig:hybrid}
+\end{figure}
